@@ -10,7 +10,7 @@ Container Jobs(String imagePath,String title){
           children: <Widget>[
             Image.asset(
               "assets/images/" + imagePath, // Add '/' to the end of the path
-              height: 80.0,
+              height: 60.0,
             ),
             SizedBox(height: 10.0),
             Text(
@@ -35,41 +35,56 @@ class MyHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(100.0),
+        preferredSize: Size.fromHeight(50.0),
         child: AppBar(
-          toolbarHeight: 50.0,
-          backgroundColor: Colors.white,
-          elevation: 0.0,
-          flexibleSpace: Stack(
+          backgroundColor: Color(0xFFEDF2FB),
+
+          elevation: 2.0,
+          leading: Row(
+
             children: [
-              Positioned.fill(
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Image.asset(
-                    'assets/images/Free_Sample_By_Wix-removebg-preview.png',
-                  ),
-                ),
+              Image.asset(
+                'assets/images/logo.png',
+                width: 60,
+                height: 90,
+                fit: BoxFit.cover,
               ),
+
             ],
           ),
           actions: [
             IconButton(
-              icon: Icon(Icons.notifications),
+              icon: Icon(Icons.more_horiz, color: Color(0xFF343ABA), size: 32.0),
               onPressed: () {},
             ),
-            CircleAvatar(
-              backgroundImage: AssetImage('assets/images/RR.png'),
-            ),
+
           ],
+           // This will remove the back button
+
         ),
       ),
+
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, // Align children to the start
         children: [
+          SizedBox(height: 50.0),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 17),
+            child: Text(
+              'Find Your Job ',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Color(0xFF343ABA),
+              ),
+            ),
+          ),
+
           Container(
-            margin:EdgeInsets.all(17),
+            margin: EdgeInsets.all(17),
             padding: EdgeInsets.fromLTRB(40, 20, 40, 20),
             decoration: BoxDecoration(
-              color: Colors.purple[100],
+              color: Color(0xFF5C8EF2),
               borderRadius: BorderRadius.circular(8.0),
               boxShadow: [
                 BoxShadow(
@@ -86,16 +101,6 @@ class MyHomePage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.only(bottom: 5),
-                        child: const Text(
-                          'Search a Job  ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 23,
-                          ),
-                        ),
-                      ),
                       TextField(
                         decoration: InputDecoration(
                           hintText: 'Search',
@@ -103,7 +108,7 @@ class MyHomePage extends StatelessWidget {
                           filled: true,
                           fillColor: Colors.white,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30.0),
+                            borderRadius: BorderRadius.circular(10.0),
                             borderSide: BorderSide.none,
                           ),
                         ),
@@ -114,21 +119,10 @@ class MyHomePage extends StatelessWidget {
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Popular Now',
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
+
+
           Container(
-            margin:EdgeInsets.symmetric(vertical: 20.0),
+            margin:EdgeInsets.symmetric(vertical: 15.0),
             height:150,
             child: ListView(
               scrollDirection: Axis.horizontal,
@@ -148,26 +142,27 @@ class MyHomePage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: BottomAppBar(
+        color: Color(0xFFF1F5FC),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
-              icon: Icon(Icons.home),
+              icon: Icon(Icons.home,color: Color(0xFF343ABA)),
               onPressed: () {},
             ),
             IconButton(
-              icon: Icon(Icons.account_circle_outlined),
+              icon: Icon(Icons.add,color: Color(0xFF343ABA)),
               onPressed: () {},
             ),
+            IconButton(
+              icon: Icon(Icons.account_circle_outlined,color: Color(0xFF343ABA)),
+              onPressed: () {},
+            ),
+
           ],
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ),
+
     );
   }
 }
