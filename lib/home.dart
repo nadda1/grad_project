@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:grad_project/profile.dart';
 
 Container Jobs(String imagePath,String title){
   return Container(
@@ -45,8 +46,8 @@ class MyHomePage extends StatelessWidget {
             children: [
               Image.asset(
                 'assets/images/logo.png',
-                width: 60,
-                height: 90,
+                width: 40,
+                height: 40,
                 fit: BoxFit.cover,
               ),
 
@@ -154,10 +155,13 @@ class MyHomePage extends StatelessWidget {
               icon: Icon(Icons.add,color: Color(0xFF343ABA)),
               onPressed: () {},
             ),
+           
             IconButton(
-              icon: Icon(Icons.account_circle_outlined,color: Color(0xFF343ABA)),
-              onPressed: () {},
-            ),
+            icon: Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+            },
+          ),
 
           ],
         ),
