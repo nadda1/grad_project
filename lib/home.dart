@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:grad_project/profile.dart';
+import 'Authentication.dart';
+
 
 Container Jobs(String imagePath,String title){
   return Container(

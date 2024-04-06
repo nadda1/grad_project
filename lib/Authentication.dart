@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'home.dart';
 
 class LoginForm extends StatefulWidget {
   @override
@@ -6,134 +9,12 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
-  TextEditingController _usernameController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView( // Wrap with SingleChildScrollView
-      child: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
-            Image.asset(
-              'assets/images/logo.png',
-              width: 400,
-              height: 200,
-              fit: BoxFit.contain,
-            ),
-            Text(
-              'Welcome Back',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              'Please Log In ',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF343ABA),
-              ),
-            ),
-            SizedBox(height: 20),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Username',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  prefixIcon: Icon(Icons.person),
-                ),
-              ),
-            ),
-            SizedBox(height: 15),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  prefixIcon: Icon(Icons.lock),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // Perform login authentication
-                String username = _usernameController.text;
-                String password = _passwordController.text;
-                // Here you can add your authentication logic
-                print('Username: $username, Password: $password');
-              },
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40.0),
-                  ),
-                ),
-                minimumSize: MaterialStateProperty.all<Size>(
-                  Size(150, 40),
-                ),
-              ),
-              child: Text('Login'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    // Clean up the controller when the widget is disposed.
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-}
-class SignUpForm extends StatefulWidget {
-  @override
-  _SignUpFormState createState() => _SignUpFormState();
-}
-
-class _SignUpFormState extends State<SignUpForm> {
-  TextEditingController _usernameController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
-  TextEditingController _nameController = TextEditingController();
-  TextEditingController _numberController = TextEditingController();
-  TextEditingController _summaryController = TextEditingController();
-  TextEditingController _skillsController = TextEditingController();
-
-  @override
+  TextEditingController _passwordController = TextEditingController();
+@override
   void dispose() {
-    // Clean up the controller when the widget is disposed.
-    _usernameController.dispose();
-    _passwordController.dispose();
     _emailController.dispose();
-    _nameController.dispose();
-    _numberController.dispose();
-    _summaryController.dispose();
-    _skillsController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -171,9 +52,9 @@ class _SignUpFormState extends State<SignUpForm> {
               width: 300.0,
               height: 50.0,
               child: TextField(
-                controller: _usernameController,
+                controller: _emailController,
                 decoration: InputDecoration(
-                  labelText: 'Username',
+                  labelText: 'email',
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -202,21 +83,109 @@ class _SignUpFormState extends State<SignUpForm> {
                 ),
               ),
             ),
-            SizedBox(height: 15),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                String email = _emailController.text;
+                String password = _passwordController.text;
+
+                final String apiUrl = 'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/login';
+
+                final http.Response response = await http.post(
+                  Uri.parse(apiUrl),
+                  headers: <String, String>{
+                    'Content-Type': 'application/json; charset=UTF-8',
+                  },
+                  body: jsonEncode(<String, String>{
+                    'email': email,
+                    'password': password,
+                  }),
+                );
+
+                if (response.statusCode == 200) {
+                  // If server returns an OK response, navigate to home page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MyHomePage(title: '')),
+                  );
+                } else {
+                  // If that 3 was not OK, show an error message.
+                  throw Exception('Failed to login');
+                }
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(40.0),
                   ),
-                  prefixIcon: Icon(Icons.email),
                 ),
+                minimumSize: MaterialStateProperty.all<Size>(
+                  Size(150, 40),
+                ),
+              ),
+              child: Text('Login'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  
+}
+
+class SignUpForm extends StatefulWidget {
+  @override
+  _SignUpFormState createState() => _SignUpFormState();
+}
+
+class _SignUpFormState extends State<SignUpForm> {
+  TextEditingController _usernameController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+  TextEditingController _passwordConfirmationController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _nameController = TextEditingController();
+  
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is disposed.
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _passwordConfirmationController.dispose();
+    _emailController.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            Image.asset(
+              'assets/images/logo.png',
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
+            ),
+            Text(
+              'Welcome Back',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              'Please Log In ',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF343ABA),
               ),
             ),
             SizedBox(height: 15),
@@ -236,85 +205,149 @@ class _SignUpFormState extends State<SignUpForm> {
                 ),
               ),
             ),
+            SizedBox(height: 20),
+            SizedBox(
+              width: 300.0,
+              height: 50.0,
+              child: TextField(
+                controller: _usernameController,
+                decoration: InputDecoration(
+                  labelText: 'Username',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  prefixIcon: Icon(Icons.person),
+                ),
+              ),
+            ),
+             SizedBox(height: 15),
+            SizedBox(
+              width: 300.0,
+              height: 50.0,
+              child: TextField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  prefixIcon: Icon(Icons.email),
+                ),
+              ),
+            ),
+            
             SizedBox(height: 15),
             SizedBox(
               width: 300.0,
               height: 50.0,
               child: TextField(
-                controller: _numberController,
+                controller: _passwordController,
+                obscureText: true,
                 decoration: InputDecoration(
-                  labelText: 'Number',
+                  labelText: 'Password',
                   filled: true,
                   fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20.0),
                   ),
-                  prefixIcon: Icon(Icons.phone),
+                  prefixIcon: Icon(Icons.lock),
                 ),
               ),
             ),
             SizedBox(height: 15),
             SizedBox(
               width: 300.0,
-              height: 100.0,
+              height: 50.0,
               child: TextField(
-                controller: _summaryController,
-                maxLines: null,
+                controller: _passwordConfirmationController,
+                obscureText: true,
                 decoration: InputDecoration(
-                  labelText: 'Summary',
+                  labelText: 'Password confirmation',
                   filled: true,
                   fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20.0),
                   ),
-                  prefixIcon: Icon(Icons.article),
+                  prefixIcon: Icon(Icons.lock),
                 ),
               ),
             ),
-            SizedBox(
-              width: 300.0,
-              height: 100.0,
-              child: TextField(
-                controller: _skillsController,
-                maxLines: null,
-                decoration: InputDecoration(
-                  labelText: 'Skills',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  prefixIcon: Icon(Icons.star),
-                ),
-              ),
-            ),
+           
+           
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                // Perform sign up authentication
-                String username = _usernameController.text;
-                String password = _passwordController.text;
-                String email = _emailController.text;
-                String name = _nameController.text;
-                String number = _numberController.text;
-                String summary = _summaryController.text;
-                String skills = _skillsController.text;
-                // Here you can add your sign up authentication logic
-                print('Username: $username, Password: $password, Email: $email, Name: $name, Number: $number, Summary: $summary, Skills: $skills');
-              },
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40.0),
-                  ),
-                ),
-                minimumSize: MaterialStateProperty.all<Size>(
-                  Size(150, 40),
-                ),
+  onPressed: () async {
+    String username = _usernameController.text;
+    String password = _passwordController.text;
+    String passwordConfirmation = _passwordConfirmationController.text;
+    String email = _emailController.text;
+    String name = _nameController.text;
+
+    Map<String, String> userData = {
+      'name': name,
+      'username': username,
+      'email': email,
+      'password': password,
+      'password_confirmation': passwordConfirmation,
+    };
+
+    String requestBody = json.encode(userData);
+
+    final response = await http.post(
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/register'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: requestBody,
+    );
+
+    // Check the response status
+    if (response.statusCode == 200) {
+      // Registration successful, navigate to home.dart
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => MyHomePage(title: '')),
+      );
+    } else {
+      // Registration failed, display an error message
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Registration Failed'),
+            content: Text('An error occurred during registration. Please try again.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
               ),
-              child: Text('Sign Up'),
-            ),
+            ],
+          );
+        },
+      );
+    }
+  },
+  style: ButtonStyle(
+    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
+    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+      RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(40.0),
+      ),
+    ),
+    minimumSize: MaterialStateProperty.all<Size>(
+      Size(150, 40),
+    ),
+  ),
+  child: Text('Sign Up'),
+),
           ],
         ),
       ),
