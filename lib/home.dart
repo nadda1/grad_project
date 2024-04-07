@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:grad_project/profile.dart';
-import 'Authentication.dart';
+import 'JobsList.dart';
+import 'data.dart';
+import 'post.dart';
 
-
-Container Jobs(String imagePath,String title){
+Container Jobs(String imagePath, String title) {
   return Container(
-    width: 200.0,
+    width: 150.0,
     child: Card(
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+
             Image.asset(
-              "assets/images/" + imagePath, // Add '/' to the end of the path
-              height: 60.0,
+              "assets/images/" + imagePath,
+              fit: BoxFit.fill,
+              height: 50.0,
+              width: 40,
             ),
             SizedBox(height: 10.0),
             Text(
@@ -27,8 +31,6 @@ Container Jobs(String imagePath,String title){
   );
 }
 
-
-
 class MyHomePage extends StatelessWidget {
   const MyHomePage({Key? key, required this.title});
 
@@ -37,40 +39,34 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50.0),
-        child: AppBar(
-          backgroundColor: Color(0xFFEDF2FB),
-
-          elevation: 2.0,
-          leading: Row(
-
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Image.asset(
-                'assets/images/logo.png',
-                width: 40,
-                height: 40,
-                fit: BoxFit.cover,
+              IconButton(
+                icon: Icon(Icons.arrow_back, color: Color(0xFF343ABA)),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
               ),
-
+              Container(
+                padding: EdgeInsets.only(left: 10.0, top: 19.0, bottom: 19.0), // Adjust padding
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  fit: BoxFit.cover,
+                  height: 90,
+                  width: 90,
+                ),
+              ),
+              Spacer(),
+              IconButton(
+                icon: Icon(Icons.more_horiz, color: Color(0xFF343ABA), size: 36.0), // Increase icon size
+                onPressed: () {},
+              ),
             ],
           ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.more_horiz, color: Color(0xFF343ABA), size: 32.0),
-              onPressed: () {},
-            ),
-
-          ],
-           // This will remove the back button
-
-        ),
-      ),
-
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // Align children to the start
-        children: [
-          SizedBox(height: 50.0),
+          SizedBox(height: 20.0),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 17),
             child: Text(
@@ -82,19 +78,18 @@ class MyHomePage extends StatelessWidget {
               ),
             ),
           ),
-
           Container(
             margin: EdgeInsets.all(17),
-            padding: EdgeInsets.fromLTRB(40, 20, 40, 20),
+            padding: EdgeInsets.fromLTRB(40, 15, 40, 15),
             decoration: BoxDecoration(
               color: Color(0xFF5C8EF2),
-              borderRadius: BorderRadius.circular(8.0),
+              borderRadius: BorderRadius.circular(15.0),
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.withOpacity(0.5),
                   spreadRadius: 5,
                   blurRadius: 7,
-                  offset: Offset(0, 3), // changes position of shadow
+                  offset: Offset(0, 3),
                 ),
               ],
             ),
@@ -104,15 +99,18 @@ class MyHomePage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search',
-                          prefixIcon: Icon(Icons.search),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                            borderSide: BorderSide.none,
+                      Container(
+                        height: 40,
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Search',
+                            prefixIcon: Icon(Icons.search),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: BorderSide.none,
+                            ),
                           ),
                         ),
                       ),
@@ -122,24 +120,45 @@ class MyHomePage extends StatelessWidget {
               ],
             ),
           ),
-
-
-          Container(
-            margin:EdgeInsets.symmetric(vertical: 15.0),
-            height:150,
-            child: ListView(
+          SizedBox(height: 15.0),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 17),
+            child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              children:<Widget> [
-                Jobs("coffee.png","Baresta"),
-                Jobs("delivery-man.png","Delivery"),
-                Jobs("baby.png","Babysitting"),
-                Jobs("cooking.png","cook"),
-              ],
+              child: Row(
+                children: [
+                  Jobs("coffee.png", "Baresta"),
+                  Jobs("delivery-man.png", "Delivery"),
+                  Jobs("baby.png", "Babysitting"),
+                  Jobs("cooking.png", "cook"),
+                ],
+              ),
             ),
           ),
+          SizedBox(height: 20.0),
           Expanded(
-            child: Container(
-              // Add your JobsList widget here
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 17),
+                  child: Text(
+                    'For you',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF343ABA),
+                    ),
+                  ),
+                ),
+
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: JobsList(jobData: JobData),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -150,25 +169,26 @@ class MyHomePage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
-              icon: Icon(Icons.home,color: Color(0xFF343ABA)),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: Icon(Icons.add,color: Color(0xFF343ABA)),
-              onPressed: () {},
-            ),
-           
-            IconButton(
-            icon: Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
-            },
-          ),
+              icon: Icon(Icons.home, color: Color(0xFF343ABA)),
+              onPressed: () {
 
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.add, color: Color(0xFF343ABA)),
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => Post()));
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+              },
+            ),
           ],
         ),
       ),
-
     );
   }
 }
