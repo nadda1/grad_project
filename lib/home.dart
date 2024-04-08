@@ -59,12 +59,12 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           Row(
             children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back, color: Color(0xFF343ABA)),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
+              // IconButton(
+              //   icon: Icon(Icons.arrow_back, color: Color(0xFF343ABA)),
+              //   onPressed: () {
+              //     Navigator.pop(context);
+              //   },
+              // ),
               Container(
                 padding: EdgeInsets.only(left: 10.0, top: 19.0, bottom: 19.0), // Adjust padding
                 child: Image.asset(

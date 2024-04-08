@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'main.dart';
 
 
 class ProfileScreen extends StatefulWidget {
@@ -28,7 +29,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     } catch (e) {
       print('Error loading user profile: $e');
-      // Handle error loading user profile
+    }
+  }
+
+  Future<void> _logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("You're not logged in."),
+      ));
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/logout'),
+        headers: <String, String>{
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await prefs.remove('token');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Logged out successfully."),
+          
+        ));
+        Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => WelcomePage()),
+        (Route<dynamic> route) => false,
+      );
+        // Add navigation or state update if needed
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Failed to log out."),
+        ));
+      }
+    } catch (e) {
+      print('Error logging out: $e');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("An error occurred while logging out."),
+      ));
     }
   }
 
@@ -47,17 +89,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 backgroundImage: NetworkImage('https://placeholdit.img/200x200'),
                 radius: 50.0,
               ),
-              SizedBox(width: 20.0),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _name,
-                    style: TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
-                  ),
-                  Text(_email),
-                ],
+              SizedBox(height: 20.0),
+              Text(
+                _name,
+                style: TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
               ),
+              Text(_email),
               SizedBox(height: 20.0),
               ElevatedButton(
                 onPressed: () {
@@ -70,6 +107,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // Change password button action
                 },
                 child: const Text('Change Password'),
+              ),
+              ElevatedButton(
+                onPressed: _logout,
+                child: const Text('Logout'),
               ),
               SizedBox(height: 20.0),
               const EducationSection(educationList: [
@@ -94,30 +135,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-}
 
-Future<Map<String, dynamic>> _getUserProfile() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('token');
-  if (token == null) {
-    throw Exception('Token not found in shared preferences');
+  Future<Map<String, dynamic>> _getUserProfile() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    if (token == null) {
+      throw Exception('Token not found in shared preferences');
+    }
+
+    final response = await http.get(
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/user-profile'),
+      headers: <String, String>{
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      return jsonData['data'];
+    } else {
+      throw Exception('Failed to load user profile');
+    }
   }
-
-  final response = await http.get(
-    Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/user-profile'),
-    headers: <String, String>{
-      'Authorization': 'Bearer $token',
-    },
-  );
-
-  if (response.statusCode == 200) {
-    final jsonData = json.decode(response.body);
-    return jsonData['data'];
-  } else {
-    throw Exception('Failed to load user profile');
-  }
 }
-
 class EducationSection extends StatelessWidget {
   final List<String> educationList; // Replace with your education data
 
