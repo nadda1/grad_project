@@ -1,92 +1,124 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class ProfileScreen extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class ProfileScreen extends StatefulWidget {
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String _name = 'Loading...';
+  String _email = 'Loading...';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      Map<String, dynamic> userProfile = await _getUserProfile();
+      setState(() {
+        _name = userProfile['name'];
+        _email = userProfile['email'];
+      });
+    } catch (e) {
+      print('Error loading user profile: $e');
+      // Handle error loading user profile
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
       ),
-      body: SingleChildScrollView( // Allow scrolling if content overflows
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              // User Information Section
-              const Column(
+              CircleAvatar(
+                backgroundImage: NetworkImage('https://placeholdit.img/200x200'),
+                radius: 50.0,
+              ),
+              SizedBox(width: 20.0),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Replace with user's profile picture URL or widget
-                  CircleAvatar(
-                    backgroundImage: NetworkImage('https://placeholdit.img/200x200'),
-                    radius: 50.0, // Adjust radius as needed
+                  Text(
+                    _name,
+                    style: TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(width: 20.0),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Replace with user's name
-                      Text(
-                        'Anna Lee',
-                        style: TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
-                      ),
-                      // Replace with user's email (optional)
-                      Text('annalee9986@gmail.com'),
-                    ],
-                  ),
+                  Text(_email),
                 ],
               ),
-              const SizedBox(height: 20.0),
-
-              // Additional Information Section (Optional)
-              const Text('Bio:'), // Add bio text field or widget here (optional)
-              const SizedBox(height: 10.0),
-              const Text('Location: Cairo, Egypt'), // Replace with user's location (optional)
-              const SizedBox(height: 10.0),
-              // Add social media links here (optional)
-
-              // Action Buttons (Optional)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: () { /* Edit profile button action */ },
-                    child: const Text('Edit Profile'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () { /* Change password button action */ },
-                    child: const Text('Change Password'),
-                  ),
-                ],
+              SizedBox(height: 20.0),
+              ElevatedButton(
+                onPressed: () {
+                  // Edit profile button action
+                },
+                child: const Text('Edit Profile'),
               ),
-              const SizedBox(height: 20.0),
-              // Education Section
+              ElevatedButton(
+                onPressed: () {
+                  // Change password button action
+                },
+                child: const Text('Change Password'),
+              ),
+              SizedBox(height: 20.0),
               const EducationSection(educationList: [
                 'Bachelor of Science in Computer Science (2020)',
                 'Master of Science in Artificial Intelligence (expected 2024)',
               ]),
               const SeparatorLine(),
-              const SizedBox(height: 20.0),
-
-              // Certificate Section
+              SizedBox(height: 20.0),
               const CertificateSection(certificateList: [
                 'Machine Learning Specialization (Coursera)',
                 'Flutter Development Bootcamp (Udacity)',
               ]),
               const SeparatorLine(),
-              const SizedBox(height: 20.0),
-
-              // Experience Section
+              SizedBox(height: 20.0),
               const ExperienceSection(experienceList: [
                 'Software Engineer Intern (Company A, 2023)',
                 'Web Developer (Company B, 2022)',
               ]),
             ],
-
-
           ),
         ),
       ),
     );
+  }
+}
+
+Future<Map<String, dynamic>> _getUserProfile() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+  if (token == null) {
+    throw Exception('Token not found in shared preferences');
+  }
+
+  final response = await http.get(
+    Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/user-profile'),
+    headers: <String, String>{
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final jsonData = json.decode(response.body);
+    return jsonData['data'];
+  } else {
+    throw Exception('Failed to load user profile');
   }
 }
 

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'home.dart';
+import 'profile.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class LoginForm extends StatefulWidget {
   @override
@@ -102,16 +105,40 @@ class _LoginFormState extends State<LoginForm> {
                   }),
                 );
 
-                if (response.statusCode == 200) {
-                  // If server returns an OK response, navigate to home page
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => MyHomePage(title: '')),
-                  );
-                } else {
-                  // If that 3 was not OK, show an error message.
-                  throw Exception('Failed to login');
-                }
+               if (response.statusCode == 200) {
+  final jsonData = json.decode(response.body);
+
+  // Save token and user data to shared preferences
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setString('token', jsonData['data']['access_token']);
+  await prefs.setString('user', json.encode(jsonData['data']['user']));
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => MyHomePage(title: ''),
+    ),
+  );
+}else {
+      // Registration failed, display an error message
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('login Failed'),
+            content: Text('An error occurred during registration. Please try again.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
               },
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
@@ -310,9 +337,22 @@ class _SignUpFormState extends State<SignUpForm> {
     // Check the response status
     if (response.statusCode == 200) {
       // Registration successful, navigate to home.dart
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => MyHomePage(title: '')),
+       showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Registration success'),
+            content: Text('congratulations you have an account'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
       );
     } else {
       // Registration failed, display an error message
