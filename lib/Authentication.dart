@@ -12,6 +12,8 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
+  bool _isPasswordVisible = false;
+
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
 @override
@@ -69,23 +71,35 @@ class _LoginFormState extends State<LoginForm> {
             ),
             SizedBox(height: 15),
             SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  prefixIcon: Icon(Icons.lock),
-                ),
-              ),
-            ),
+  width: 300.0,
+  height: 50.0,
+  child: TextField(
+    controller: _passwordController,
+    obscureText: !_isPasswordVisible, // Updated based on state variable
+    decoration: InputDecoration(
+      labelText: 'Password',
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20.0),
+      ),
+      prefixIcon: Icon(Icons.lock),
+      suffixIcon: IconButton(
+        icon: Icon(
+          // Change the icon based on the state
+          _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+        ),
+        onPressed: () {
+          // Update the state to toggle password visibility
+          setState(() {
+            _isPasswordVisible = !_isPasswordVisible;
+          });
+        },
+      ),
+    ),
+  ),
+),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
@@ -168,6 +182,8 @@ class SignUpForm extends StatefulWidget {
 }
 
 class _SignUpFormState extends State<SignUpForm> {
+  bool _isPasswordVisible = false;
+bool _isConfirmPasswordVisible = false;
   TextEditingController _usernameController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _passwordConfirmationController = TextEditingController();
@@ -269,42 +285,48 @@ class _SignUpFormState extends State<SignUpForm> {
             
             SizedBox(height: 15),
             SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  prefixIcon: Icon(Icons.lock),
-                ),
-              ),
-            ),
+  width: 300.0,
+  height: 50.0,
+  child: TextField(
+    controller: _passwordController,
+    obscureText: !_isPasswordVisible, // Use the state variable here
+    decoration: InputDecoration(
+      // Your InputDecoration
+      suffixIcon: IconButton(
+        icon: Icon(
+          _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+        ),
+        onPressed: () {
+          setState(() {
+            _isPasswordVisible = !_isPasswordVisible;
+          });
+        },
+      ),
+    ),
+  ),
+),
             SizedBox(height: 15),
             SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _passwordConfirmationController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password confirmation',
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  prefixIcon: Icon(Icons.lock),
-                ),
-              ),
-            ),
+  width: 300.0,
+  height: 50.0,
+  child: TextField(
+    controller: _passwordConfirmationController,
+    obscureText: !_isConfirmPasswordVisible, // Use the state variable here
+    decoration: InputDecoration(
+      // Your InputDecoration
+      suffixIcon: IconButton(
+        icon: Icon(
+          _isConfirmPasswordVisible ? Icons.visibility_off : Icons.visibility,
+        ),
+        onPressed: () {
+          setState(() {
+            _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+          });
+        },
+      ),
+    ),
+  ),
+),
            
            
             SizedBox(height: 20),
