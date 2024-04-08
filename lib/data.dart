@@ -29,3 +29,4 @@ const List<Map<String, String>> JobData = [
     "price": "200",
   },
 ];
+
