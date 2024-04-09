@@ -195,20 +195,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               Text(_email),
               const SizedBox(height: 20.0),
-              ElevatedButton(
-                onPressed: _showEditProfileDialog,
-                child: const Text('Edit Profile'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  // Change password button action
-                },
-                child: const Text('Change Password'),
-              ),
-              ElevatedButton(
-                onPressed: _logout,
-                child: const Text('Logout'),
-              ),
+             Padding(
+  padding: const EdgeInsets.only(bottom: 8.0), // Adjust the padding as needed
+  child: ElevatedButton(
+    onPressed: _showEditProfileDialog,
+    child: const Text('Edit Profile'),
+  ),
+),
+Padding(
+  padding: const EdgeInsets.only(bottom: 8.0), // Adjust the padding as needed
+  child: ElevatedButton(
+    onPressed: () {
+      // Change password button action
+    },
+    child: const Text('Change Password'),
+  ),
+),
+Padding(
+  padding: const EdgeInsets.only(bottom: 8.0), // Adjust the padding as needed
+  child: ElevatedButton(
+    onPressed: _logout,
+    child: const Text('Logout'),
+  ),
+),
               const SizedBox(height: 20.0),
               const EducationSection(educationList: [
                 'Bachelor of Science in Computer Science (2020)',
