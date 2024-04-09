@@ -6,6 +6,8 @@ import 'main.dart';
 
 
 class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({Key? key}) : super(key: key);
+
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
 }
@@ -36,7 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
     if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("You're not logged in."),
       ));
       return;
@@ -52,28 +54,90 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (response.statusCode == 200) {
         await prefs.remove('token');
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text("Logged out successfully."),
           
         ));
         Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => WelcomePage()),
+        MaterialPageRoute(builder: (context) =>  WelcomePage()),
         (Route<dynamic> route) => false,
       );
         // Add navigation or state update if needed
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text("Failed to log out."),
         ));
       }
     } catch (e) {
       print('Error logging out: $e');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("An error occurred while logging out."),
       ));
     }
   }
+ Future<void> _showEditProfileDialog() async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        String editedName = _name;
+        String editedEmail = _email;
+        String editedPassword = '';
+        String editedConfirmPassword = '';
 
+        return AlertDialog(
+          title: Text('Edit Profile'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                TextFormField(
+                  initialValue: _name,
+                  onChanged: (value) {
+                    editedName = value;
+                  },
+                  decoration: InputDecoration(labelText: 'Name'),
+                ),
+                TextFormField(
+                  initialValue: _email,
+                  onChanged: (value) {
+                    editedEmail = value;
+                  },
+                  decoration: InputDecoration(labelText: 'Email'),
+                ),
+                TextFormField(
+                  onChanged: (value) {
+                    editedPassword = value;
+                  },
+                  decoration: InputDecoration(labelText: 'Password'),
+                  obscureText: true,
+                ),
+                TextFormField(
+                  onChanged: (value) {
+                    editedConfirmPassword = value;
+                  },
+                  decoration: InputDecoration(labelText: 'Confirm Password'),
+                  obscureText: true,
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Save'),
+              onPressed: () {
+               ;
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,21 +149,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              CircleAvatar(
+              const CircleAvatar(
                 backgroundImage: NetworkImage('https://placeholdit.img/200x200'),
                 radius: 50.0,
               ),
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20.0),
               Text(
                 _name,
-                style: TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
               ),
               Text(_email),
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20.0),
               ElevatedButton(
-                onPressed: () {
-                  // Edit profile button action
-                },
+                onPressed: _showEditProfileDialog,
                 child: const Text('Edit Profile'),
               ),
               ElevatedButton(
@@ -112,19 +174,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: _logout,
                 child: const Text('Logout'),
               ),
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20.0),
               const EducationSection(educationList: [
                 'Bachelor of Science in Computer Science (2020)',
                 'Master of Science in Artificial Intelligence (expected 2024)',
               ]),
               const SeparatorLine(),
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20.0),
               const CertificateSection(certificateList: [
                 'Machine Learning Specialization (Coursera)',
                 'Flutter Development Bootcamp (Udacity)',
               ]),
               const SeparatorLine(),
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20.0),
               const ExperienceSection(experienceList: [
                 'Software Engineer Intern (Company A, 2023)',
                 'Web Developer (Company B, 2022)',

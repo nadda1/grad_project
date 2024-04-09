@@ -357,7 +357,7 @@ bool _isConfirmPasswordVisible = false;
     );
 
     // Check the response status
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       // Registration successful, navigate to home.dart
        showDialog(
         context: context,
