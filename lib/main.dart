@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 import 'Authentication.dart';
 import 'home.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Welcome Page',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: const Color(0xFFF1F5FC),
-      ),
-      home: WelcomePage(),
+      title: 'Your App Title',
+      initialRoute: '/',
+      routes: {
+        '/': (context) => WelcomePage(),
+        '/home': (context) => MyHomePage(title: 'Home Page'),
+      },
     );
   }
 }
+
 Color buttonColor = Color(0xFF1B3D55);
 class WelcomePage extends StatelessWidget {
   @override

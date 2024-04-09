@@ -284,19 +284,28 @@ bool _isConfirmPasswordVisible = false;
             ),
             
             SizedBox(height: 15),
-            SizedBox(
+           SizedBox(
   width: 300.0,
   height: 50.0,
   child: TextField(
     controller: _passwordController,
-    obscureText: !_isPasswordVisible, // Use the state variable here
+    obscureText: !_isPasswordVisible, // Updated based on state variable
     decoration: InputDecoration(
-      // Your InputDecoration
+      labelText: 'Password',
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20.0),
+      ),
+      prefixIcon: Icon(Icons.lock),
       suffixIcon: IconButton(
         icon: Icon(
+          // Change the icon based on the state
           _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
         ),
         onPressed: () {
+          // Update the state to toggle password visibility
           setState(() {
             _isPasswordVisible = !_isPasswordVisible;
           });
@@ -313,6 +322,13 @@ bool _isConfirmPasswordVisible = false;
     controller: _passwordConfirmationController,
     obscureText: !_isConfirmPasswordVisible, // Use the state variable here
     decoration: InputDecoration(
+      fillColor: Colors.white,
+      filled: true,
+      labelText: 'Password confirmation',
+      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20.0),
+      ),
       // Your InputDecoration
       suffixIcon: IconButton(
         icon: Icon(
@@ -357,7 +373,7 @@ bool _isConfirmPasswordVisible = false;
     );
 
     // Check the response status
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       // Registration successful, navigate to home.dart
        showDialog(
         context: context,
