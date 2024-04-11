@@ -4,6 +4,10 @@ import 'dart:convert';
 import 'home.dart';
 import 'profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+Future<void> persistRoute(String routeName) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('last_route', routeName);
+}
 
 
 class LoginForm extends StatefulWidget {
@@ -126,8 +130,10 @@ class _LoginFormState extends State<LoginForm> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', jsonData['data']['access_token']);
       await prefs.setString('user', json.encode(jsonData['data']['user']));
+      await persistRoute('/home');
 Navigator.pushAndRemoveUntil(
   context,
+  
   MaterialPageRoute(builder: (context) => MyHomePage(title: '')),
   (Route<dynamic> route) => false, // Remove all routes below
 );

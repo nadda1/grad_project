@@ -3,16 +3,29 @@ import 'Authentication.dart';
 import 'home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Required for async main
+  final prefs = await SharedPreferences.getInstance();
+  final lastRoute = prefs.getString('last_route') ?? '/';
+
+  runApp(MyApp(initialRoute: lastRoute));
 }
 
 class MyApp extends StatelessWidget {
+  final String initialRoute;
+
+  MyApp({required this.initialRoute});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Your App Title',
-      home: WelcomePage(), // Change this to MyHomePage()
+      initialRoute: initialRoute, // Use the initialRoute parameter here
+      routes: {
+        '/': (context) => WelcomePage(),
+        '/home': (context) => MyHomePage(title: 'Home Page'),
+        // Define other routes as needed
+      },
     );
   }
 }
