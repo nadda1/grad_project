@@ -4,6 +4,9 @@ import 'dart:convert';
 import 'home.dart';
 import 'profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'navigation_service.dart';
+
+final NavigationService navigationService = NavigationService();
 Future<void> persistRoute(String routeName) async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString('last_route', routeName);
@@ -131,6 +134,7 @@ class _LoginFormState extends State<LoginForm> {
       await prefs.setString('token', jsonData['data']['access_token']);
       await prefs.setString('user', json.encode(jsonData['data']['user']));
       await persistRoute('/home');
+      navigationService.navigateTo('/home');
 Navigator.pushAndRemoveUntil(
   context,
   
