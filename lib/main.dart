@@ -12,11 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Your App Title',
-      initialRoute: '/',
-      routes: {
-        '/': (context) => WelcomePage(),
-        '/home': (context) => MyHomePage(title: 'Home Page'),
-      },
+      home: WelcomePage(), // Change this to MyHomePage()
     );
   }
 }

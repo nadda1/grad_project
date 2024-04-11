@@ -102,45 +102,43 @@ class _LoginFormState extends State<LoginForm> {
 ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () async {
-                String email = _emailController.text;
-                String password = _passwordController.text;
+  onPressed: () async {
+    String email = _emailController.text;
+    String password = _passwordController.text;
 
-                final String apiUrl = 'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/login';
+    final String apiUrl = 'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/login';
 
-                final http.Response response = await http.post(
-                  Uri.parse(apiUrl),
-                  headers: <String, String>{
-                    'Content-Type': 'application/json; charset=UTF-8',
-                  },
-                  body: jsonEncode(<String, String>{
-                    'email': email,
-                    'password': password,
-                  }),
-                );
+    final http.Response response = await http.post(
+      Uri.parse(apiUrl),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'email': email,
+        'password': password,
+      }),
+    );
 
-               if (response.statusCode == 200) {
-  final jsonData = json.decode(response.body);
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
 
-  // Save token and user data to shared preferences
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setString('token', jsonData['data']['access_token']);
-  await prefs.setString('user', json.encode(jsonData['data']['user']));
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => MyHomePage(title: ''),
-    ),
-  );
-}else {
-      // Registration failed, display an error message
+      // Save token and user data to shared preferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', jsonData['data']['access_token']);
+      await prefs.setString('user', json.encode(jsonData['data']['user']));
+Navigator.pushAndRemoveUntil(
+  context,
+  MaterialPageRoute(builder: (context) => MyHomePage(title: '')),
+  (Route<dynamic> route) => false, // Remove all routes below
+);
+    } else {
+      // Login failed, display an error message
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('login Failed'),
-            content: Text('An error occurred during registration. Please try again.'),
+            title: Text('Login Failed'),
+            content: Text('An error occurred during login. Please try again.'),
             actions: <Widget>[
               TextButton(
                 onPressed: () {
@@ -153,21 +151,21 @@ class _LoginFormState extends State<LoginForm> {
         },
       );
     }
-              },
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40.0),
-                  ),
-                ),
-                minimumSize: MaterialStateProperty.all<Size>(
-                  Size(150, 40),
-                ),
-              ),
-              child: Text('Login'),
-            ),
-          ],
+  },
+  style: ButtonStyle(
+    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
+    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+      RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(40.0),
+      ),
+    ),
+    minimumSize: MaterialStateProperty.all<Size>(
+      Size(150, 40),
+    ),
+  ),
+  child: Text('Login'),
+),
+       ],
         ),
       ),
     );
