@@ -5,7 +5,6 @@ import 'data.dart';
 import 'post.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 Container Jobs(String imagePath, String title) {
   return Container(
     width: 150.0,
@@ -14,7 +13,6 @@ Container Jobs(String imagePath, String title) {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-
             Image.asset(
               "assets/images/" + imagePath,
               fit: BoxFit.fill,
@@ -40,10 +38,10 @@ class MyHomePage extends StatefulWidget {
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
-  
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late TextEditingController _searchController;
 
   @override
@@ -55,19 +53,14 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey, // Assign the key to the Scaffold
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              // IconButton(
-              //   icon: Icon(Icons.arrow_back, color: Color(0xFF343ABA)),
-              //   onPressed: () {
-              //     Navigator.pop(context);
-              //   },
-              // ),
               Container(
-                padding: EdgeInsets.only(left: 10.0, top: 19.0, bottom: 19.0), // Adjust padding
+                padding: EdgeInsets.only(left: 10.0, top: 19.0, bottom: 19.0),
                 child: Image.asset(
                   'assets/images/logo.png',
                   fit: BoxFit.cover,
@@ -77,8 +70,10 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               Spacer(),
               IconButton(
-                icon: Icon(Icons.more_horiz, color: Color(0xFF343ABA), size: 36.0), // Increase icon size
-                onPressed: () {},
+                icon: Icon(Icons.more_horiz, color: Color(0xFF343ABA), size: 36.0),
+                onPressed: () {
+                  _scaffoldKey.currentState!.openDrawer();
+                },
               ),
             ],
           ),
@@ -182,6 +177,40 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Color(0xFF5C8EF2),
+              ),
+              child: Text('settings'),
+            ),
+            ListTile(
+              title: Text('Wishlist'),
+              onTap: () {
+                Navigator.pop(context);
+                _showWishlist();
+              },
+            ),
+            ListTile(
+              title: Text('log out '),
+              onTap: () {
+                Navigator.pop(context);
+                
+              },
+            ),
+            ListTile(
+              title: Text('change password'),
+              onTap: () {
+                Navigator.pop(context);
+                // Add functionality for changing password if needed
+              },
+            ),
+          ],
+        ),
+      ),
       bottomNavigationBar: BottomAppBar(
         color: Color(0xFFF1F5FC),
         child: Row(
@@ -198,14 +227,14 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
             IconButton(
-    icon: Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ProfileScreen()),
-      );
-    },
-  ),
+              icon: Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfileScreen()),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -219,6 +248,8 @@ class _MyHomePageState extends State<MyHomePage> {
       return name.contains(query);
     }).toList();
   }
+
+  void _showWishlist() {}
 
   @override
   void dispose() {

@@ -173,7 +173,9 @@ Navigator.pushAndRemoveUntil(
       Size(150, 40),
     ),
   ),
-  child: Text('Login'),
+  child: Text('Login',style: TextStyle(
+    color: Colors.white,
+  ),),
 ),
        ],
         ),
@@ -232,7 +234,7 @@ bool _isConfirmPasswordVisible = false;
               ),
             ),
             Text(
-              'Please Log In ',
+              'Please sign up ',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
@@ -432,7 +434,10 @@ bool _isConfirmPasswordVisible = false;
       Size(150, 40),
     ),
   ),
-  child: Text('Sign Up'),
+  child: Text('Sign Up',
+    style: TextStyle(
+    color: Colors.white,
+  ),),
 ),
           ],
         ),
