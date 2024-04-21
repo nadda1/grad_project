@@ -37,47 +37,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Future<void> _logout() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("You're not logged in."),
-      ));
-      return;
-    }
-
-    try {
-      final response = await http.post(
-        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/logout'),
-        headers: <String, String>{
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        await prefs.remove('token');
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Logged out successfully."),
-          
-        ));
-        Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) =>  WelcomePage()),
-        (Route<dynamic> route) => false,
-      );
-        // Add navigation or state update if needed
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Failed to log out."),
-        ));
-      }
-    } catch (e) {
-      print('Error logging out: $e');
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("An error occurred while logging out."),
-      ));
-    }
+Future<void> _logout() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+  if (token == null) {
+    // Directly replace with the WelcomePage route to ensure no back navigation
+    Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+    return;
   }
+
+  try {
+    final response = await http.post(
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/logout'),
+      headers: <String, String>{
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      await prefs.remove('token');
+      // Use pushNamedAndRemoveUntil to manage the route stack and URL state
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Failed to log out."),
+      ));
+    }
+  } catch (e) {
+    print('Error logging out: $e');
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text("An error occurred while logging out."),
+    ));
+  }
+}
+
  Future<void> _showEditProfileDialog() async {
     return showDialog<void>(
       context: context,

@@ -126,22 +126,22 @@ class _LoginFormState extends State<LoginForm> {
       }),
     );
 
-    if (response.statusCode == 200) {
-      final jsonData = json.decode(response.body);
+if (response.statusCode == 200) {
+  final jsonData = json.decode(response.body);
 
-      // Save token and user data to shared preferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', jsonData['data']['access_token']);
-      await prefs.setString('user', json.encode(jsonData['data']['user']));
-      await persistRoute('/home');
-      navigationService.navigateTo('/home');
-Navigator.pushAndRemoveUntil(
-  context,
-  
-  MaterialPageRoute(builder: (context) => MyHomePage(title: '')),
-  (Route<dynamic> route) => false, // Remove all routes below
-);
-    } else {
+  // Save token, user data, and role to shared preferences
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setString('token', jsonData['data']['access_token']);
+  await prefs.setString('user', json.encode(jsonData['data']['user']));
+  await prefs.setString('role', jsonData['data']['user']['role']);  // Assume 'role' is a field in the user object
+  await persistRoute('/home');
+  navigationService.navigateTo('/home');
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(builder: (context) => MyHomePage(title: '')),
+    (Route<dynamic> route) => false, // Remove all routes below
+  );
+} else {
       // Login failed, display an error message
       showDialog(
         context: context,
@@ -183,7 +183,6 @@ Navigator.pushAndRemoveUntil(
 
   
 }
-
 class SignUpForm extends StatefulWidget {
   @override
   _SignUpFormState createState() => _SignUpFormState();
@@ -191,23 +190,49 @@ class SignUpForm extends StatefulWidget {
 
 class _SignUpFormState extends State<SignUpForm> {
   bool _isPasswordVisible = false;
-bool _isConfirmPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
   TextEditingController _usernameController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _passwordConfirmationController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
   TextEditingController _nameController = TextEditingController();
-  
+  TextEditingController _specializationIdController = TextEditingController();
+  TextEditingController _jobTitleController = TextEditingController();
+  TextEditingController _dobController = TextEditingController();
+
+  String? _selectedRole;
+  List<String> _roles = ['freelancer', 'client'];
+
+  String? _selectedGender;
+  List<String> _genders = ['male', 'female'];
+
+  DateTime? _selectedDate;
 
   @override
   void dispose() {
-    // Clean up the controller when the widget is disposed.
     _usernameController.dispose();
     _passwordController.dispose();
     _passwordConfirmationController.dispose();
     _emailController.dispose();
     _nameController.dispose();
+    _specializationIdController.dispose();
+    _jobTitleController.dispose();
+    _dobController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedDate)
+      setState(() {
+        _selectedDate = picked;
+        _dobController.text = "${picked.toLocal()}".split(' ')[0];  // Format the date as YYYY-MM-DD
+      });
   }
 
   @override
@@ -232,7 +257,7 @@ bool _isConfirmPasswordVisible = false;
               ),
             ),
             Text(
-              'Please Log In ',
+              'Please Log In',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
@@ -273,7 +298,7 @@ bool _isConfirmPasswordVisible = false;
                 ),
               ),
             ),
-             SizedBox(height: 15),
+            SizedBox(height: 15),
             SizedBox(
               width: 300.0,
               height: 50.0,
@@ -290,124 +315,220 @@ bool _isConfirmPasswordVisible = false;
                 ),
               ),
             ),
-            
-            SizedBox(height: 15),
-           SizedBox(
-  width: 300.0,
-  height: 50.0,
-  child: TextField(
-    controller: _passwordController,
-    obscureText: !_isPasswordVisible, // Updated based on state variable
-    decoration: InputDecoration(
-      labelText: 'Password',
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20.0),
-      ),
-      prefixIcon: Icon(Icons.lock),
-      suffixIcon: IconButton(
-        icon: Icon(
-          // Change the icon based on the state
-          _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-        ),
-        onPressed: () {
-          // Update the state to toggle password visibility
-          setState(() {
-            _isPasswordVisible = !_isPasswordVisible;
-          });
-        },
-      ),
-    ),
-  ),
-),
+            SizedBox(height: 20),
+            SizedBox(
+              width: 300.0,
+              height: 50.0,
+              child: DropdownButtonFormField(
+                value: _selectedRole,
+                decoration: InputDecoration(
+                  labelText: 'Role',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                ),
+                items: _roles.map((String role) {
+                  return DropdownMenuItem(
+                    value: role,
+                    child: Text(role),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedRole = newValue!;
+                  });
+                },
+              ),
+            ),
+            SizedBox(height: 20),
+            SizedBox(
+              width: 300.0,
+              height: 50.0,
+              child: TextField(
+                controller: _specializationIdController,
+                decoration: InputDecoration(
+                  labelText: 'Specialization ID',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  prefixIcon: Icon(Icons.account_tree_outlined),
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            SizedBox(
+              width: 300.0,
+              height: 50.0,
+              child: TextField(
+                controller: _jobTitleController,
+                decoration: InputDecoration(
+                  labelText: 'Job Title',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  prefixIcon: Icon(Icons.work),
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            SizedBox(
+              width: 300.0,
+              height: 50.0,
+              child: DropdownButtonFormField(
+                value: _selectedGender,
+                decoration: InputDecoration(
+                  labelText: 'Gender',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                ),
+                items: _genders.map((String gender) {
+                  return DropdownMenuItem(
+                    value: gender,
+                    child: Text(gender),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedGender = newValue!;
+                  });
+                },
+              ),
+            ),
+            SizedBox(height: 20),
+            OutlinedButton(
+              onPressed: () => _selectDate(context),
+              child: Text(_selectedDate == null
+                  ? 'Select your date of birth'
+                  : "${_selectedDate!.toLocal()}".split(' ')[0]),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.black, backgroundColor: Colors.white,
+                side: BorderSide(color: Colors.grey, width: 1.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+              ),
+            ),
             SizedBox(height: 15),
             SizedBox(
-  width: 300.0,
-  height: 50.0,
-  child: TextField(
-    controller: _passwordConfirmationController,
-    obscureText: !_isConfirmPasswordVisible, // Use the state variable here
-    decoration: InputDecoration(
-      fillColor: Colors.white,
-      filled: true,
-      labelText: 'Password confirmation',
-      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20.0),
-      ),
-      // Your InputDecoration
-      suffixIcon: IconButton(
-        icon: Icon(
-          _isConfirmPasswordVisible ? Icons.visibility_off : Icons.visibility,
-        ),
-        onPressed: () {
-          setState(() {
-            _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-          });
-        },
-      ),
-    ),
-  ),
-),
-           
-           
+              width: 300.0,
+              height: 50.0,
+              child: TextField(
+                controller: _passwordController,
+                obscureText: !_isPasswordVisible, // Updated based on state variable
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  prefixIcon: Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      // Change the icon based on the state
+                      _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      // Update the state to toggle password visibility
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 15),
+            SizedBox(
+              width: 300.0,
+              height: 50.0,
+              child: TextField(
+                controller: _passwordConfirmationController,
+                obscureText: !_isConfirmPasswordVisible, // Use the state variable here
+                decoration: InputDecoration(
+                  fillColor: Colors.white,
+                  filled: true,
+                  labelText: 'Password confirmation',
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isConfirmPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ),
             SizedBox(height: 20),
             ElevatedButton(
-  onPressed: () async {
-    String username = _usernameController.text;
-    String password = _passwordController.text;
-    String passwordConfirmation = _passwordConfirmationController.text;
-    String email = _emailController.text;
-    String name = _nameController.text;
+              onPressed: () async {
+                Map<String, String> userData = {
+                  'name': _nameController.text,
+                  'username': _usernameController.text,
+                  'email': _emailController.text,
+                  'password': _passwordController.text,
+                  'password_confirmation': _passwordConfirmationController.text,
+                  'specialization_id': _specializationIdController.text,
+                  'role': _selectedRole ?? '',
+                  'job_title': _jobTitleController.text,
+                  'gender': _selectedGender ?? '',
+                  'dob': _dobController.text,
+                };
 
-    Map<String, String> userData = {
-      'name': name,
-      'username': username,
-      'email': email,
-      'password': password,
-      'password_confirmation': passwordConfirmation,
-    };
+                String requestBody = json.encode(userData);
 
-    String requestBody = json.encode(userData);
+                final response = await http.post(
+                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/register'),
+                  headers: <String, String>{
+                    'Content-Type': 'application/json; charset=UTF-8',
+                  },
+                  body: requestBody,
+                );
 
-    final response = await http.post(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/register'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: requestBody,
-    );
-
-    // Check the response status
-    if (response.statusCode == 201) {
-      // Registration successful, navigate to home.dart
-       showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Registration success'),
-            content: Text('congratulations you have an account'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-    } else {
-      // Registration failed, display an error message
+                if (response.statusCode == 201) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Registration success'),
+                        content: Text('Congratulations, you now have an account.'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('OK'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                } else {
+      var responseData = json.decode(response.body);
+      String errorMessage = responseData['message'] ?? 'Unknown error occurred';  // Adjust based on your API
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text('Registration Failed'),
-            content: Text('An error occurred during registration. Please try again.'),
+            content: Text(errorMessage),
             actions: <Widget>[
               TextButton(
                 onPressed: () {
@@ -420,20 +541,20 @@ bool _isConfirmPasswordVisible = false;
         },
       );
     }
-  },
-  style: ButtonStyle(
-    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
-    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-      RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(40.0),
-      ),
-    ),
-    minimumSize: MaterialStateProperty.all<Size>(
-      Size(150, 40),
-    ),
-  ),
-  child: Text('Sign Up'),
-),
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(40.0),
+                  ),
+                ),
+                minimumSize: MaterialStateProperty.all<Size>(
+                  Size(150, 40),
+                ),
+              ),
+              child: Text('Sign Up'),
+            ),
           ],
         ),
       ),

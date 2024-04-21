@@ -6,9 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Required for async main
   final prefs = await SharedPreferences.getInstance();
-  final lastRoute = prefs.getString('last_route') ?? '/';
+  final token = prefs.getString('token');
+  final String initialRoute = token != null ? '/home' : '/';
 
-  runApp(MyApp(initialRoute: lastRoute));
+  runApp(MyApp(initialRoute: initialRoute));
 }
 
 class MyApp extends StatelessWidget {
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Your App Title',
-      initialRoute: initialRoute, // Use the initialRoute parameter here
+      initialRoute: initialRoute, // Dynamic initial route based on token
       routes: {
         '/': (context) => WelcomePage(),
         '/home': (context) => MyHomePage(title: 'Home Page'),
@@ -74,7 +75,9 @@ class WelcomePage extends StatelessWidget {
                 ),
               ),
 
-              child: Text('Login'),
+              child: Text('Login',style: TextStyle(
+                color: Colors.white,
+              ),),
             ),
             SizedBox(height: 10),
             ElevatedButton(
@@ -102,6 +105,31 @@ class WelcomePage extends StatelessWidget {
                   color: Color(0xFF0064B1),),
               ),
             ),
+            // ElevatedButton(
+            //   onPressed: () {
+            //     // Navigate to sign up page
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (context) =>  MyHomePage(title: 'home',)),
+            //     );
+            //   },
+            //   style: ButtonStyle(
+            //     backgroundColor: MaterialStateProperty.all<Color>(Color(
+            //         0xFFFFFFFF)),
+            //     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+            //       RoundedRectangleBorder(
+            //         borderRadius: BorderRadius.circular(40.0), // Adjust radius as needed
+            //       ),
+            //     ),
+            //     minimumSize: MaterialStateProperty.all<Size>(
+            //       Size(200, 40), // Adjust width and height as needed
+            //     ),
+            //   ),
+            //   child: Text('home',
+            //     style: TextStyle(
+            //       color: Color(0xFF0064B1),),
+            //   ),
+            // ),
           ],
         ),
       ),

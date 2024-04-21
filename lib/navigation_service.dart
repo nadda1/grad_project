@@ -1,10 +1,18 @@
+import 'package:shared_preferences/shared_preferences.dart';
+
 class NavigationService {
-  final List<String> _pastRoutes = ['/']; // Assuming '/' is your home route.
+  final List<String> _pastRoutes = ['/']; // Assuming '/' is your home route
   final List<String> _forwardRoutes = [];
 
-  void navigateTo(String route) {
+  Future<void> navigateTo(String route) async {
     _pastRoutes.add(route);
     _forwardRoutes.add(route); // Clear forward history when navigating to a new route.
+    await _updateLastRoute(route);
+  }
+
+  Future<void> _updateLastRoute(String route) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('last_route', route);
   }
 
   bool canGoBack() => _pastRoutes.length > 1;
