@@ -43,21 +43,22 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late TextEditingController _searchController;
-  String? userRole;  // Variable to store user role
+  String? userRole;
 
   @override
-  void initState() {
+   void initState() {
     super.initState();
     _searchController = TextEditingController();
     _loadUserRole();
   }
-
-  void _loadUserRole() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
       userRole = prefs.getString('role');
     });
   }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -219,7 +220,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-            bottomNavigationBar: BottomAppBar(
+      bottomNavigationBar: BottomAppBar(
         color: Color(0xFFF1F5FC),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -228,7 +229,7 @@ class _MyHomePageState extends State<MyHomePage> {
               icon: Icon(Icons.home, color: Color(0xFF343ABA)),
               onPressed: () {},
             ),
-            if (userRole == 'client')  // Conditional rendering based on the user role
+            if (userRole == 'client')  // Conditional rendering based on role
               IconButton(
                 icon: Icon(Icons.add, color: Color(0xFF343ABA)),
                 onPressed: () {
@@ -238,10 +239,7 @@ class _MyHomePageState extends State<MyHomePage> {
             IconButton(
               icon: Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfileScreen()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
               },
             ),
           ],
