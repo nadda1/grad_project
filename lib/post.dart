@@ -1,6 +1,118 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http_parser/http_parser.dart';
 
-class Post extends StatelessWidget {
+class Post extends StatefulWidget {
+  @override
+  _PostState createState() => _PostState();
+}
+
+class _PostState extends State<Post> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _skillsController = TextEditingController();
+  final TextEditingController _budgetController = TextEditingController();
+  final TextEditingController _durationController = TextEditingController();
+  List<PlatformFile>? _pickedFiles;  // To store picked files
+
+  Future<void> pickFiles() async {
+  FilePickerResult? result = await FilePicker.platform.pickFiles(
+    allowMultiple: true, // Allows multiple files to be picked
+    type: FileType.custom, // Allows picking of all file types
+    allowedExtensions: ['jpg', 'pdf', 'png', 'doc', 'docx'], // Specify allowed extensions
+  );
+
+  if (result != null) {
+    setState(() {
+      _pickedFiles = result.files; 
+    });
+  } else {
+    // User canceled the picker
+    print('No files selected');
+  }
+}
+
+Future<void> postJob() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+
+  if (token == null) {
+    print('No token found');
+    return;
+  }
+
+  var uri = Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/jobs');
+  var request = http.MultipartRequest('POST', uri)
+    ..headers.addAll({'Authorization': 'Bearer $token'})
+    ..fields['title'] = _titleController.text
+    ..fields['description'] = _descriptionController.text
+    ..fields['required_skills'] = jsonEncode(_skillsController.text.split(',').map((skill) => skill.trim()).toList())
+    ..fields['expected_budget'] = _budgetController.text
+    ..fields['expected_duration'] = _durationController.text;
+
+  if (_pickedFiles != null) {
+    for (var file in _pickedFiles!) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'attachments[]',
+        file.path!,
+        contentType: MediaType('application', 'octet-stream'), // Ensure this is correct or use file.extension
+      ));
+    }
+  }  var response = await request.send();
+  var responseBody = await response.stream.bytesToString();
+
+  if (response.statusCode == 200) {
+    showSuccessDialog('Job posted successfully.');
+  } else {
+    try {
+      Map<String, dynamic> decodedResponseBody = jsonDecode(responseBody);
+      String errorMessage = decodedResponseBody['message']?.toString() ?? 'Unknown error occurred.';
+      showErrorDialog(errorMessage);
+    } catch (e) {
+      showErrorDialog('Failed to parse error message. Please try again.');
+    }
+  }
+}
+
+void showSuccessDialog(String message) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Success'),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('OK'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void showErrorDialog(String message) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context). pop(),
+            child: Text('OK'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -8,159 +120,36 @@ class Post extends StatelessWidget {
         title: Text('Create Post'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0), // Adjusted padding
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Expanded(
-              child: Container(
-                color: Colors.white,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start, // Align labels to the left
-                    children: [
-                      SizedBox(height: 10),
-                      Text(
-                        'Job Description',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      SizedBox(height: 30),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start, // Align labels vertically
-                        children: [
-                          Text(
-                            'Description:',
-                            style: TextStyle(fontSize: 14.0,color: Color(0xFF343ABA),),
-                          ),],
-                      ),
-
-                      SizedBox(width: 50),
-                          Row(
-                            children :[
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Color(0xFFD0DCF2),
-                                borderRadius: BorderRadius.circular(10.0),
-                              ),
-                              child: TextField(
-                                maxLines: 5, // Adjust this as needed
-                                decoration: InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.all(10),
-                                  hintText: 'Enter job description...',
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 10),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Job Title:',
-                            style: TextStyle(fontSize: 14.0,color: Color(0xFF343ABA),),
-
-                          ),
-                          SizedBox(width: 20),
-                          Expanded(
-                            child: TextField(
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Color(0xFFD0DCF2),
-                                hintText: 'Enter job title...',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height:20),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Time:',
-                            style: TextStyle(fontSize: 14.0,color: Color(0xFF343ABA),),
-
-                          ),
-                          SizedBox(width: 20),
-                          Expanded(
-                            child: TextField(
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Color(0xFFD0DCF2),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 20),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Salary per Hour:',
-                            style: TextStyle(fontSize: 14.0,color: Color(0xFF343ABA),),
-
-                          ),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: TextField(
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Color(0xFFD0DCF2),
-                                hintText: 'Enter wage (optional)',
-                                border: OutlineInputBorder(
-
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Icon(Icons.location_on),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Location',
-                              style: TextStyle(
-                                fontSize: 16.0,
-                                color: Color(0xFF343ABA),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            TextField(
+              controller: _titleController,
+              decoration: InputDecoration(labelText: 'Job Title', hintText: 'Enter job title'),
+            ),
+            TextField(
+              controller: _descriptionController,
+              decoration: InputDecoration(labelText: 'Description', hintText: 'Enter job description'),
+            ),
+            TextField(
+              controller: _skillsController,
+              decoration: InputDecoration(labelText: 'Required Skills', hintText: 'Enter required skills, separated by commas'),
+            ),
+            TextField(
+              controller: _budgetController,
+              decoration: InputDecoration(labelText: 'Expected Budget', hintText: 'Enter expected budget'),
+            ),
+            TextField(
+              controller: _durationController,
+              decoration: InputDecoration(labelText: 'Expected Duration (days)', hintText: 'Enter expected duration in days'),
+            ),
+            ElevatedButton(
+              onPressed: pickFiles,
+              child: Text('Pick Files'),
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                // Implement post functionality
-              },
+              onPressed: postJob,
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF5C8EF2)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
@@ -169,7 +158,7 @@ class Post extends StatelessWidget {
                   ),
                 ),
               ),
-              child: Text('Post'),
+              child: Text('Post Job'),
             ),
           ],
         ),
