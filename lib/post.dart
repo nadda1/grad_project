@@ -45,20 +45,21 @@ Future<void> postJob() async {
   }
 
   var uri = Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/jobs');
-  var request = http.MultipartRequest('POST', uri)
-    ..headers.addAll({'Authorization': 'Bearer $token'})
-    ..fields['title'] = _titleController.text
-    ..fields['description'] = _descriptionController.text
-    ..fields['required_skills'] = jsonEncode(_skillsController.text.split(',').map((skill) => skill.trim()).toList())
-    ..fields['expected_budget'] = _budgetController.text
-    ..fields['expected_duration'] = _durationController.text;
+var request = http.MultipartRequest('POST', uri)
+  ..headers.addAll({'Authorization': 'Bearer $token'})
+  ..fields['title'] = _titleController.text
+  ..fields['description'] = _descriptionController.text
+  ..fields['required_skills[]'] = jsonEncode(_skillsController.text.split(',').map((skill) => skill.trim()).toList())
+  ..fields['expected_budget'] = _budgetController.text
+  ..fields['expected_duration'] = _durationController.text;
+
 
   if (_pickedFiles != null) {
     for (var file in _pickedFiles!) {
       request.files.add(await http.MultipartFile.fromPath(
         'attachments[]',
         file.path!,
-        contentType: MediaType('application', 'octet-stream'), // Ensure this is correct or use file.extension
+        contentType: MediaType('application', 'octet-stream'), 
       ));
     }
   }  var response = await request.send();
