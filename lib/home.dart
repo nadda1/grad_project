@@ -8,27 +8,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'specificjob.dart';
 import 'profile.dart';
 
-
-Container Jobs(String imagePath, String title) {
+Container Jobs(String imagePath, String title, String id, Function(String) onTap) {
   return Container(
     width: 150.0,
-    child: Card(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Image.asset(
-              "assets/images/" + imagePath,
-              fit: BoxFit.fill,
-              height: 50.0,
-              width: 40,
-            ),
-            SizedBox(height: 10.0),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-            ),
-          ],
+    child: GestureDetector(
+      onTap: () => onTap(id),
+      child: Card(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Image.asset(
+                "assets/images/" + imagePath,
+                fit: BoxFit.fill,
+                height: 50.0,
+                width: 40,
+              ),
+              SizedBox(height: 10.0),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -76,26 +78,31 @@ class _MyHomePageState extends State<MyHomePage> {
     return '${dateTime.year}-${dateTime.month}-${dateTime.day}';
   }
 
-  Future<void> fetchJobs() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
+Future<void> fetchJobs({String specializationId = ''}) async {
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+  String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization';
+  if (specializationId.isNotEmpty) {
+    url += '/$specializationId';
+  }
 
-    if (token != null) {
-      final response = await http.get(
-        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+  if (token != null) {
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Authorization': 'Bearer $token'},
+    );
 
-      if (response.statusCode == 200) {
-        setState(() {
-          jobList = json.decode(response.body)['data'];
-           _filterJobs();
-        });
-      } else {
-        print('Failed to fetch jobs');
-      }
+    if (response.statusCode == 200) {
+      setState(() {
+        jobList = json.decode(response.body)['data'];
+        _filterJobs();
+      });
+    } else {
+      print('Failed to fetch jobs');
     }
   }
+}
+
 
   Future<void> _loadUserRole() async {
     final prefs = await SharedPreferences.getInstance();
@@ -264,12 +271,12 @@ class _MyHomePageState extends State<MyHomePage> {
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: [
-                  Jobs("coffee.png", "Barista"),
-                  Jobs("delivery-man.png", "Delivery"),
-                  Jobs("baby.png", "Babysitting"),
-                  Jobs("cooking.png", "Cook"),
-                ],
+               children: [
+                Jobs("coffee.png", "all jobs", "", (id) => fetchJobs(specializationId: id)),
+                Jobs("coffee.png", "web", "1", (id) => fetchJobs(specializationId: id)),
+                Jobs("delivery-man.png", "mobile", "2", (id) => fetchJobs(specializationId: id)),
+                Jobs("baby.png", "graphic", "3", (id) => fetchJobs(specializationId: id)),
+              ],
               ),
             ),
           ),
@@ -348,7 +355,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
       trailing: Text(
-        '\$${job['expected_budget']}',
+        ' budget is:${job['expected_budget']} \$',
         style: TextStyle(
           fontWeight: FontWeight.bold,
           color: Colors.black,
