@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:grad_project/profile.dart';
-import 'JobsList.dart';
-import 'data.dart';
-import 'post.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'specificjob.dart';
+import 'profile.dart';
+
 
 Container Jobs(String imagePath, String title) {
   return Container(
@@ -42,15 +46,57 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isHovering = false;
   late TextEditingController _searchController;
+  late TextEditingController _locationController;
   String? userRole;
+  List<dynamic> jobList = [];
+  List<dynamic> filteredJobs = [];
 
   @override
-   void initState() {
+  void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _locationController = TextEditingController();
+    _searchController.addListener(_filterJobs);
     _loadUserRole();
+    fetchJobs();
   }
+  void _filterJobs() {
+    String query = _searchController.text.toLowerCase();
+    setState(() {
+      filteredJobs = jobList.where((job) {
+        return job['title'].toLowerCase().contains(query);
+      }).toList();
+    });
+  }
+
+  String formatDate(String dateString) {
+    DateTime dateTime = DateTime.parse(dateString);
+    return '${dateTime.year}-${dateTime.month}-${dateTime.day}';
+  }
+
+  Future<void> fetchJobs() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null) {
+      final response = await http.get(
+        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          jobList = json.decode(response.body)['data'];
+           _filterJobs();
+        });
+      } else {
+        print('Failed to fetch jobs');
+      }
+    }
+  }
+
   Future<void> _loadUserRole() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -58,11 +104,124 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _showLocationPicker(BuildContext context) async {
+    LatLng selectedLocation = LatLng(0, 0);  // Default location
+
+    Position currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Select Location"),
+          content: Container(
+            height: 300,
+            width: 300,
+            child: FlutterMap(
+              children: [
+                TileLayer(
+                  urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                  subdomains: ['a', 'b', 'c'],
+                ),
+              ],
+              options: MapOptions(
+                center: LatLng(currentPosition.latitude, currentPosition.longitude),
+                zoom: 13.0,
+                onTap: (_, position) {
+                  selectedLocation = position;
+                  _locationController.text = "${selectedLocation.latitude}, ${selectedLocation.longitude}";
+                },
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Container locationInputField() {
+    return Container(
+      margin: EdgeInsets.all(17),
+      padding: EdgeInsets.fromLTRB(40, 15, 40, 15),
+      decoration: BoxDecoration(
+        color: Color(0xFF5C8EF2),
+        borderRadius: BorderRadius.circular(15.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 5,
+            blurRadius: 7,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {});
+              },
+              decoration: InputDecoration(
+                hintText: 'Search',
+                prefixIcon: Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 10), // Spacer between search and location fields
+          Expanded(
+            child: TextField(
+              controller: _locationController,
+              decoration: InputDecoration(
+                hintText: 'nearest jobs for you',
+                prefixIcon: Icon(Icons.place),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.map),
+            onPressed: () {
+              _showLocationPicker(context);
+            },
+            color: Colors.white,
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
-  Widget build(BuildContext context) {
+ Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey, // Assign the key to the Scaffold
+      key: _scaffoldKey,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -90,7 +249,7 @@ class _MyHomePageState extends State<MyHomePage> {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 17),
             child: Text(
-              'Find Your Job ',
+              'Find Your Job',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -98,52 +257,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-          Container(
-            margin: EdgeInsets.all(17),
-            padding: EdgeInsets.fromLTRB(40, 15, 40, 15),
-            decoration: BoxDecoration(
-              color: Color(0xFF5C8EF2),
-              borderRadius: BorderRadius.circular(15.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 5,
-                  blurRadius: 7,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: 40,
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (value) {
-                            setState(() {});
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'Search',
-                            prefixIcon: Icon(Icons.search),
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          locationInputField(),
           SizedBox(height: 15.0),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 17),
@@ -151,10 +265,10 @@ class _MyHomePageState extends State<MyHomePage> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  Jobs("coffee.png", "Baresta"),
+                  Jobs("coffee.png", "Barista"),
                   Jobs("delivery-man.png", "Delivery"),
                   Jobs("baby.png", "Babysitting"),
-                  Jobs("cooking.png", "cook"),
+                  Jobs("cooking.png", "Cook"),
                 ],
               ),
             ),
@@ -176,12 +290,80 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: JobsList(jobData: _filterJobs(JobData)),
-                  ),
-                ),
-              ],
+  child: ListView.builder(
+    itemCount: filteredJobs.length,
+    itemBuilder: (context, index) {
+      var job = filteredJobs[index];  // Use filteredJobs to ensure searching works
+      String formattedDate = job['created_at'] != null ? formatDate(job['created_at']) : 'Not available';
+      return InkWell(
+  onTap: () {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => SpecificJobPage(jobId: job['id'].toString()),
+    ));
+  },
+  child: Container(
+    margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+    padding: EdgeInsets.all(12.0),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10.0),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withOpacity(0.5),
+          spreadRadius: 3,
+          blurRadius: 5,
+          offset: Offset(0, 3),
+        ),
+      ],
+    ),
+    child: ListTile(
+      onTap: () {
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => SpecificJobPage(jobId: job['id'].toString()),
+        ));
+      },
+      title: Text(
+        job['title'],
+        style: TextStyle(
+          fontSize: 16.0,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+        ),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            job['description'],
+            style: TextStyle(
+              color: Colors.black87,
+            ),
+          ),
+          Text(
+            'Created at: $formattedDate',
+            style: TextStyle(
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+      trailing: Text(
+        '\$${job['expected_budget']}',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+        ),
+      ),
+      // Wrap with MouseRegion for hover effect
+      // Remove the child property from here
+
+    ),
+  ),
+);
+    },
+  ),
+),
+  ],
             ),
           ),
         ],
@@ -194,27 +376,24 @@ class _MyHomePageState extends State<MyHomePage> {
               decoration: BoxDecoration(
                 color: Color(0xFF5C8EF2),
               ),
-              child: Text('settings'),
+              child: Text('Settings'),
             ),
             ListTile(
               title: Text('Wishlist'),
               onTap: () {
                 Navigator.pop(context);
-                _showWishlist();
               },
             ),
             ListTile(
-              title: Text('log out '),
+              title: Text('Log out'),
               onTap: () {
                 Navigator.pop(context);
-                
               },
             ),
             ListTile(
-              title: Text('change password'),
+              title: Text('Change password'),
               onTap: () {
                 Navigator.pop(context);
-                // Add functionality for changing password if needed
               },
             ),
           ],
@@ -229,38 +408,28 @@ class _MyHomePageState extends State<MyHomePage> {
               icon: Icon(Icons.home, color: Color(0xFF343ABA)),
               onPressed: () {},
             ),
-            if (userRole == 'client')  // Conditional rendering based on role
+            if (userRole == 'client')
               IconButton(
                 icon: Icon(Icons.add, color: Color(0xFF343ABA)),
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => Post()));
-                },
+                onPressed: () {},
               ),
-            IconButton(
+           IconButton(
               icon: Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
               },
             ),
+
           ],
         ),
       ),
     );
   }
 
-  List<Map<String, String>> _filterJobs(List<Map<String, String>> jobs) {
-    final query = _searchController.text.toLowerCase();
-    return jobs.where((job) {
-      final name = job['name']!.toLowerCase();
-      return name.contains(query);
-    }).toList();
-  }
-
-  void _showWishlist() {}
-
   @override
   void dispose() {
     _searchController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 }
