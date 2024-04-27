@@ -196,9 +196,11 @@ class _SignUpFormState extends State<SignUpForm> {
   TextEditingController _passwordConfirmationController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
   TextEditingController _nameController = TextEditingController();
-  TextEditingController _specializationIdController = TextEditingController();
   TextEditingController _jobTitleController = TextEditingController();
   TextEditingController _dobController = TextEditingController();
+  List<Map<String, dynamic>> _specializations = [];
+  String? _selectedSpecializationId;
+
 
   String? _selectedRole;
   List<String> _roles = ['freelancer', 'client'];
@@ -215,11 +217,38 @@ class _SignUpFormState extends State<SignUpForm> {
     _passwordConfirmationController.dispose();
     _emailController.dispose();
     _nameController.dispose();
-    _specializationIdController.dispose();
     _jobTitleController.dispose();
     _dobController.dispose();
     super.dispose();
   }
+  @override
+void initState() {
+  super.initState();
+  _loadSpecializations();
+}
+
+Future<void> _loadSpecializations() async {
+  try {
+    final specializations = await _fetchSpecializations();
+    setState(() {
+      _specializations = specializations;
+    });
+  } catch (e) {
+    print('Failed to load specializations: $e');
+  }
+}
+
+  Future<List<Map<String, dynamic>>> _fetchSpecializations() async {
+  final apiUrl = 'https://snapwork-133ce78bbd88.herokuapp.com/api/specializations';
+  final response = await http.get(Uri.parse(apiUrl));
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    return List<Map<String, dynamic>>.from(data['data']);
+  } else {
+    throw Exception('Failed to load specializations');
+  }
+}
+
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -342,23 +371,33 @@ class _SignUpFormState extends State<SignUpForm> {
                 },
               ),
             ),
-            SizedBox(height: 20),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _specializationIdController,
-                decoration: InputDecoration(
-                  labelText: 'Specialization ID',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  prefixIcon: Icon(Icons.account_tree_outlined),
+            SizedBox(height: 15),
+              SizedBox(
+            width: 300.0,
+            height: 50.0,
+            child: DropdownButtonFormField<String>(
+              value: _selectedSpecializationId,
+              decoration: InputDecoration(
+                labelText: 'Specialization',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20.0),
                 ),
               ),
+              items: _specializations.map((spec) {
+                return DropdownMenuItem(
+                  value: spec['id'].toString(),
+                  child: Text(spec['name']),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedSpecializationId = newValue!;
+                });
+              },
             ),
+          ),
             SizedBox(height: 20),
             SizedBox(
               width: 300.0,
@@ -423,7 +462,7 @@ class _SignUpFormState extends State<SignUpForm> {
               height: 50.0,
               child: TextField(
                 controller: _passwordController,
-                obscureText: !_isPasswordVisible, // Updated based on state variable
+                obscureText: !_isPasswordVisible, 
                 decoration: InputDecoration(
                   labelText: 'Password',
                   filled: true,
@@ -478,19 +517,19 @@ class _SignUpFormState extends State<SignUpForm> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () async {
-                Map<String, String> userData = {
-                  'name': _nameController.text,
-                  'username': _usernameController.text,
-                  'email': _emailController.text,
-                  'password': _passwordController.text,
-                  'password_confirmation': _passwordConfirmationController.text,
-                  'specialization_id': _specializationIdController.text,
-                  'role': _selectedRole ?? '',
-                  'job_title': _jobTitleController.text,
-                  'gender': _selectedGender ?? '',
-                  'dob': _dobController.text,
-                };
+             onPressed: () async {
+              Map<String, dynamic> userData = {
+                'name': _nameController.text,
+                'username': _usernameController.text,
+                'email': _emailController.text,
+                'password': _passwordController.text,
+                'password_confirmation': _passwordConfirmationController.text,
+                'specialization_id': _selectedSpecializationId, 
+                'role': _selectedRole ?? '',
+                'job_title': _jobTitleController.text,
+                'gender': _selectedGender ?? '',
+                'dob': _dobController.text,
+              };
 
                 String requestBody = json.encode(userData);
 
