@@ -7,7 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'specificjob.dart';
 import 'profile.dart';
-
+import 'post.dart';
 Container Jobs(String imagePath, String title, String id, Function(String) onTap) {
   return Container(
     width: 150.0,
@@ -345,6 +345,14 @@ Future<void> fetchJobs({String specializationId = ''}) async {
       job['latitude'] as String?,  // Job latitude
       job['longitude'] as String?  // Job longitude
     );
+     double distanceNumeric = double.tryParse(distance.split(' ')[0]) ?? double.infinity;
+  if (distanceNumeric < 20.0) {
+    distance = '$distance: Close to you, suit you';
+  }
+  else{
+    distance = '$distance';
+  }
+    
   }
   return InkWell(
     onTap: () {
@@ -391,12 +399,12 @@ Future<void> fetchJobs({String specializationId = ''}) async {
                 color: Colors.grey,
               ),
             ),
-            Text(
-              'Distance: $distance',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
+             Text(
+            'Distance: ${distance}',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
             ),
           ],
         ),
@@ -461,7 +469,9 @@ Future<void> fetchJobs({String specializationId = ''}) async {
             if (userRole == 'client')
               IconButton(
                 icon: Icon(Icons.add, color: Color(0xFF343ABA)),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => Post()));
+                },
               ),
            IconButton(
               icon: Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),

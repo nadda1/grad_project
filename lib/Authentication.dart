@@ -227,6 +227,17 @@ void initState() {
   _loadSpecializations();
 }
 
+Future<List<Map<String, dynamic>>> _fetchSpecializations() async {
+  final apiUrl = 'https://snapwork-133ce78bbd88.herokuapp.com/api/specializations';
+  final response = await http.get(Uri.parse(apiUrl));
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    return List<Map<String, dynamic>>.from(data['data']);
+  } else {
+    throw Exception('Failed to load specializations');
+  }
+}
+
 Future<void> _loadSpecializations() async {
   try {
     final specializations = await _fetchSpecializations();
@@ -238,16 +249,7 @@ Future<void> _loadSpecializations() async {
   }
 }
 
-  Future<List<Map<String, dynamic>>> _fetchSpecializations() async {
-  final apiUrl = 'https://snapwork-133ce78bbd88.herokuapp.com/api/specializations';
-  final response = await http.get(Uri.parse(apiUrl));
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    return List<Map<String, dynamic>>.from(data['data']);
-  } else {
-    throw Exception('Failed to load specializations');
-  }
-}
+  
 
 
   Future<void> _selectDate(BuildContext context) async {
@@ -286,7 +288,7 @@ Future<void> _loadSpecializations() async {
               ),
             ),
             Text(
-              'Please Log In',
+              'Please sign up',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
