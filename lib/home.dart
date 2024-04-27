@@ -48,7 +48,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  bool _isHovering = false;
   late TextEditingController _searchController;
   late TextEditingController _locationController;
   String? userRole;
@@ -64,6 +63,41 @@ class _MyHomePageState extends State<MyHomePage> {
     _loadUserRole();
     fetchJobs();
   }
+void _calculateDistanceForAllJobs(String latStr, String longStr) {
+  setState(() {
+    filteredJobs = filteredJobs.map((job) {
+      job['distance'] = calculateDistance(latStr, longStr, job['latitude'] as String?, job['longitude'] as String?);
+      return job;
+    }).toList();
+
+    filteredJobs.sort((a, b) {
+      String distanceA = a['distance'];
+      String distanceB = b['distance'];
+      
+      double distanceANumeric = distanceA == 'Location not set' ? double.infinity : double.parse(distanceA.split(' ')[0]);
+      double distanceBNumeric = distanceB == 'Location not set' ? double.infinity : double.parse(distanceB.split(' ')[0]);
+      
+      return distanceANumeric.compareTo(distanceBNumeric);
+    });
+  });
+}
+
+
+String calculateDistance(String? userLatStr, String? userLongStr, String? jobLatStr, String? jobLongStr) {
+  if (userLatStr == null || userLongStr == null || userLatStr.isEmpty || userLongStr.isEmpty ||
+      jobLatStr == null || jobLongStr == null) {
+    return 'Location not set';  
+  } else {
+    final double userLat = double.tryParse(userLatStr) ?? 0.0;
+    final double userLong = double.tryParse(userLongStr) ?? 0.0;
+    final double jobLat = double.tryParse(jobLatStr) ?? 0.0;
+    final double jobLong = double.tryParse(jobLongStr) ?? 0.0;
+
+    double distanceInMeters = Geolocator.distanceBetween(userLat, userLong, jobLat, jobLong);
+    return '${(distanceInMeters / 1000).toStringAsFixed(2)} km';  
+  }
+}
+
   void _filterJobs() {
     String query = _searchController.text.toLowerCase();
     setState(() {
@@ -112,54 +146,54 @@ Future<void> fetchJobs({String specializationId = ''}) async {
   }
 
   void _showLocationPicker(BuildContext context) async {
-    LatLng selectedLocation = LatLng(0, 0);  // Default location
+  LatLng selectedLocation = LatLng(0, 0);  // Default location
 
-    Position currentPosition = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+  Position currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Select Location"),
-          content: Container(
-            height: 300,
-            width: 300,
-            child: FlutterMap(
-              children: [
-                TileLayer(
-                  urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                  subdomains: ['a', 'b', 'c'],
-                ),
-              ],
-              options: MapOptions(
-                center: LatLng(currentPosition.latitude, currentPosition.longitude),
-                zoom: 13.0,
-                onTap: (_, position) {
-                  selectedLocation = position;
-                  _locationController.text = "${selectedLocation.latitude}, ${selectedLocation.longitude}";
-                },
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Select Location"),
+        content: Container(
+          height: 300,
+          width: 300,
+          child: FlutterMap(
+            children: [
+              TileLayer(
+                urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                subdomains: ['a', 'b', 'c'],
               ),
+            ],
+            options: MapOptions(
+              center: LatLng(currentPosition.latitude, currentPosition.longitude),
+              zoom: 13.0,
+              onTap: (_, position) {
+                selectedLocation = position;
+                _locationController.text = "${selectedLocation.latitude}, ${selectedLocation.longitude}";
+              },
             ),
           ),
-          actions: <Widget>[
-            TextButton(
-              child: Text("OK"),
-              onPressed: () {
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: Text("OK"),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _calculateDistanceForAllJobs(selectedLocation.latitude.toString(), selectedLocation.longitude.toString());
+            },
+          ),
+          TextButton(
+            child: Text("Cancel"),
+            onPressed: () {
                 Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text("Cancel"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
 
   Container locationInputField() {
     return Container(
@@ -298,77 +332,86 @@ Future<void> fetchJobs({String specializationId = ''}) async {
                 ),
                 Expanded(
   child: ListView.builder(
-    itemCount: filteredJobs.length,
-    itemBuilder: (context, index) {
-      var job = filteredJobs[index];  // Use filteredJobs to ensure searching works
-      String formattedDate = job['created_at'] != null ? formatDate(job['created_at']) : 'Not available';
-      return InkWell(
-  onTap: () {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => SpecificJobPage(jobId: job['id'].toString()),
-    ));
-  },
-  child: Container(
-    margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-    padding: EdgeInsets.all(12.0),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(10.0),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withOpacity(0.5),
-          spreadRadius: 3,
-          blurRadius: 5,
-          offset: Offset(0, 3),
-        ),
-      ],
-    ),
-    child: ListTile(
-      onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => SpecificJobPage(jobId: job['id'].toString()),
-        ));
-      },
-      title: Text(
-        job['title'],
-        style: TextStyle(
-          fontSize: 16.0,
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
-        ),
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            job['description'],
-            style: TextStyle(
-              color: Colors.black87,
-            ),
-          ),
-          Text(
-            'Created at: $formattedDate',
-            style: TextStyle(
-              color: Colors.grey,
-            ),
+  itemCount: filteredJobs.length,
+  itemBuilder: (context, index) {
+  var job = filteredJobs[index];
+  String formattedDate = job['created_at'] != null ? formatDate(job['created_at']) : 'Not available';
+  List<String> userCoords = _locationController.text.split(',');
+  String distance = 'Location not set';
+  if (userCoords.length > 1 && userCoords[0].trim().isNotEmpty && userCoords[1].trim().isNotEmpty) {
+    distance = calculateDistance(
+      userCoords[0].trim(),  // User latitude
+      userCoords[1].trim(),  // User longitude
+      job['latitude'] as String?,  // Job latitude
+      job['longitude'] as String?  // Job longitude
+    );
+  }
+  return InkWell(
+    onTap: () {
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => SpecificJobPage(jobId: job['id'].toString()),
+      ));
+    },
+    child: Container(
+      margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      padding: EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 3,
+            blurRadius: 5,
+            offset: Offset(0, 3),
           ),
         ],
       ),
-      trailing: Text(
-        ' budget is:${job['expected_budget']} \$',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
+      child: ListTile(
+        title: Text(
+          job['title'],
+          style: TextStyle(
+            fontSize: 16.0,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              job['description'],
+              style: TextStyle(
+                color: Colors.black87,
+              ),
+            ),
+            Text(
+              'Created at: $formattedDate',
+              style: TextStyle(
+                color: Colors.grey,
+              ),
+            ),
+            Text(
+              'Distance: $distance',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        trailing: Text(
+          'Budget: ${job['expected_budget']} \$',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+          ),
         ),
       ),
-      // Wrap with MouseRegion for hover effect
-      // Remove the child property from here
-
-    ),
-  ),
-);
-    },
-  ),
+    );
+  },
+),
 ),
   ],
             ),
