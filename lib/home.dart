@@ -356,9 +356,15 @@ Future<void> fetchJobs({String specializationId = ''}) async {
   }
   return InkWell(
     onTap: () {
-      Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => SpecificJobPage(jobId: job['id'].toString()),
-      ));
+      Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => SpecificJobPage(
+      jobId: job['id'].toString(),
+      specializationId: job['specialization']['id'].toString(), 
+    ),
+  ),
+);
     },
     child: Container(
       margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),

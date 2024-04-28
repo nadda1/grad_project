@@ -5,8 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SpecificJobPage extends StatefulWidget {
   final String jobId;
+  final String specializationId; // Add this line
 
-  SpecificJobPage({Key? key, required this.jobId}) : super(key: key);
+  SpecificJobPage({Key? key, required this.jobId, required this.specializationId}) : super(key: key); // Update this line
 
   @override
   _SpecificJobPageState createState() => _SpecificJobPageState();
@@ -14,7 +15,9 @@ class SpecificJobPage extends StatefulWidget {
 
 class _SpecificJobPageState extends State<SpecificJobPage> {
   Map<String, dynamic> jobDetails = {};
+    String? userIDjob;
     String? userRole;
+    String? userid;
 
 
   @override
@@ -22,7 +25,106 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     super.initState();
     fetchJobDetails();
     _loadUserRole();
+    _loadUserid();
   }
+
+  Future<List<dynamic>> fetchFreelancers( ) async {
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+
+  if (token != null) {
+    final response = await http.get(
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/freelancers/${widget.specializationId}'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    print('Status Code: ${response.statusCode}'); 
+    print('Response Body: ${response.body}'); 
+
+    if (response.statusCode == 200) {
+      List<dynamic> freelancers = json.decode(response.body)['data'];
+      return freelancers;
+    } else {
+      throw Exception('Failed to load freelancers');
+    }
+  } else {
+    throw Exception('Token not found');
+  }
+}
+
+Future<void> sendInvitation(String freelancerId) async {
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+  if (token != null) {
+    final response = await http.post(
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/invitations'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'job_id': widget.jobId,
+        'freelancer_id': freelancerId,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // عرض رسالة نجاح العملية
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Invitation sent successfully!")));
+    } else {
+      // عرض رسالة خطأ في حالة فشل العملية
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to send invitation!")));
+    }
+  }
+}
+
+void showFreelancersPopup(BuildContext context) async {
+  List<dynamic> freelancers = await fetchFreelancers();
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Freelancers'),
+        content: Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: freelancers.length,
+            itemBuilder: (BuildContext context, int index) {
+              var freelancer = freelancers[index];
+              return Card(
+                color: Colors.deepPurple,
+                child: ListTile(
+                  title: Text('Name: ${freelancer['username'] ?? 'No data'}'),
+                  subtitle: Text('Gender: ${freelancer['gender'] ?? 'No data'}\nEmail: ${freelancer['email'] ?? 'No data'}'),
+                  trailing: ElevatedButton(
+                    onPressed: () {
+                      sendInvitation(freelancer['id'].toString());
+                    },
+                    child: Text('Invite'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Close'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
   Future<void> submitApplication(String bid, String duration, String coverLetter, BuildContext context) async {
   final prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('token');
@@ -42,9 +144,37 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
   );
 
   if (response.statusCode == 200) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Application submitted successfully!')));
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Success'),
+          content: Text("success application"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   } else {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('you applied in this job before')));
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('fail'),
+          content: Text("you applied berfoe"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
   Future<void> _loadUserRole() async {
@@ -53,26 +183,40 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
       userRole = prefs.getString('role');
     });
   }
+  Future<void> _loadUserid() async {
+  final prefs = await SharedPreferences.getInstance();
+  setState(() {
+    // استخدام getInt للحصول على القيمة كعدد صحيح
+    userid = prefs.getInt('user_id')?.toString();
+  });
+}
+
 
   Future<void> fetchJobDetails() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
 
-    if (token != null) {
-      final response = await http.get(
-        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/${widget.jobId}'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+  if (token != null) {
+    final response = await http.get(
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/${widget.jobId}'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
 
-      if (response.statusCode == 200) {
-        setState(() {
-          jobDetails = json.decode(response.body)['data'];
-        });
-      } else {
-        print('Failed to fetch job details');
-      }
+    if (response.statusCode == 200) {
+      setState(() {
+        jobDetails = json.decode(response.body)['data'];
+         var jobResponse = json.decode(response.body);
+
+        jobDetails = jobResponse['data'];
+
+       userIDjob = jobResponse['data']['client']['id'].toString();
+      });
+    } else {
+      print('Failed to fetch job details');
     }
   }
+}
+
   void showApplicationDialog(BuildContext context) {
   final _formKey = GlobalKey<FormState>();
   TextEditingController bidController = TextEditingController();
@@ -224,20 +368,21 @@ Widget build(BuildContext context) {
           buildCard( jobDetails['description'] ?? 'Description not available'),
           if (jobDetails.containsKey('required_skills'))
             buildSkillsCard(jobDetails['required_skills']),
-          if (userRole == 'freelancer')
+         if (userRole == 'client' && userid==userIDjob)
           Padding(
             padding: EdgeInsets.symmetric(vertical: 16.0),
             child: Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.green, // Customize button color
+                  foregroundColor: Colors.white, // Customize text color
                 ),
-                onPressed: () => showApplicationDialog(context),
-                child: Text('Apply for a job', style: TextStyle(fontSize: 16)),
+                onPressed: () => showFreelancersPopup(context),
+                child: Text('Suggestion Invite', style: TextStyle(fontSize: 16)),
               ),
             ),
           ),
+          
           if (userRole == 'client' && jobDetails.containsKey('applications'))
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
