@@ -18,6 +18,7 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     String? userIDjob;
     String? userRole;
     String? userid;
+    String? jobstatus;
 
 
   @override
@@ -38,8 +39,7 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
       headers: {'Authorization': 'Bearer $token'},
     );
 
-    print('Status Code: ${response.statusCode}'); 
-    print('Response Body: ${response.body}'); 
+   
 
     if (response.statusCode == 200) {
       List<dynamic> freelancers = json.decode(response.body)['data'];
@@ -68,13 +68,35 @@ Future<void> sendInvitation(String freelancerId) async {
       }),
     );
 
-    if (response.statusCode == 200) {
-      // عرض رسالة نجاح العملية
+    if (response.statusCode == 201) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Invitation sent successfully!")));
     } else {
-      // عرض رسالة خطأ في حالة فشل العملية
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to send invitation!")));
-    }
+  var responseBody = json.decode(response.body);
+  var errorMessage = responseBody['message'];
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
+}
+  }
+}
+Future<void> hireFreelancer(String jobSlug, String applicationSlug) async {
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+  if (token == null) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Authentication error. Please log in again.")));
+    return;
+  }
+
+  final response = await http.put(
+    Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/hire/$jobSlug/$applicationSlug'),
+    headers: {'Authorization': 'Bearer $token'},
+  );
+
+  if (response.statusCode == 200) {
+    fetchJobDetails();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Freelancer hired successfully!")));
+  } else {
+    var responseBody = json.decode(response.body);
+    var error = responseBody['message'];
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
   }
 }
 
@@ -143,38 +165,13 @@ void showFreelancersPopup(BuildContext context) async {
     }),
   );
 
-  if (response.statusCode == 200) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Success'),
-          content: Text("success application"),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
+  if (response.statusCode == 201) {
+    fetchJobDetails();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Freelancer hired successfully!")));
   } else {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('fail'),
-          content: Text("you applied berfoe"),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
+    var responseBody = json.decode(response.body);
+    var error = responseBody['message'];
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
   }
 }
   Future<void> _loadUserRole() async {
@@ -208,6 +205,7 @@ void showFreelancersPopup(BuildContext context) async {
          var jobResponse = json.decode(response.body);
 
         jobDetails = jobResponse['data'];
+        jobstatus = jobResponse['data']['status'];
 
        userIDjob = jobResponse['data']['client']['id'].toString();
       });
@@ -368,7 +366,7 @@ Widget build(BuildContext context) {
           buildCard( jobDetails['description'] ?? 'Description not available'),
           if (jobDetails.containsKey('required_skills'))
             buildSkillsCard(jobDetails['required_skills']),
-         if (userRole == 'client' && userid==userIDjob)
+         if (userRole == 'client' && userid==userIDjob && jobstatus!="hired") 
           Padding(
             padding: EdgeInsets.symmetric(vertical: 16.0),
             child: Center(
@@ -379,6 +377,20 @@ Widget build(BuildContext context) {
                 ),
                 onPressed: () => showFreelancersPopup(context),
                 child: Text('Suggestion Invite', style: TextStyle(fontSize: 16)),
+              ),
+            ),
+          ),
+         if (userRole == 'freelancer' && jobstatus!="hired")
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color.fromARGB(255, 224, 79, 53), // Customize button color
+                  foregroundColor: Colors.white, // Customize text color
+                ),
+                onPressed: () => showApplicationDialog( context),
+                child: Text('apply for a job', style: TextStyle(fontSize: 16)),
               ),
             ),
           ),
@@ -394,6 +406,7 @@ Widget build(BuildContext context) {
           application['bid'].toString() ?? '0',
           application['duration'].toString() ?? '0',
           application['cover_letter'] ?? 'N/A',
+          application['slug']
         )).toList(),
           if (userRole == 'freelancer' && jobDetails.containsKey('applications'))
             ...jobDetails['applications'].map((application) => buildApplicationCardForFreelance(
@@ -406,7 +419,7 @@ Widget build(BuildContext context) {
           );
 }
 
-Widget buildApplicationCard(String freelancer, String bid, String duration, String coverLetter) {
+Widget buildApplicationCard(String freelancer, String bid, String duration, String coverLetter, String applicationSlug) {
   return Card(
     color: Colors.lightBlueAccent,
     margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -423,9 +436,23 @@ Widget buildApplicationCard(String freelancer, String bid, String duration, Stri
           ),
         ],
       ),
+      trailing: userid == userIDjob && userRole=="client" ? Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ElevatedButton(
+            onPressed: () => hireFreelancer(jobDetails['slug'], applicationSlug), 
+            child: Text('Hire'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.lightGreen,
+            ),
+          ),
+        ],
+      ): SizedBox.shrink(),
     ),
   );
 }
+
+
 Widget buildApplicationCardForFreelance(String freelancer, String coverLetter) {
   // Split the cover letter into words
   List<String> words = coverLetter.split(' ');

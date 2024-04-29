@@ -338,6 +338,7 @@ Future<void> fetchJobs({String specializationId = ''}) async {
   String formattedDate = job['created_at'] != null ? formatDate(job['created_at']) : 'Not available';
   List<String> userCoords = _locationController.text.split(',');
   String distance = 'Location not set';
+    String message = job['status'] == "hired" ? 'this job is expired' : '';
   if (userCoords.length > 1 && userCoords[0].trim().isNotEmpty && userCoords[1].trim().isNotEmpty) {
     distance = calculateDistance(
       userCoords[0].trim(),  // User latitude
@@ -354,6 +355,7 @@ Future<void> fetchJobs({String specializationId = ''}) async {
   }
     
   }
+  
   return InkWell(
     onTap: () {
       Navigator.push(
@@ -412,6 +414,13 @@ Future<void> fetchJobs({String specializationId = ''}) async {
               fontWeight: FontWeight.bold,
             ),
             ),
+            Text(
+                message,
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
           ],
         ),
         trailing: Text(
@@ -491,7 +500,6 @@ Future<void> fetchJobs({String specializationId = ''}) async {
       ),
     );
   }
-
   @override
   void dispose() {
     _searchController.dispose();

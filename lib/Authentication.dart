@@ -175,7 +175,11 @@ if (response.statusCode == 200) {
       Size(150, 40),
     ),
   ),
-  child: Text('Login'),
+ child: Text('Login',style: TextStyle(
+                color: Colors.white,
+              ),
+ ),
+  
 ),
        ],
         ),
@@ -596,7 +600,11 @@ Future<void> _loadSpecializations() async {
                   Size(150, 40),
                 ),
               ),
-              child: Text('Sign Up'),
+             child: Text('sign up',style: TextStyle(
+                color: Colors.white,
+              ),
+             ),
+              
             ),
           ],
         ),
