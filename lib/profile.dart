@@ -7,8 +7,129 @@ import 'navigation_service.dart';
 import 'contracts_page.dart';
 import 'clientJobs.dart';
 
-
 final NavigationService navigationService = NavigationService();
+
+
+class Certification {
+  final String name;
+  final String issuer;
+  final String issueDate;
+  final String url;
+  final String description;
+
+  Certification({
+    required this.name,
+    required this.issuer,
+    required this.issueDate,
+    required this.url,
+    required this.description,
+  });
+    Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'issuer': issuer,
+      'issueDate': issueDate,
+      'url': url,
+      'description': description,
+    };
+  }
+
+  factory Certification.fromJson(Map<String, dynamic> json) {
+    return Certification(
+      name: json['name'],
+      issuer: json['issuer'],
+      issueDate: json['issueDate'],
+      url: json['url'],
+      description: json['description'],
+    );
+  }
+}
+
+
+class Experience {
+  final String company;
+  final String position;
+  final String city;
+  final String country;
+  final String startDate;
+  final String endDate;
+  final String description;
+
+  Experience({
+    required this.company,
+    required this.position,
+    required this.city,
+    required this.country,
+    required this.startDate,
+    required this.endDate,
+    required this.description,
+  });
+   Map<String, dynamic> toJson() {
+    return {
+      'company': company,
+      'position': position,
+      'city': city,
+      'country': country,
+      'startDate': startDate,
+      'endDate': endDate,
+      'description': description,
+    };
+  }
+
+  factory Experience.fromJson(Map<String, dynamic> json) {
+    return Experience(
+      company: json['company'],
+      position: json['position'],
+      city: json['city'],
+      country: json['country'],
+      startDate: json['startDate'],
+      endDate: json['endDate'],
+      description: json['description'],
+    );
+  }
+}
+
+
+class Education {
+  final String school;
+  final String degree;
+  final String startDate;
+  final String endDate;
+  final String major;
+  final String description;
+
+  Education({
+    required this.school,
+    required this.degree,
+    required this.startDate,
+    required this.endDate,
+    required this.major,
+    required this.description,
+  });
+    Map<String, dynamic> toJson() {
+    return {
+      'school': school,
+      'degree': degree,
+      'startDate': startDate,
+      'endDate': endDate,
+      'major': major,
+      'description': description,
+    };
+  }
+
+  factory Education.fromJson(Map<String, dynamic> json) {
+    return Education(
+      school: json['school'],
+      degree: json['degree'],
+      startDate: json['startDate'],
+      endDate: json['endDate'],
+      major: json['major'],
+      description: json['description'],
+    );
+  }
+}
+
+
 
 
 class ProfileScreen extends StatefulWidget {
@@ -21,13 +142,68 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   String _name = 'Loading...';
   String _email = 'Loading...';
-  String? role;
+  List<Education> _educationList = []; // Maintain a list of education data
+  List<Experience> _experienceList = [];
+  List<Certification> _certificationList = [];
+   String? role;
+
+Future<void> _saveEducationList() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setStringList(
+    'educationList',
+    _educationList.map((e) => jsonEncode(e.toJson())).toList(),
+  );
+}
+
+Future<void> _saveExperienceList() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setStringList(
+    'experienceList',
+    _experienceList.map((e) => jsonEncode(e.toJson())).toList(),
+  );
+}
+
+Future<void> _saveCertificationList() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setStringList(
+    'certificationList',
+    _certificationList.map((e) => jsonEncode(e.toJson())).toList(),
+  );
+}
+
+
+ void _addEducation(Education education) {
+    setState(() {
+      _educationList.add(education);
+    });
+    _saveEducationList();
+  }
+
+   void _addExperience(Experience experience) {
+    setState(() {
+      _experienceList.add(experience);
+    });
+     _saveExperienceList();
+  }
+
+    void _addCertification(Certification certification) {
+    setState(() {
+      _certificationList.add(certification);
+    });
+    _saveCertificationList();
+  }
 
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
     _loadUserRole();
+  }
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      role = prefs.getString('role');
+    });
   }
 
   Future<void> _loadUserProfile() async {
@@ -37,14 +213,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _name = userProfile['name'];
         _email = userProfile['email'];
       });
+    _loadEducationList();
+    _loadExperienceList();
+    _loadCertificationList();
     } catch (e) {
       print('Error loading user profile: $e');
     }
   }
-  Future<void> _loadUserRole() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    role = prefs.getString('role');
+  Future<void> _loadEducationList() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  List<String>? educationData = prefs.getStringList('educationList');
+  if (educationData != null) {
+    setState(() {
+      _educationList = educationData.map((e) => Education.fromJson(jsonDecode(e))).toList();
+    });
   }
+}
+
+Future<void> _loadExperienceList() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  List<String>? experienceData = prefs.getStringList('experienceList');
+  if (experienceData != null) {
+    setState(() {
+      _experienceList = experienceData.map((e) => Experience.fromJson(jsonDecode(e))).toList();
+    });
+  }
+}
+
+Future<void> _loadCertificationList() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  List<String>? certificationData = prefs.getStringList('certificationList');
+  if (certificationData != null) {
+    setState(() {
+      _certificationList = certificationData.map((e) => Certification.fromJson(jsonDecode(e))).toList();
+    });
+  }
+}
 
 Future<void> _logout() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -216,7 +420,7 @@ Future<void> _logout() async {
                   child: const Text('Change Password'),
                 ),
               ),
-              role=="freelancer"? Padding(
+               role=="freelancer"? Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: ElevatedButton(
                   onPressed: () {
@@ -239,7 +443,7 @@ Future<void> _logout() async {
                   child: const Text('my posted jobs'),
                 ),
               ),
-               Padding(
+              Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: ElevatedButton(
                   onPressed: _logout,
@@ -247,19 +451,28 @@ Future<void> _logout() async {
                 ),
               ),
               const SizedBox(height: 20.0),
-              const EducationSection(),
+               EducationSection(
+                educationList: _educationList,
+                onAddEducation: _addEducation, // Callback to add education
+              ),
               const SeparatorLine(),
               const SizedBox(height: 20.0),
-              const CertificateSection(),
+               CertificateSection(
+                certificationList: _certificationList,
+                onAddCertification: _addCertification, // Callback to add education
+              ),
               const SeparatorLine(),
               const SizedBox(height: 20.0),
-              const ExperienceSection(),
+               ExperienceSection(experienceList: _experienceList ,onAddExperience:_addExperience ),
             ],
           ),
         ),
       ),
     );
   }
+
+ 
+
 
   Future<Map<String, dynamic>> _getUserProfile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -287,7 +500,10 @@ Future<void> _logout() async {
 
 
 class AddEducationForm extends StatefulWidget {
-  const AddEducationForm({Key? key}) : super(key: key);
+   final void Function(Education) onAddEducation;
+
+  const AddEducationForm({Key? key, required this.onAddEducation}) : super(key: key);
+
 
   @override
   _AddEducationFormState createState() => _AddEducationFormState();
@@ -347,6 +563,7 @@ class _AddEducationFormState extends State<AddEducationForm> {
   child: Text('Save'),
   onPressed: () async {
     _submitForm();
+
     
   },
 ),
@@ -365,20 +582,21 @@ void _submitForm() async {
 
   // Validate inputs
   if (_validateInputs(school, degree, startDate, endDate, major, description)) {
-    // If inputs are valid, send request to add new education entry
-    try {
-      await _addEducationEntry(school, degree, startDate, endDate, major, description);
-      Navigator.of(context).pop(); // Close the dialog after successful submission
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Education entry added successfully."),
-      ));
-    } catch (error) {
-      // Handle error if request fails
-      print('Error adding education entry: $error');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Failed to add education entry. Please try again."),
-      ));
-    }
+    // If inputs are valid, create an Education object
+    Education education = Education(
+      school: school,
+      degree: degree,
+      startDate: startDate,
+      endDate: endDate,
+      major: major,
+      description: description,
+    );
+
+    // Call the callback to add education in the parent widget
+    widget.onAddEducation(education);
+
+    // Close the dialog
+    Navigator.of(context).pop();
   }
 }
 
@@ -405,20 +623,20 @@ Future<void> _addEducationEntry(String school, String degree, String startDate, 
     throw Exception("User is not logged in");
   }
 
-  final response = await http.post(
-    Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-educations'), 
+  final response = await http.put(
+    Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-educations'), // Use your actual API URL
     headers: <String, String>{
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
     },
-    body: jsonEncode({
+    body: jsonEncode({"educations":[{
       "school": school,
       "degree": degree,
       "start_date": startDate,
       "end_date": endDate,
       "major": major,
       "description": description,
-    }),
+    }]}),
   );
 
   if (response.statusCode != 200) {
@@ -428,10 +646,19 @@ Future<void> _addEducationEntry(String school, String degree, String startDate, 
 }
 
 }
-
 class AddCertificateForm extends StatelessWidget {
+  final void Function(Certification) onAddCertification;
+  final BuildContext context;
+  const AddCertificateForm({Key? key, required this.onAddCertification,required this.context}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
+    TextEditingController _nameController = TextEditingController();
+    TextEditingController _issuerController = TextEditingController();
+    TextEditingController _issueDateController = TextEditingController();
+    TextEditingController _urlController = TextEditingController();
+    TextEditingController _descriptionController = TextEditingController();
+
     return AlertDialog(
       title: Text('Add Certificate'),
       content: SingleChildScrollView(
@@ -439,18 +666,23 @@ class AddCertificateForm extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextFormField(
+              controller: _nameController,
               decoration: InputDecoration(labelText: 'Name'),
             ),
             TextFormField(
+              controller: _issuerController,
               decoration: InputDecoration(labelText: 'Issuer'),
             ),
             TextFormField(
+              controller: _issueDateController,
               decoration: InputDecoration(labelText: 'Issue Date'),
             ),
             TextFormField(
+              controller: _urlController,
               decoration: InputDecoration(labelText: 'URL'),
             ),
             TextFormField(
+              controller: _descriptionController,
               decoration: InputDecoration(labelText: 'Description'),
             ),
           ],
@@ -465,44 +697,94 @@ class AddCertificateForm extends StatelessWidget {
         ),
         TextButton(
           onPressed: () {
-            // Add certificate logic
+            _submitForm(
+              _nameController.text,
+              _issuerController.text,
+              _issueDateController.text,
+              _urlController.text,
+              _descriptionController.text,
+            );
           },
-          child: Text('Add'),
+          child: Text('Save'),
         ),
       ],
     );
   }
+
+  void _submitForm(
+    String name,
+    String issuer,
+    String issueDate,
+    String url,
+    String description,
+  ) {
+    Certification certification = Certification(
+      name: name,
+      issuer: issuer,
+      issueDate: issueDate,
+      url: url,
+      description: description,
+    );
+
+    onAddCertification(certification);
+
+    Navigator.of(context).pop();
+  }
 }
 
 
+
+
 class AddExperienceForm extends StatelessWidget {
+ final void Function(Experience) onAddExperience;
+final BuildContext context;
+
+const AddExperienceForm({Key? key, required this.onAddExperience, required this.context}) : super(key: key);
+
+
   @override
   Widget build(BuildContext context) {
+    TextEditingController _companyController = TextEditingController();
+    TextEditingController _positionController = TextEditingController();
+    TextEditingController _cityController = TextEditingController();
+    TextEditingController _countryController = TextEditingController();
+    TextEditingController _startDateController = TextEditingController();
+    TextEditingController _endDateController = TextEditingController();
+    TextEditingController _descriptionController = TextEditingController();
+
     return AlertDialog(
       title: Text('Add Experience'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
+
+          children: <Widget>[
             TextFormField(
+              controller: _companyController,
               decoration: InputDecoration(labelText: 'Company'),
             ),
             TextFormField(
+              controller: _positionController,
               decoration: InputDecoration(labelText: 'Position'),
             ),
             TextFormField(
+              controller: _cityController,
               decoration: InputDecoration(labelText: 'City'),
             ),
             TextFormField(
+              controller: _countryController,
               decoration: InputDecoration(labelText: 'Country'),
             ),
             TextFormField(
+              controller: _startDateController,
               decoration: InputDecoration(labelText: 'Start Date'),
             ),
             TextFormField(
+              controller: _endDateController,
               decoration: InputDecoration(labelText: 'End Date'),
             ),
             TextFormField(
+              controller: _descriptionController,
               decoration: InputDecoration(labelText: 'Description'),
             ),
           ],
@@ -511,24 +793,67 @@ class AddExperienceForm extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () {
-            Navigator.of(context).pop();
+            Navigator.of(context).pop(); // Close the dialog
           },
           child: Text('Cancel'),
         ),
         TextButton(
           onPressed: () {
-            // Add experience logic
+            _submitForm(
+              _companyController.text,
+              _positionController.text,
+              _cityController.text,
+              _countryController.text,
+              _startDateController.text,
+              _endDateController.text,
+              _descriptionController.text,
+            );
           },
-          child: Text('Add'),
+          child: Text('save'),
         ),
       ],
     );
   }
+
+  void _submitForm(
+    String company,
+    String position,
+    String city,
+    String country,
+    String startDate,
+    String endDate,
+    String description,
+  ) {
+    // Create an Experience object
+    Experience experience = Experience(
+      company: company,
+      position: position,
+      city: city,
+      country: country,
+      startDate: startDate,
+      endDate: endDate,
+      description: description,
+    );
+
+    // Call the callback to add experience in the parent widget
+    onAddExperience(experience);
+
+    // Close the dialog
+    Navigator.of(context).pop();
+  }
 }
 
 
+
 class EducationSection extends StatelessWidget {
-  const EducationSection({Key? key}) : super(key: key);
+  final List<Education> educationList;
+  final void Function(Education) onAddEducation;
+
+  const EducationSection({
+    Key? key,
+    required this.educationList,
+    required this.onAddEducation,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -553,7 +878,9 @@ class EducationSection extends StatelessWidget {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return AddEducationForm(); // Show AddEducationForm in a dialog
+                      return AddEducationForm(
+                        onAddEducation: onAddEducation,
+                      );
                     },
                   );
                 },
@@ -563,14 +890,111 @@ class EducationSection extends StatelessWidget {
           ),
           const SizedBox(height: 10.0),
           // Display education entries
+          Column(
+            children: educationList.map((education) {
+              return ListTile(
+                title: Text(
+                  '${education.school} (${education.startDate} - ${education.endDate})',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${education.degree}, ${education.major}',
+                      style: TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Description: ${education.description}',
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
         ],
       ),
     );
   }
 }
 
+
+class ExperienceSection extends StatelessWidget {
+  final List<Experience> experienceList;
+  final void Function(Experience) onAddExperience;
+
+  const ExperienceSection({Key? key, required this.experienceList, required this.onAddExperience}) : super(key: key);
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(15.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Experience:',
+                style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+              ),
+               IconButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AddExperienceForm(
+                        onAddExperience: onAddExperience,
+                        context: context
+                      );
+                    },
+                  );
+                },
+                icon: Icon(Icons.add),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10.0),
+          // Display experience entries
+          Column(
+            children: experienceList.map((experience) {
+              return ListTile(
+                title: Text(
+                  '${experience.position}, ${experience.company} (${experience.startDate} - ${experience.endDate})',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${experience.city}, ${experience.country}',
+                      style: TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Description: ${experience.description}',
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
 class CertificateSection extends StatelessWidget {
-  const CertificateSection({Key? key}) : super(key: key);
+  final List<Certification> certificationList;
+ final void Function(Certification) onAddCertification;
+  const CertificateSection({Key? key, required this.certificationList,required this.onAddCertification}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -591,11 +1015,14 @@ class CertificateSection extends StatelessWidget {
                 style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
               ),
               IconButton(
-               onPressed: () {
+                onPressed: () {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return AddCertificateForm(); // Show AddCertificateForm in a dialog
+                      return AddCertificateForm(
+                        onAddCertification: onAddCertification,
+                        context: context,
+                      );
                     },
                   );
                 },
@@ -605,53 +1032,39 @@ class CertificateSection extends StatelessWidget {
           ),
           const SizedBox(height: 10.0),
           // Display certificate entries
-        ],
-      ),
-    );
-  }
-}
-
-class ExperienceSection extends StatelessWidget {
-  const ExperienceSection({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(15.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Experience:',
-                style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                 onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AddExperienceForm(); // Show AddExperienceForm in a dialog
-                    },
-                  );
-                },
-                icon: Icon(Icons.add),
-              ),
-            ],
+          Column(
+            children: certificationList.map((certification) {
+              return ListTile(
+                title: Text(
+                  '${certification.name} (${certification.issueDate})',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Issuer: ${certification.issuer}',
+                      style: TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'URL: ${certification.url}',
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Description: ${certification.description}',
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
           ),
-          const SizedBox(height: 10.0),
-          // Display experience entries
         ],
       ),
     );
   }
 }
+
 
 class SeparatorLine extends StatelessWidget {
   const SeparatorLine({Key? key}) : super(key: key);
