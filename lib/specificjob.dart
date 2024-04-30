@@ -372,8 +372,8 @@ Widget build(BuildContext context) {
             child: Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green, // Customize button color
-                  foregroundColor: Colors.white, // Customize text color
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white, 
                 ),
                 onPressed: () => showFreelancersPopup(context),
                 child: Text('Suggestion Invite', style: TextStyle(fontSize: 16)),

@@ -406,7 +406,7 @@ Future<void> _addEducationEntry(String school, String degree, String startDate, 
   }
 
   final response = await http.post(
-    Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-educations'), // Use your actual API URL
+    Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-educations'), 
     headers: <String, String>{
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',

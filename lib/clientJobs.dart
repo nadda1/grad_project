@@ -26,17 +26,30 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
   }
 
   Future<void> fetchJobs() async {
-    var url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization';
-    var response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      var data = json.decode(response.body)['data'];
-      if (clientId != null) {
+    int currentPage = 1;
+    bool hasMore = true;
+
+    while (hasMore) {
+      var url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$currentPage';
+      var response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body)['data'];
+        var newJobs = data.where((job) => job['client']['id'] == clientId).toList();
+
         setState(() {
-          jobs = data.where((job) => job['client']['id'] == clientId).toList();
+          jobs.addAll(newJobs);
         });
+
+        if (newJobs.isEmpty) {
+          hasMore = false;
+        } else {
+          currentPage++;
+        }
+      } else {
+        print('Failed to load jobs');
+        hasMore = false; 
       }
-    } else {
-      print('Failed to load jobs');
     }
   }
 

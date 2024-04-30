@@ -16,82 +16,91 @@ class _ContractsPageState extends State<ContractsPage> {
   void initState() {
     super.initState();
     _loadAuthToken();
-    fetchJobs();
   }
 
   Future<void> _loadAuthToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     authToken = prefs.getString('token');
+    if (authToken != null) {
+      fetchJobs();
+    }
   }
 
-  Future<void> fetchJobs({String specializationId = ''}) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    String? loggedInUsername = prefs.getString('user_name'); 
+  Future<void> fetchJobs() async {
+  int currentPage = 1;
+  bool hasMore = true;
+  List<dynamic> allJobs = [];
 
-    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization';
-    if (specializationId.isNotEmpty) {
-      url += '/$specializationId';
-    }
+  if (authToken == null) {
+    await _loadAuthToken();
+  }
 
-    if (token != null) {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? loggedInUsername = prefs.getString('user_name');
 
-      if (response.statusCode == 200) {
-        List<dynamic> jobs = json.decode(response.body)['data'];
-        List<dynamic> filteredJobs = [];
-        for (var job in jobs) {
-          var applications = job['applications'];
-          var validApplications = applications.where((app) =>
-              app['freelancer'] == loggedInUsername && app['status'] == "hired").toList();
-          if (validApplications.isNotEmpty) {
-            job['applications'] = validApplications;
-            filteredJobs.add(job);
+  while (hasMore) {
+    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$currentPage';
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Authorization': 'Bearer $authToken'},
+    );
+
+    if (response.statusCode == 200) {
+      var data = json.decode(response.body)['data'];
+      if (data.isEmpty) {
+        hasMore = false;
+      } else {
+        for (var job in data) {
+          var applications = job['applications'] as List;
+          applications = applications.where((app) => app['freelancer'] == loggedInUsername && app['status'] == 'hired').toList();
+          if (applications.isNotEmpty) {
+            job['applications'] = applications;
+            allJobs.add(job);
           }
         }
-
-        setState(() {
-          jobList = filteredJobs;
-        });
-      } else {
-        print('Failed to fetch jobs');
+        currentPage++;
       }
+    } else {
+      print('Failed to fetch jobs');
+      hasMore = false;
     }
   }
 
-  Future<void> requestCancel(String jobSlug) async {
-  String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-cancel/$jobSlug';
-  final response = await http.put(
-    Uri.parse(url),
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $authToken'
-    },
-    body: jsonEncode({
-      'type': 'cancel',
-      'new_bid': '',
-      'new_duration': ''
-    }),
-  );
-  if (response.statusCode == 201) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Request to Cancel sent successfully'),
-      backgroundColor: Colors.green,
-    ));
-  } else {
-    // Assuming the API returns a JSON response with a 'message' key on error
-    var responseBody = json.decode(response.body);
-    var errorMessage = responseBody['message'] ?? 'Failed to process your request';
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(errorMessage),
-      backgroundColor: Colors.red,
-    ));
-  }
+  setState(() {
+    jobList = allJobs;
+  });
 }
 
+
+
+  Future<void> requestCancel(String jobSlug) async {
+    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-cancel/$jobSlug';
+    final response = await http.put(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken'
+      },
+      body: jsonEncode({
+        'type': 'cancel',
+        'new_bid': '',
+        'new_duration': ''
+      }),
+    );
+    if (response.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Request to Cancel sent successfully'),
+        backgroundColor: Colors.green,
+      ));
+    } else {
+      var responseBody = json.decode(response.body);
+      var errorMessage = responseBody['message'] ?? 'Failed to process your request';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(errorMessage),
+        backgroundColor: Colors.red,
+      ));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
