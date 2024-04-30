@@ -135,6 +135,7 @@ if (response.statusCode == 200) {
   await prefs.setString('user', json.encode(jsonData['data']['user']));
   await prefs.setString('role', jsonData['data']['user']['role']);  // Assume 'role' is a field in the user object
  await prefs.setInt('user_id', jsonData['data']['user']['id']);  // Saving the user ID
+ await prefs.setString('user_name', jsonData['data']['user']['name']);  // Saving the user ID
 
   await persistRoute('/home');
   navigationService.navigateTo('/home');

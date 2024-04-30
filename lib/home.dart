@@ -41,6 +41,7 @@ class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title});
 
   final String title;
+  
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -53,6 +54,8 @@ class _MyHomePageState extends State<MyHomePage> {
   String? userRole;
   List<dynamic> jobList = [];
   List<dynamic> filteredJobs = [];
+  int currentPage = 1;
+
 
   @override
   void initState() {
@@ -112,12 +115,12 @@ String calculateDistance(String? userLatStr, String? userLongStr, String? jobLat
     return '${dateTime.year}-${dateTime.month}-${dateTime.day}';
   }
 
-Future<void> fetchJobs({String specializationId = ''}) async {
+Future<void> fetchJobs({String specializationId = '', int page = 1}) async {
   final prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('token');
-  String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization';
+  String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
   if (specializationId.isNotEmpty) {
-    url += '/$specializationId';
+    url += '&specializationId=$specializationId';
   }
 
   if (token != null) {
@@ -128,14 +131,20 @@ Future<void> fetchJobs({String specializationId = ''}) async {
 
     if (response.statusCode == 200) {
       setState(() {
-        jobList = json.decode(response.body)['data'];
-        _filterJobs();
+        if (page == 1) {
+          jobList = json.decode(response.body)['data'];
+        } else {
+          jobList.addAll(json.decode(response.body)['data']);
+        }
+        filteredJobs = List.from(jobList); // Update filtered jobs too
+        currentPage = page; // Update the current page
       });
     } else {
       print('Failed to fetch jobs');
     }
   }
 }
+
 
 
   Future<void> _loadUserRole() async {
@@ -146,7 +155,7 @@ Future<void> fetchJobs({String specializationId = ''}) async {
   }
 
   void _showLocationPicker(BuildContext context) async {
-  LatLng selectedLocation = LatLng(0, 0);  // Default location
+  LatLng selectedLocation = LatLng(0, 0);  
 
   Position currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 
@@ -260,187 +269,197 @@ Future<void> fetchJobs({String specializationId = ''}) async {
   }
 
   @override
- Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.only(left: 10.0, top: 19.0, bottom: 19.0),
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  fit: BoxFit.cover,
-                  height: 90,
-                  width: 90,
-                ),
-              ),
-              Spacer(),
-              IconButton(
-                icon: Icon(Icons.more_horiz, color: Color(0xFF343ABA), size: 36.0),
-                onPressed: () {
-                  _scaffoldKey.currentState!.openDrawer();
-                },
-              ),
-            ],
-          ),
-          SizedBox(height: 20.0),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 17),
-            child: Text(
-              'Find Your Job',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: Color(0xFF343ABA),
+Widget build(BuildContext context) {
+  return Scaffold(
+    key: _scaffoldKey,
+    body: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: EdgeInsets.only(left: 10.0, top: 19.0, bottom: 19.0),
+              child: Image.asset(
+                'assets/images/logo.png',
+                fit: BoxFit.cover,
+                height: 90,
+                width: 90,
               ),
             ),
+            Spacer(),
+            IconButton(
+              icon: Icon(Icons.more_horiz, color: Color(0xFF343ABA), size: 36.0),
+              onPressed: () {
+                _scaffoldKey.currentState!.openDrawer();
+              },
+            ),
+          ],
+        ),
+        SizedBox(height: 20.0),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 17),
+          child: Text(
+            'Find Your Job',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Color(0xFF343ABA),
+            ),
           ),
-          locationInputField(),
-          SizedBox(height: 15.0),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 17),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-               children: [
+        ),
+        locationInputField(),
+        SizedBox(height: 15.0),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 17),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
                 Jobs("coffee.png", "all jobs", "", (id) => fetchJobs(specializationId: id)),
                 Jobs("coffee.png", "web", "1", (id) => fetchJobs(specializationId: id)),
                 Jobs("delivery-man.png", "mobile", "2", (id) => fetchJobs(specializationId: id)),
                 Jobs("baby.png", "graphic", "3", (id) => fetchJobs(specializationId: id)),
               ],
-              ),
             ),
           ),
-          SizedBox(height: 20.0),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 17),
-                  child: Text(
-                    'For you',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF343ABA),
-                    ),
+        ),
+        SizedBox(height: 20.0),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 17),
+                child: Text(
+                  'For you',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Color(0xFF343ABA),
                   ),
                 ),
-                Expanded(
-  child: ListView.builder(
-  itemCount: filteredJobs.length,
-  itemBuilder: (context, index) {
-  var job = filteredJobs[index];
-  String formattedDate = job['created_at'] != null ? formatDate(job['created_at']) : 'Not available';
-  List<String> userCoords = _locationController.text.split(',');
-  String distance = 'Location not set';
-    String message = job['status'] == "hired" ? 'this job is expired' : '';
-  if (userCoords.length > 1 && userCoords[0].trim().isNotEmpty && userCoords[1].trim().isNotEmpty) {
-    distance = calculateDistance(
-      userCoords[0].trim(),  // User latitude
-      userCoords[1].trim(),  // User longitude
-      job['latitude'] as String?,  // Job latitude
-      job['longitude'] as String?  // Job longitude
-    );
-     double distanceNumeric = double.tryParse(distance.split(' ')[0]) ?? double.infinity;
-  if (distanceNumeric < 20.0) {
-    distance = '$distance: Close to you, suit you';
-  }
-  else{
-    distance = '$distance';
-  }
-    
-  }
-  
-  return InkWell(
-    onTap: () {
-      Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => SpecificJobPage(
-      jobId: job['id'].toString(),
-      specializationId: job['specialization']['id'].toString(), 
-    ),
-  ),
-);
-    },
-    child: Container(
-      margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      padding: EdgeInsets.all(12.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 3,
-            blurRadius: 5,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: ListTile(
-        title: Text(
-          job['title'],
-          style: TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              job['description'],
-              style: TextStyle(
-                color: Colors.black87,
               ),
-            ),
-            Text(
-              'Created at: $formattedDate',
-              style: TextStyle(
-                color: Colors.grey,
-              ),
-            ),
-             Text(
-            'Distance: ${distance}',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
-            ),
-            Text(
-                message,
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: ListView.builder(
+                  itemCount: filteredJobs.length,
+                  itemBuilder: (context, index) {
+                    var job = filteredJobs[index];
+                    String formattedDate = job['created_at'] != null ? formatDate(job['created_at']) : 'Not available';
+                    List<String> userCoords = _locationController.text.split(',');
+                    String distance = 'Location not set';
+                    String message = job['status'] == "hired" ? 'this job is expired' : '';
+                    if (userCoords.length > 1 && userCoords[0].trim().isNotEmpty && userCoords[1].trim().isNotEmpty) {
+                      distance = calculateDistance(
+                        userCoords[0].trim(),  // User latitude
+                        userCoords[1].trim(),  // User longitude
+                        job['latitude'] as String?,  // Job latitude
+                        job['longitude'] as String?  // Job longitude
+                      );
+                      double distanceNumeric = double.tryParse(distance.split(' ')[0]) ?? double.infinity;
+                      if (distanceNumeric < 20.0) {
+                        distance = '$distance: Close to you, suit you';
+                      } else {
+                        distance = '$distance';
+                      }
+                    }
+                    return InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SpecificJobPage(
+                              jobId: job['id'].toString(),
+                              specializationId: job['specialization']['id'].toString(), 
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                        padding: EdgeInsets.all(12.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 3,
+                              blurRadius: 5,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            job['title'],
+                            style: TextStyle(
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                job['description'],
+                                style: TextStyle(
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              Text(
+                                'Created at: $formattedDate',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Text(
+                                'Distance: ${distance}',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                message,
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          trailing: Text(
+                            'Budget: ${job['expected_budget']} \$',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
-          ],
+             Center(
+                      child: TextButton(
+                        onPressed: () {
+                          fetchJobs(page: currentPage + 1);
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.black,
+                          backgroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20), // تكبير حجم الزر
+                        ),
+                        child: Text('Load More', style: TextStyle(fontSize: 18)), // تكبير حجم النص
+                      ),
+                    ),
+            ],
+          ),
         ),
-        trailing: Text(
-          'Budget: ${job['expected_budget']} \$',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-          ),
-        ),
-      ),
-    );
-  },
-),
-),
-  ],
-            ),
-          ),
-        ],
-      ),
+      ],
+    ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,

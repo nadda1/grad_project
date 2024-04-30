@@ -4,6 +4,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'main.dart';
 import 'navigation_service.dart';
+import 'contracts_page.dart';
+import 'clientJobs.dart';
+
 
 final NavigationService navigationService = NavigationService();
 
@@ -18,11 +21,13 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   String _name = 'Loading...';
   String _email = 'Loading...';
+  String? role;
 
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
+    _loadUserRole();
   }
 
   Future<void> _loadUserProfile() async {
@@ -35,6 +40,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       print('Error loading user profile: $e');
     }
+  }
+  Future<void> _loadUserRole() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    role = prefs.getString('role');
   }
 
 Future<void> _logout() async {
@@ -207,7 +216,30 @@ Future<void> _logout() async {
                   child: const Text('Change Password'),
                 ),
               ),
-              Padding(
+              role=="freelancer"? Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ContractsPage()),
+                    );
+                  },
+                  child: const Text('My Contracts'),
+                ),
+              ):Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ClientJobsPage()),
+                    );
+                  },
+                  child: const Text('my posted jobs'),
+                ),
+              ),
+               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: ElevatedButton(
                   onPressed: _logout,
