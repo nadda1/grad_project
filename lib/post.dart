@@ -9,6 +9,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 
 class Post extends StatefulWidget {
+  final Function onJobPosted; 
+  Post({Key? key, required this.onJobPosted}) : super(key: key);
   @override
   _PostState createState() => _PostState();
 }
@@ -54,19 +56,21 @@ class _PostState extends State<Post> {
     }
 
     var uri = Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/jobs');
-    var request = http.MultipartRequest('POST', uri)
-      ..headers.addAll({'Authorization': 'Bearer $token'})
-      ..fields['title'] = _titleController.text
-      ..fields['specialization_id'] = _specialization_id.text
-      ..fields['description'] = _descriptionController.text
-      ..fields['required_skills[]'] = jsonEncode(_skillsController.text.split(',').map((skill) => skill.trim()).toList())
-      ..fields['expected_budget'] = _budgetController.text
-      ..fields['expected_duration'] = _durationController.text
-      ..fields['type'] = _typeController.text
-      ..fields['location_type'] = _locationTypeController.text
-      ..fields['longitude'] = _longitudeController.text
-      ..fields['latitude'] = _latitudeController.text
-      ..fields['address'] = _addressController.text;
+  var request = http.MultipartRequest('POST', uri)
+    ..headers.addAll({'Authorization': 'Bearer $token'})
+    ..fields['title'] = _titleController.text
+    ..fields['specialization_id'] = _specialization_id.text
+    ..fields['description'] = _descriptionController.text
+    ..fields['expected_budget'] = _budgetController.text
+    ..fields['expected_duration'] = _durationController.text
+    ..fields['type'] = _typeController.text
+    ..fields['location_type'] = _locationTypeController.text
+    ..fields['longitude'] = _longitudeController.text
+    ..fields['latitude'] = _latitudeController.text
+    ..fields['address'] = _addressController.text;
+    for (String skill in _skillsController.text.split(',').map((skill) => skill.trim())) {
+    request.fields['required_skills[]'] = skill;
+  }
 
     if (_pickedFiles != null) {
       for (var file in _pickedFiles!) {
@@ -82,6 +86,7 @@ class _PostState extends State<Post> {
 
     if (response.statusCode == 200) {
       showSuccessDialog('Job posted successfully.');
+       widget.onJobPosted();
     } else {
       try {
         Map<String, dynamic> decodedResponseBody = jsonDecode(responseBody);

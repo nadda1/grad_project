@@ -67,6 +67,9 @@ class _MyHomePageState extends State<MyHomePage> {
     _loadUserRole();
     fetchJobs();
   }
+  void refreshJobList() {
+  fetchJobs(); // Assuming fetchJobs is the method that fetches all jobs
+}
   void _calculateDistanceForAllJobs(String latStr, String longStr) {
     setState(() {
       filteredJobs = filteredJobs.map((job) {
@@ -527,7 +530,14 @@ class _MyHomePageState extends State<MyHomePage> {
               IconButton(
                 icon: Icon(Icons.add, color: Color(0xFF343ABA)),
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => Post()));
+                 Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Post(
+                      onJobPosted: refreshJobList, // Pass the callback here
+                    ),
+                  ),
+                );
                 },
               ),
             IconButton(
@@ -573,6 +583,7 @@ class _FavIconButtonState extends State<FavIconButton> {
 
     isFavorited = checkfav();
   }
+  
   Future<String?> _getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
