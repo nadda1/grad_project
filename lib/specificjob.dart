@@ -297,7 +297,7 @@ void showFreelancersPopup(BuildContext context) async {
 Widget buildSkillsCard(List<dynamic> skills) {
   return Card(
     margin: const EdgeInsets.symmetric(vertical: 8.0),
-    color: Colors.deepPurple, // You can customize the background color
+   color: Color.fromARGB(255, 255, 255, 255),  // You can customize the background color
     child: Padding(
       padding: const EdgeInsets.all(8.0),
       child: Wrap(
@@ -305,7 +305,7 @@ Widget buildSkillsCard(List<dynamic> skills) {
         runSpacing: 6.0, // Vertical space between chips
         children: skills.map((skill) => Chip(
           label: Text(skill, style: TextStyle(color: Colors.white)),
-          backgroundColor: Colors.deepPurpleAccent,
+          backgroundColor: const Color.fromARGB(255, 0, 0, 0),
         )).toList(),
       ),
     ),
@@ -314,7 +314,7 @@ Widget buildSkillsCard(List<dynamic> skills) {
 Widget buildCard(String details) {
   return Card(
     margin: const EdgeInsets.symmetric(vertical: 8.0),
-    color: Colors.deepPurple, 
+    color: Color.fromARGB(255, 255, 255, 255), 
     child: Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -330,7 +330,7 @@ Widget buildCard(String details) {
                   details,
                   style: TextStyle(color: Colors.white),
                 ),
-                backgroundColor: Colors.deepPurpleAccent,
+                backgroundColor: const Color.fromARGB(255, 0, 0, 0),
               ),
             ],
           ),
@@ -346,12 +346,12 @@ Widget buildCard(String details) {
 Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
-      backgroundColor: Color.fromARGB(255, 0, 13, 24),
-      title: Text('Job Details', style: TextStyle(color: Colors.white)),
-      centerTitle: true,
-      elevation: 0,
+       backgroundColor: Color.fromARGB(255, 242, 242, 242),
+        title: Text('Job Details', style: TextStyle(color: Color(0xFF343ABA),)), // Blue color for the title
+        centerTitle: true,
+        elevation: 0,
     ),
-    backgroundColor: const Color.fromARGB(255, 0, 46, 83),
+     backgroundColor: Color.fromARGB(255, 242, 242, 242),
     body: Padding(
       padding: const EdgeInsets.all(12.0),
       child: ListView(
@@ -386,8 +386,8 @@ Widget build(BuildContext context) {
             child: Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromARGB(255, 224, 79, 53), // Customize button color
-                  foregroundColor: Colors.white, // Customize text color
+                  backgroundColor: Color.fromARGB(255, 224, 79, 53), 
+                  foregroundColor: Colors.white, 
                 ),
                 onPressed: () => showApplicationDialog( context),
                 child: Text('apply for a job', style: TextStyle(fontSize: 16)),
@@ -395,10 +395,10 @@ Widget build(BuildContext context) {
             ),
           ),
           
-          if (userRole == 'client' && jobDetails.containsKey('applications'))
+          if (  jobDetails.containsKey('applications'))
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
-              child: Text('The Applicants', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text('The Applicants', style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0), fontSize: 18, fontWeight: FontWeight.bold)),
             ),
           if (userRole == 'client' && jobDetails.containsKey('applications'))
             ...jobDetails['applications'].map((application) => buildApplicationCard(
@@ -421,7 +421,7 @@ Widget build(BuildContext context) {
 
 Widget buildApplicationCard(String freelancer, String bid, String duration, String coverLetter, String applicationSlug) {
   return Card(
-    color: Colors.lightBlueAccent,
+    color: const Color.fromARGB(255, 255, 255, 255),
     margin: const EdgeInsets.symmetric(vertical: 8.0),
     child: ListTile(
       title: Text('Freelancer: $freelancer', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -464,7 +464,7 @@ Widget buildApplicationCardForFreelance(String freelancer, String coverLetter) {
   }
 
   return Card(
-    color: Colors.lightBlueAccent,
+    color: const Color.fromARGB(255, 255, 255, 255),
     margin: const EdgeInsets.symmetric(vertical: 8.0),
     child: ListTile(
       title: Text('Freelancer: $freelancer', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -480,14 +480,14 @@ Widget buildApplicationCardForFreelance(String freelancer, String coverLetter) {
     ),
   );
 }
-Widget buildDetailCard(String title, String content, Color color) {
-  return Card(
-    margin: const EdgeInsets.symmetric(vertical: 8.0),
-    child: ListTile(
-      tileColor: color.withAlpha(50),
-      title: Text(title, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
-      subtitle: Text(content, style: TextStyle(color: Colors.black87, fontSize: 14)),
-    ),
-  );
-}
+Widget buildDetailCard(String title, String content) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ListTile(
+        tileColor: Colors.white,
+        title: Text(title, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+        subtitle: Text(content, style: TextStyle(color: Colors.black87, fontSize: 14)),
+      ),
+    );
+  }
 }

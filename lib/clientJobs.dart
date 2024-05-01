@@ -53,6 +53,10 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
     }
   }
 
+  void navigateToEditJob(String jobId, String specializationId) {
+    // تنفيذ التنقل إلى صفحة التعديل هنا
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,7 +82,18 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(job['title'], style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(job['title'], style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
+                        IconButton(
+                          icon: Icon(Icons.edit),
+                          onPressed: () {
+                            navigateToEditJob(job['id'].toString(), job['specialization']['id'].toString());
+                          },
+                        ),
+                      ],
+                    ),
                     SizedBox(height: 8.0),
                     Text(job['description'], style: TextStyle(fontSize: 14.0)),
                   ],

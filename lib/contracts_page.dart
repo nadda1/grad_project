@@ -71,6 +71,57 @@ class _ContractsPageState extends State<ContractsPage> {
   });
 }
 
+Future<void> showChangeRequestDialog(String jobSlug) async {
+  TextEditingController bidController = TextEditingController();
+  TextEditingController durationController = TextEditingController();
+
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // user must tap button to close the dialog
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Request Change'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              TextField(
+                controller: bidController,
+                decoration: InputDecoration(
+                  labelText: 'New Bid (new bid)',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: durationController,
+                decoration: InputDecoration(
+                  labelText: 'New Duration (days)',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          TextButton(
+            child: Text('Submit'),
+            onPressed: () {
+              if (bidController.text.isNotEmpty && durationController.text.isNotEmpty) {
+                requestChange(jobSlug, bidController.text, durationController.text);
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
 
 
   Future<void> requestCancel(String jobSlug) async {
@@ -90,6 +141,63 @@ class _ContractsPageState extends State<ContractsPage> {
     if (response.statusCode == 201) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Request to Cancel sent successfully'),
+        backgroundColor: Colors.green,
+      ));
+    } else {
+      var responseBody = json.decode(response.body);
+      var errorMessage = responseBody['message'] ?? 'Failed to process your request';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(errorMessage),
+        backgroundColor: Colors.red,
+      ));
+    }
+  }
+  Future<void> requestChange(String jobSlug, String newBid, String newDuration) async {
+  String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-change/$jobSlug';
+  final response = await http.post(
+    Uri.parse(url),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $authToken'
+    },
+    body: jsonEncode({
+      'type': 'change',
+      'new_bid': newBid,
+      'new_duration': newDuration
+    }),
+  );
+
+  if (response.statusCode == 201) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Request to change sent successfully'),
+      backgroundColor: Colors.green,
+    ));
+  } else {
+    var responseBody = json.decode(response.body);
+    var errorMessage = responseBody['message'] ?? 'Failed to process your request';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(errorMessage),
+      backgroundColor: Colors.red,
+    ));
+  }
+}
+
+  Future<void> requestSubmit(String jobSlug) async {
+    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-submit/$jobSlug';
+    final response = await http.put(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken'
+      },
+      body: jsonEncode({
+        'type': 'submit',
+       
+      }),
+    );
+    if (response.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Request to submit sent successfully'),
         backgroundColor: Colors.green,
       ));
     } else {
@@ -152,12 +260,12 @@ class _ContractsPageState extends State<ContractsPage> {
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
                       ),
                       ElevatedButton(
-                        onPressed: () {}, 
-                        child: Text('Request to Change'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                      ),
+                      onPressed: () => showChangeRequestDialog(job['slug']),
+                      child: Text('Request to Change'),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                    ),
                       ElevatedButton(
-                        onPressed: () {}, 
+                        onPressed: () => requestSubmit(job['slug']),
                         child: Text('Request to Submit'),
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                       ),
