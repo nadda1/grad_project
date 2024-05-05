@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SpecificJobPage extends StatefulWidget {
   final String jobId;
-  final String specializationId; // Add this line
+  final String specializationId; 
 
   SpecificJobPage({Key? key, required this.jobId, required this.specializationId}) : super(key: key); // Update this line
 
@@ -161,7 +161,7 @@ void showFreelancersPopup(BuildContext context) async {
       'bid': int.parse(bid),
       'duration': int.parse(duration),
       'cover_letter': coverLetter,
-      'job_id': widget.jobId, // Assuming jobId is accessible from this context
+      'job_id': widget.jobId, 
     }),
   );
 
@@ -183,7 +183,6 @@ void showFreelancersPopup(BuildContext context) async {
   Future<void> _loadUserid() async {
   final prefs = await SharedPreferences.getInstance();
   setState(() {
-    // استخدام getInt للحصول على القيمة كعدد صحيح
     userid = prefs.getInt('user_id')?.toString();
   });
 }
@@ -340,85 +339,6 @@ Widget buildCard(String details) {
   );
 }
 
-
-
-  @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-       backgroundColor: Color.fromARGB(255, 242, 242, 242),
-        title: Text('Job Details', style: TextStyle(color: Color(0xFF343ABA),)), // Blue color for the title
-        centerTitle: true,
-        elevation: 0,
-    ),
-     backgroundColor: Color.fromARGB(255, 242, 242, 242),
-    body: Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: ListView(
-        children: <Widget>[
-          if (jobDetails.containsKey('title'))
-          buildCard( jobDetails['title'] ?? 'N/A'),
-          if (jobDetails.containsKey('address'))
-          buildCard( jobDetails['address'] ?? 'Location not available'),
-          if (jobDetails.containsKey('expected_budget'))
-          buildCard( '\$${jobDetails['expected_budget']}'),
-          if (jobDetails.containsKey('description'))
-          buildCard( jobDetails['description'] ?? 'Description not available'),
-          if (jobDetails.containsKey('required_skills'))
-            buildSkillsCard(jobDetails['required_skills']),
-         if (userRole == 'client' && userid==userIDjob && jobstatus!="hired") 
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0),
-            child: Center(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white, 
-                ),
-                onPressed: () => showFreelancersPopup(context),
-                child: Text('Suggestion Invite', style: TextStyle(fontSize: 16)),
-              ),
-            ),
-          ),
-         if (userRole == 'freelancer' && jobstatus!="hired")
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0),
-            child: Center(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromARGB(255, 224, 79, 53), 
-                  foregroundColor: Colors.white, 
-                ),
-                onPressed: () => showApplicationDialog( context),
-                child: Text('apply for a job', style: TextStyle(fontSize: 16)),
-              ),
-            ),
-          ),
-          
-          if (  jobDetails.containsKey('applications'))
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: Text('The Applicants', style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0), fontSize: 18, fontWeight: FontWeight.bold)),
-            ),
-          if (userRole == 'client' && jobDetails.containsKey('applications'))
-            ...jobDetails['applications'].map((application) => buildApplicationCard(
-          application['freelancer'] ?? 'N/A',
-          application['bid'].toString() ?? '0',
-          application['duration'].toString() ?? '0',
-          application['cover_letter'] ?? 'N/A',
-          application['slug']
-        )).toList(),
-          if (userRole == 'freelancer' && jobDetails.containsKey('applications'))
-            ...jobDetails['applications'].map((application) => buildApplicationCardForFreelance(
-          application['freelancer'] ?? 'N/A',
-          application['cover_letter'] ?? 'N/A',
-        )).toList(),
-                ],
-              ),
-            ),
-          );
-}
-
 Widget buildApplicationCard(String freelancer, String bid, String duration, String coverLetter, String applicationSlug) {
   return Card(
     color: const Color.fromARGB(255, 255, 255, 255),
@@ -480,14 +400,89 @@ Widget buildApplicationCardForFreelance(String freelancer, String coverLetter) {
     ),
   );
 }
-Widget buildDetailCard(String title, String content) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: ListTile(
-        tileColor: Colors.white,
-        title: Text(title, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
-        subtitle: Text(content, style: TextStyle(color: Colors.black87, fontSize: 14)),
-      ),
-    );
-  }
+
+
+  @override
+  
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+       backgroundColor: Color.fromARGB(255, 242, 242, 242),
+        title: Text('Job Details', style: TextStyle(color: Color(0xFF343ABA),)), // Blue color for the title
+        centerTitle: true,
+        elevation: 0,
+    ),
+     backgroundColor: Color.fromARGB(255, 242, 242, 242),
+    body: Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: ListView(
+        children: <Widget>[
+          if (jobDetails.containsKey('title'))
+          buildCard( jobDetails['title'] ?? 'N/A'),
+          if (jobDetails.containsKey('address'))
+          buildCard( jobDetails['address'] ?? 'Location not available'),
+          if (jobDetails.containsKey('expected_budget'))
+          buildCard( '\$${jobDetails['expected_budget']}'),
+          if (jobDetails.containsKey('description'))
+          buildCard( jobDetails['description'] ?? 'Description not available'),
+          // if (jobDetails.containsKey('required_skills'))
+          //   buildSkillsCard(jobDetails['required_skills']),
+          
+           
+         if (userRole == 'client' && userid==userIDjob && jobstatus!="hired") 
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white, 
+                ),
+                onPressed: () => showFreelancersPopup(context),
+                child: Text('Suggestion Invite', style: TextStyle(fontSize: 16)),
+              ),
+            ),
+          ),
+         if (userRole == 'freelancer' && jobstatus!="hired")
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color.fromARGB(255, 224, 79, 53), 
+                  foregroundColor: Colors.white, 
+                ),
+                onPressed: () => showApplicationDialog( context),
+                child: Text('apply for a job', style: TextStyle(fontSize: 16)),
+              ),
+            ),
+          ),
+          
+          if (  jobDetails.containsKey('applications'))
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Text('The Applicants', style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0), fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+          if (userRole == 'client' && jobDetails.containsKey('applications'))
+            ...jobDetails['applications'].map((application) => buildApplicationCard(
+          application['freelancer'] ?? 'N/A',
+          application['bid'].toString() ?? '0',
+          application['duration'].toString() ?? '0',
+          application['cover_letter'] ?? 'N/A',
+          application['slug']
+        )).toList(),
+          if (userRole == 'freelancer' && jobDetails.containsKey('applications'))
+            ...jobDetails['applications'].map((application) => buildApplicationCardForFreelance(
+          application['freelancer'] ?? 'N/A',
+          application['cover_letter'] ?? 'N/A',
+        )).toList(),
+                ],
+              ),
+            ),
+          );
+}
+
+
+
+
 }

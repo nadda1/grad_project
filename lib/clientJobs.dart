@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'specificjob.dart';
+import 'specificjob.dart'; // Make sure this import path is correct for navigation to work
 
 class ClientJobsPage extends StatefulWidget {
   @override
@@ -11,180 +11,110 @@ class ClientJobsPage extends StatefulWidget {
 
 class _ClientJobsPageState extends State<ClientJobsPage> {
   List jobs = [];
-  int? clientId;
 
   @override
   void initState() {
     super.initState();
-    loadClientId();
-  }
-
-  Future<void> loadClientId() async {
-    final prefs = await SharedPreferences.getInstance();
-    clientId = prefs.getInt('user_id');
     fetchJobs();
   }
 
   Future<void> fetchJobs() async {
-    int currentPage = 1;
-    bool hasMore = true;
-
-    while (hasMore) {
-      var url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$currentPage';
-      var response = await http.get(Uri.parse(url));
-
-      if (response.statusCode == 200) {
-        var data = json.decode(response.body)['data'];
-        var newJobs = data.where((job) => job['client']['id'] == clientId).toList();
-
-        setState(() {
-          jobs.addAll(newJobs);
-        });
-
-        if (newJobs.isEmpty) {
-          hasMore = false;
-        } else {
-          currentPage++;
-        }
-      } else {
-        print('Failed to load jobs');
-        hasMore = false; 
-      }
-    }
-  }
-
-  Future<void> updateJobDetails(String jobId, Map<String, dynamic> updatedData) async {
-    var url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/$jobId';
-
     final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');  // Assuming the token is stored with key 'auth_token'
-
+    String? token = prefs.getString('token');  // Assuming the token is stored with key 'token'
+    var url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs';
     var headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',  // Include the token in the header
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
     };
-
-    var response = await http.put(
-        Uri.parse(url),
-        headers: headers,
-        body: json.encode(updatedData),
-    );
-
+    var response = await http.get(Uri.parse(url), headers: headers);
     if (response.statusCode == 200) {
-        print('Job updated successfully.');
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Job updated successfully.'))); // Success message
+      var data = json.decode(response.body)['data'];
+      setState(() {
+        jobs.addAll(data);
+      });
     } else {
-        var responseBody = json.decode(response.body);
-        var errorMessage = responseBody['message'];
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));  // Show the error message from server
+      print('Failed to load jobs');
     }
-}
-
-
-  void showEditJobDialog(Map job) {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-            TextEditingController titleController = TextEditingController(text: job['title']);
-            TextEditingController descriptionController = TextEditingController(text: job['description']);
-            TextEditingController skillsController = TextEditingController(text: job['required_skills'].join(', '));
-            TextEditingController attachmentsController = TextEditingController(text: ".pdf");
-            TextEditingController budgetController = TextEditingController(text: job['expected_budget'].toString());
-            TextEditingController durationController = TextEditingController(text: job['expected_duration'].toString());
-
-            return AlertDialog(
-                title: Text('Edit Job'),
-                content: SingleChildScrollView(
-                    child: ListBody(
-                        children: <Widget>[
-                            TextField(
-                                controller: titleController,
-                                decoration: InputDecoration(hintText: "Title"),
-                            ),
-                            TextField(
-                                controller: descriptionController,
-                                decoration: InputDecoration(hintText: "Description"),
-                            ),
-                            TextField(
-                                controller: skillsController,
-                                decoration: InputDecoration(hintText: "Required Skills (comma separated)"),
-                            ),
-                            TextField(
-                                controller: attachmentsController,
-                                decoration: InputDecoration(hintText: "attachments"),
-                            ),
-                            TextField(
-                                controller: budgetController,
-                                decoration: InputDecoration(hintText: "Expected Budget"),
-                                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                            ),
-                            TextField(
-                                controller: durationController,
-                                decoration: InputDecoration(hintText: "Expected Duration (days)"),
-                                keyboardType: TextInputType.number,
-                            ),
-                        ],
-                    ),
-                ),
-                actions: <Widget>[
-                    TextButton(
-                        child: Text('Update'),
-                        onPressed: () {
-                            Map<String, dynamic> updatedData = {
-                                "title": titleController.text,
-                                "description": descriptionController.text,
-                                "required_skills": skillsController.text.split(',').map((skill) => skill.trim()).toList(),
-                                "expected_budget": int.tryParse(budgetController.text),
-                                "expected_duration": int.tryParse(durationController.text),
-                                "attachments": attachmentsController.text.split(',').map((e) => e.trim()).toList(),
-                            };
-                            updateJobDetails(job['id'].toString(), updatedData);
-                            Navigator.of(context).pop(); // Close the dialog
-                        },
-                    ),
-                ],
-            );
-        },
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Client Jobs'),
+        title: Text('Contracts'),
+        backgroundColor: Colors.blueGrey,
       ),
-      body: jobs.isEmpty ? Center(child: Text("No jobs found for this client.")) :
-      ListView.builder(
+      body: ListView.builder(
         itemCount: jobs.length,
         itemBuilder: (context, index) {
-          var job = jobs[index];
-          return Card(
-            margin: EdgeInsets.all(8.0),
-            child: InkWell(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => SpecificJobPage(
-                  jobId: job['id'].toString(),
-                  specializationId: job['specialization']['id'].toString(),
-                )));
-              },
+          final job = jobs[index];
+          List hiredApplications = job['applications'].where((app) => app['status'] == 'hired').toList();
+
+          return InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SpecificJobPage(
+                    jobId: job['id'].toString(),
+                    specializationId: job['specialization']['id'].toString(),
+                  ),
+                ),
+              );
+            },
+            child: Card(
+              elevation: 4,
+              margin: EdgeInsets.all(10),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(job['title'], style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
-                        IconButton(
-                          icon: Icon(Icons.edit),
-                          onPressed: () => showEditJobDialog(job),
-                        ),
-                      ],
+                  children: [
+                    Text('Job Title: ${job['title']}', style: TextStyle(fontWeight: FontWeight.bold)),
+                    SizedBox(height: 10),
+                    Text('Client Name: ${job['client']['name']}'),
+                    Text('Specialization: ${job['specialization']['name']}'),
+                    Text('Description: ${job['description']}'),
+                    Text('Expected Budget: \$${job['expected_budget']}'),
+                    Text('Expected Duration: ${job['expected_duration']} days'),
+                    Text('Location: ${job['address']}'),
+                    SizedBox(height: 10),
+                    Text('Required Skills:'),
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 4.0,
+                      children: job['required_skills'].map<Widget>((skill) {
+                        return Chip(
+                          label: Text(skill),
+                          backgroundColor: Colors.blueGrey[100],
+                        );
+                      }).toList(),
                     ),
-                    SizedBox(height: 8.0),
-                    Text(job['description'], style: TextStyle(fontSize: 14.0)),
+                    SizedBox(height: 10),
+                    Text('Attachments:'),
+                    if (job['attachments'] != null && job['attachments'].isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: job['attachments'].map<Widget>((attachment) {
+                          return Text(attachment);
+                        }).toList(),
+                      ),
+                    SizedBox(height: 10),
+                    Text('hired Application:'),
+                    Column(
+                      children: hiredApplications.map<Widget>((app) {
+                        return ListTile(
+                          title: Text('Freelancer: ${app['freelancer']}'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Bid: \$${app['bid']}'),
+                              Text('Duration: ${app['duration']} days'),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ],
                 ),
               ),

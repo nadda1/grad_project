@@ -70,27 +70,58 @@ class _MyHomePageState extends State<MyHomePage> {
   void refreshJobList() {
   fetchJobs(); // Assuming fetchJobs is the method that fetches all jobs
 }
-  void _calculateDistanceForAllJobs(String latStr, String longStr) {
+Future<void> fetchJobs({String specializationId = '', int page = 1, bool fetchAll = false}) async {
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+  String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
+  if (specializationId.isNotEmpty) {
+    url += '&specializationId=$specializationId';
+  }
+
+  List<dynamic> allJobs = [];
+  
+  if (token != null) {
+    do {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        var currentPageData = json.decode(response.body)['data'];
+        allJobs.addAll(currentPageData);
+        if (!fetchAll || currentPageData.isEmpty) {
+          break; // Stop if not fetching all or no more data
+        }
+        page++; // Increment page to fetch next
+        url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
+        if (specializationId.isNotEmpty) {
+          url += '&specializationId=$specializationId';
+        }
+      } else {
+        print('Failed to fetch jobs');
+        break;
+      }
+    } while (fetchAll);
+
     setState(() {
-      filteredJobs = filteredJobs.map((job) {
-        job['distance'] = calculateDistance(latStr, longStr, job['latitude'] as String?, job['longitude'] as String?);
-        return job;
+      jobList = allJobs;
+      filteredJobs = List.from(jobList); // Update filtered jobs
+      currentPage = page; // Update the current page
+    });
+  }
+}
+
+  void _filterJobs() {
+    String query = _searchController.text.toLowerCase();
+    setState(() {
+      filteredJobs = jobList.where((job) {
+        return job['title'].toLowerCase().contains(query);
       }).toList();
-
-      filteredJobs.sort((a, b) {
-        String distanceA = a['distance'];
-        String distanceB = b['distance'];
-
-        double distanceANumeric = distanceA == 'Location not set' ? double.infinity : double.parse(distanceA.split(' ')[0]);
-        double distanceBNumeric = distanceB == 'Location not set' ? double.infinity : double.parse(distanceB.split(' ')[0]);
-
-        return distanceANumeric.compareTo(distanceBNumeric);
-      });
     });
   }
 
-
-  String calculateDistance(String? userLatStr, String? userLongStr, String? jobLatStr, String? jobLongStr) {
+String calculateDistance(String? userLatStr, String? userLongStr, String? jobLatStr, String? jobLongStr) {
     if (userLatStr == null || userLongStr == null || userLatStr.isEmpty || userLongStr.isEmpty ||
         jobLatStr == null || jobLongStr == null) {
       return 'Location not set';
@@ -105,50 +136,44 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void _filterJobs() {
-    String query = _searchController.text.toLowerCase();
-    setState(() {
-      filteredJobs = jobList.where((job) {
-        return job['title'].toLowerCase().contains(query);
-      }).toList();
+  void _calculateDistanceForAllJobs(String latStr, String longStr) {
+  if (jobList.isEmpty) {
+    fetchJobs(fetchAll: true).then((_) {
+      applyDistanceFilter(latStr, longStr);
     });
+  } else {
+    applyDistanceFilter(latStr, longStr);
   }
+}
+void applyDistanceFilter(String latStr, String longStr) {
+  setState(() {
+    filteredJobs = jobList.map((job) {
+      job['distance'] = calculateDistance(latStr, longStr, job['latitude'] as String?, job['longitude'] as String?);
+      return job;
+    }).toList();
+
+    filteredJobs.sort((a, b) {
+      String distanceA = a['distance'];
+      String distanceB = b['distance'];
+
+      double distanceANumeric = distanceA == 'Location not set' ? double.infinity : double.parse(distanceA.split(' ')[0]);
+      double distanceBNumeric = distanceB == 'Location not set' ? double.infinity : double.parse(distanceB.split(' ')[0]);
+
+      return distanceANumeric.compareTo(distanceBNumeric);
+    });
+  });
+}
+
+
+  
+  
 
   String formatDate(String dateString) {
     DateTime dateTime = DateTime.parse(dateString);
     return '${dateTime.year}-${dateTime.month}-${dateTime.day}';
   }
 
-  Future<void> fetchJobs({String specializationId = '', int page = 1}) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
-    if (specializationId.isNotEmpty) {
-      url += '&specializationId=$specializationId';
-    }
-
-    if (token != null) {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          if (page == 1) {
-            jobList = json.decode(response.body)['data'];
-          } else {
-            jobList.addAll(json.decode(response.body)['data']);
-          }
-          filteredJobs = List.from(jobList); // Update filtered jobs too
-          currentPage = page; // Update the current page
-        });
-      } else {
-        print('Failed to fetch jobs');
-      }
-    }
-  }
-
+  
 
 
   Future<void> _loadUserRole() async {
@@ -578,7 +603,6 @@ class _FavIconButtonState extends State<FavIconButton> {
   @override
   void initState() {
     super.initState();
-    // Set the initial favorited state based on the provided isBookmarked value
     _fetchWishlistJobs();
 
     isFavorited = checkfav();
