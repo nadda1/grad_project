@@ -104,7 +104,7 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
                     Column(
                       children: hiredApplications.map<Widget>((app) {
                         return ListTile(
-                          title: Text('Freelancer: ${app['freelancer']}'),
+                          title: Text('Freelancer: ${app['freelancer']['name']}'),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [

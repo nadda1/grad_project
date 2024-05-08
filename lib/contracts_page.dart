@@ -211,7 +211,7 @@ Widget build(BuildContext context) {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Freelancer: ${job['freelancer']}', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text('Freelancer: ${job['freelancer']['name']}', style: TextStyle(fontWeight: FontWeight.bold)),
                 SizedBox(height: 10),
                 Text('Bid: \$${job['bid']}'),
                 Text('Duration: ${job['duration']} days'),
