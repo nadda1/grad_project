@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:grad_project/recommendtion.dart';
 import 'package:grad_project/wishlist.dart';
 import 'package:latlong2/latlong.dart';
 import 'dart:convert';
@@ -56,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<dynamic> jobList = [];
   List<dynamic> filteredJobs = [];
   int currentPage = 1;
+  List<Widget> jobCards = [];
 
 
   @override
@@ -102,89 +104,52 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     }
   }
+  Future<void> fetchData(String specializationId ) async {
+    final String apiUrl = 'https://1nadda.pythonanywhere.com/recommend';
+    List<String> skills = ["python", "machine learning", "data analysis"];
 
-
-  Future<void> getRecommendedJobs() async {
     try {
-      // Define your endpoint URL
-      String url = '';
-
-      // Define the user's skills
-      Map<String, dynamic> userSkills = {'skills': ['Graphic design', 'logo design']};
-
-      // Make a POST request with user skills
-      final response = await http.post(
-        Uri.parse(url),
+      final http.Response response = await http.post(
+        Uri.parse(apiUrl),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
-        body: jsonEncode(userSkills),
+        body: jsonEncode({'skills': skills}),
       );
 
       if (response.statusCode == 200) {
-        // Parse the JSON response
-        Map<String, dynamic> responseData = jsonDecode(response.body);
+        // Replace "NaN" with null in the response body
+        String responseBody = response.body;
 
-        // Extract recommended jobs
-        List<dynamic> recommendedJobs = responseData['recommended_jobs'];
+        // Parse recommended jobs from the response
+        List<dynamic> recommendedJobs = jsonDecode(responseBody)["recommended_jobs"];
 
-        // Display recommended jobs as cards
-        List<Widget> jobCards = [];
-        for (var job in recommendedJobs) {
-          String title = job[1];
-          String description = job[3];
-          double expectedBudget = job[5];
+        // Update jobList with recommended jobs
+        setState(() {
+          buildJobCardsFromRecommendedJobs(recommendedJobs);
+          filteredJobs = recommendedJobs;
 
-          // Create card for each job
-          Widget jobCard = Card(
-            margin: EdgeInsets.all(8.0),
-            child: ListTile(
-              title: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF343ABA),
-                ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    description,
-                    style: TextStyle(
-                      color: Colors.black87,
-                    ),
-                  ),
-                  Text(
-                    'Budget: \$${expectedBudget.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
-              // Add any other details as needed
-            ),
-          );
-          jobCards.add(jobCard);
-        }
-
-        // Update UI with job cards
-        if (mounted) {
-          setState(() {
-            jobCards = jobCards;
-          });
-        }
+        });
       } else {
-        print('Error: ${response.statusCode}');
-        print(response.body);
+        print('Request failed with status: ${response.statusCode}');
       }
-    } catch (e) {
-      print('Error: $e');
+    } catch (error) {
+      print('Error: $error');
     }
   }
+  void buildJobCardsFromRecommendedJobs(List<dynamic> recommendedJobs) {
+    setState(() {
+      jobCards = recommendedJobs.map<Widget>((job) {
+        return Card(
+          child: ListTile(
+            title: Text(job[1]), // Job title
+            subtitle: Text(job[3]), // Job description
+          ),
+        );
+      }).toList();
+    });
+  }
+
 
 
 
@@ -420,7 +385,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Row(
                 children: [
                   Jobs("all-inclusive.png", "all jobs", "", (id) => fetchJobs(specializationId: id)),
-                  Jobs("social-media.png", "Recommended", "", (_) => getRecommendedJobs()),
+                  Jobs("social-media.png", "Recommended", "",  (id) => fetchData(id)),
                   Jobs("coffee.png", "web", "1", (id) => fetchJobs(specializationId: id)),
                   Jobs("delivery-man.png", "mobile", "2", (id) => fetchJobs(specializationId: id)),
                   Jobs("baby.png", "graphic", "3", (id) => fetchJobs(specializationId: id)),
@@ -613,6 +578,12 @@ class _MyHomePageState extends State<MyHomePage> {
               title: Text('Change password'),
               onTap: () {
                 Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text('Recommendation'),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => RecommendedJobsWidget()));
               },
             ),
           ],
