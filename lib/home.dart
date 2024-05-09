@@ -72,46 +72,48 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> fetchJobs({String specializationId = '', int page = 1, bool fetchAll = false}) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId';
-    if (specializationId.isEmpty) {
-      url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization';
-    }
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+  String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId?page=$page';
+  if (specializationId.isEmpty) {
+    url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
+  }
 
-    List<dynamic> allJobs = [];
+  if (token != null) {
+    var response = await http.get(
+      Uri.parse(url),
+      headers: {'Authorization': 'Bearer $token'},
+    );
 
-    if (token != null) {
-      do {
-        final response = await http.get(
-          Uri.parse(url),
-          headers: {'Authorization': 'Bearer $token'},
-        );
-
-        if (response.statusCode == 200) {
-          var currentPageData = json.decode(response.body)['data'];
-          allJobs.addAll(currentPageData);
-          if (!fetchAll || currentPageData.isEmpty) {
-            break; // Stop if not fetching all or no more data
-          }
-          page++; // Increment page to fetch next
-          url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId';
+    if (response.statusCode == 200) {
+      var currentPageData = json.decode(response.body)['data'];
+      if (fetchAll) {
+        while (!currentPageData.isEmpty) {
+          jobList.addAll(currentPageData); // Append new jobs to the existing list
+          page++;
+          url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId?page=$page';
           if (specializationId.isEmpty) {
-            url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization';
+            url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
           }
-        } else {
-          print('Failed to fetch jobs');
-          break;
+          response = await http.get(
+            Uri.parse(url),
+            headers: {'Authorization': 'Bearer $token'},
+          );
+          currentPageData = json.decode(response.body)['data'];
         }
-      } while (fetchAll);
+      } else {
+        jobList.addAll(currentPageData); // Append new jobs to the existing list
+        currentPage = page; // Update the current page
+      }
 
       setState(() {
-        jobList = allJobs;
-        filteredJobs = List.from(jobList); // Update filtered jobs
-        currentPage = page; // Update the current page
+        filteredJobs = List.from(jobList); // Update filtered jobs based on the complete list
       });
+    } else {
+      print('Failed to fetch jobs');
     }
   }
+}
 
   Future<void> getRecommendedJobs() async {
     try {
@@ -580,16 +582,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 Center(
                   child: TextButton(
-                    onPressed: () {
-                      fetchJobs(page: currentPage + 1);
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      backgroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20), // تكبير حجم الزر
+                      onPressed: () {
+                        fetchJobs(page: currentPage + 1); // Increment page number to fetch the next page
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        backgroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                      ),
+                      child: Text('Load More', style: TextStyle(fontSize: 18)),
                     ),
-                    child: Text('Load More', style: TextStyle(fontSize: 18)), // تكبير حجم النص
-                  ),
                 ),
               ],
             ),
