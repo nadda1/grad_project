@@ -68,49 +68,134 @@ class _MyHomePageState extends State<MyHomePage> {
     fetchJobs();
   }
   void refreshJobList() {
-  fetchJobs(); // Assuming fetchJobs is the method that fetches all jobs
-}
-Future<void> fetchJobs({String specializationId = '', int page = 1, bool fetchAll = false}) async {
-  final prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('token');
-  String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
-  if (specializationId.isNotEmpty) {
-    url += '&specializationId=$specializationId';
+    fetchJobs(); // Assuming fetchJobs is the method that fetches all jobs
   }
 
-  List<dynamic> allJobs = [];
-  
-  if (token != null) {
-    do {
-      final response = await http.get(
+  Future<void> fetchJobs({String specializationId = '', int page = 1, bool fetchAll = false}) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId';
+    if (specializationId.isEmpty) {
+      url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization';
+    }
+
+    List<dynamic> allJobs = [];
+
+    if (token != null) {
+      do {
+        final response = await http.get(
+          Uri.parse(url),
+          headers: {'Authorization': 'Bearer $token'},
+        );
+
+        if (response.statusCode == 200) {
+          var currentPageData = json.decode(response.body)['data'];
+          allJobs.addAll(currentPageData);
+          if (!fetchAll || currentPageData.isEmpty) {
+            break; // Stop if not fetching all or no more data
+          }
+          page++; // Increment page to fetch next
+          url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId';
+          if (specializationId.isEmpty) {
+            url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization';
+          }
+        } else {
+          print('Failed to fetch jobs');
+          break;
+        }
+      } while (fetchAll);
+
+      setState(() {
+        jobList = allJobs;
+        filteredJobs = List.from(jobList); // Update filtered jobs
+        currentPage = page; // Update the current page
+      });
+    }
+  }
+
+  Future<void> getRecommendedJobs() async {
+    try {
+      // Define your endpoint URL
+      String url = '';
+
+      // Define the user's skills
+      Map<String, dynamic> userSkills = {'skills': ['Graphic design', 'logo design']};
+
+      // Make a POST request with user skills
+      final response = await http.post(
         Uri.parse(url),
-        headers: {'Authorization': 'Bearer $token'},
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(userSkills),
       );
 
       if (response.statusCode == 200) {
-        var currentPageData = json.decode(response.body)['data'];
-        allJobs.addAll(currentPageData);
-        if (!fetchAll || currentPageData.isEmpty) {
-          break; // Stop if not fetching all or no more data
+        // Parse the JSON response
+        Map<String, dynamic> responseData = jsonDecode(response.body);
+
+        // Extract recommended jobs
+        List<dynamic> recommendedJobs = responseData['recommended_jobs'];
+
+        // Display recommended jobs as cards
+        List<Widget> jobCards = [];
+        for (var job in recommendedJobs) {
+          String title = job[1];
+          String description = job[3];
+          double expectedBudget = job[5];
+
+          // Create card for each job
+          Widget jobCard = Card(
+            margin: EdgeInsets.all(8.0),
+            child: ListTile(
+              title: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF343ABA),
+                ),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    'Budget: \$${expectedBudget.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+              // Add any other details as needed
+            ),
+          );
+          jobCards.add(jobCard);
         }
-        page++; // Increment page to fetch next
-        url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
-        if (specializationId.isNotEmpty) {
-          url += '&specializationId=$specializationId';
+
+        // Update UI with job cards
+        if (mounted) {
+          setState(() {
+            jobCards = jobCards;
+          });
         }
       } else {
-        print('Failed to fetch jobs');
-        break;
+        print('Error: ${response.statusCode}');
+        print(response.body);
       }
-    } while (fetchAll);
-
-    setState(() {
-      jobList = allJobs;
-      filteredJobs = List.from(jobList); // Update filtered jobs
-      currentPage = page; // Update the current page
-    });
+    } catch (e) {
+      print('Error: $e');
+    }
   }
-}
+
+
 
   void _filterJobs() {
     String query = _searchController.text.toLowerCase();
@@ -121,7 +206,7 @@ Future<void> fetchJobs({String specializationId = '', int page = 1, bool fetchAl
     });
   }
 
-String calculateDistance(String? userLatStr, String? userLongStr, String? jobLatStr, String? jobLongStr) {
+  String calculateDistance(String? userLatStr, String? userLongStr, String? jobLatStr, String? jobLongStr) {
     if (userLatStr == null || userLongStr == null || userLatStr.isEmpty || userLongStr.isEmpty ||
         jobLatStr == null || jobLongStr == null) {
       return 'Location not set';
@@ -137,43 +222,43 @@ String calculateDistance(String? userLatStr, String? userLongStr, String? jobLat
   }
 
   void _calculateDistanceForAllJobs(String latStr, String longStr) {
-  if (jobList.isEmpty) {
-    fetchJobs(fetchAll: true).then((_) {
+    if (jobList.isEmpty) {
+      fetchJobs(fetchAll: true).then((_) {
+        applyDistanceFilter(latStr, longStr);
+      });
+    } else {
       applyDistanceFilter(latStr, longStr);
-    });
-  } else {
-    applyDistanceFilter(latStr, longStr);
+    }
   }
-}
-void applyDistanceFilter(String latStr, String longStr) {
-  setState(() {
-    filteredJobs = jobList.map((job) {
-      job['distance'] = calculateDistance(latStr, longStr, job['latitude'] as String?, job['longitude'] as String?);
-      return job;
-    }).toList();
+  void applyDistanceFilter(String latStr, String longStr) {
+    setState(() {
+      filteredJobs = jobList.map((job) {
+        job['distance'] = calculateDistance(latStr, longStr, job['latitude'] as String?, job['longitude'] as String?);
+        return job;
+      }).toList();
 
-    filteredJobs.sort((a, b) {
-      String distanceA = a['distance'];
-      String distanceB = b['distance'];
+      filteredJobs.sort((a, b) {
+        String distanceA = a['distance'];
+        String distanceB = b['distance'];
 
-      double distanceANumeric = distanceA == 'Location not set' ? double.infinity : double.parse(distanceA.split(' ')[0]);
-      double distanceBNumeric = distanceB == 'Location not set' ? double.infinity : double.parse(distanceB.split(' ')[0]);
+        double distanceANumeric = distanceA == 'Location not set' ? double.infinity : double.parse(distanceA.split(' ')[0]);
+        double distanceBNumeric = distanceB == 'Location not set' ? double.infinity : double.parse(distanceB.split(' ')[0]);
 
-      return distanceANumeric.compareTo(distanceBNumeric);
+        return distanceANumeric.compareTo(distanceBNumeric);
+      });
     });
-  });
-}
+  }
 
 
-  
-  
+
+
 
   String formatDate(String dateString) {
     DateTime dateTime = DateTime.parse(dateString);
     return '${dateTime.year}-${dateTime.month}-${dateTime.day}';
   }
 
-  
+
 
 
   Future<void> _loadUserRole() async {
@@ -344,7 +429,8 @@ void applyDistanceFilter(String latStr, String longStr) {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  Jobs("coffee.png", "all jobs", "", (id) => fetchJobs(specializationId: id)),
+                  Jobs("all-inclusive.png", "all jobs", "", (id) => fetchJobs(specializationId: id)),
+                  Jobs("social-media.png", "Recommended", "", (_) => getRecommendedJobs()),
                   Jobs("coffee.png", "web", "1", (id) => fetchJobs(specializationId: id)),
                   Jobs("delivery-man.png", "mobile", "2", (id) => fetchJobs(specializationId: id)),
                   Jobs("baby.png", "graphic", "3", (id) => fetchJobs(specializationId: id)),
@@ -555,14 +641,14 @@ void applyDistanceFilter(String latStr, String longStr) {
               IconButton(
                 icon: Icon(Icons.add, color: Color(0xFF343ABA)),
                 onPressed: () {
-                 Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Post(
-                      onJobPosted: refreshJobList, // Pass the callback here
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Post(
+                        onJobPosted: refreshJobList, // Pass the callback here
+                      ),
                     ),
-                  ),
-                );
+                  );
                 },
               ),
             IconButton(
@@ -583,12 +669,13 @@ void applyDistanceFilter(String latStr, String longStr) {
     _locationController.dispose();
     super.dispose();
   }
+
+
 }
 class FavIconButton extends StatefulWidget {
   final Map<String, dynamic> job;
   final bool isBookmarked; // New property to indicate if the job is bookmarked
   final Function() updateUI;
-
 
   FavIconButton({required this.job, required this.isBookmarked, required this.updateUI});
 
@@ -599,6 +686,7 @@ class FavIconButton extends StatefulWidget {
 class _FavIconButtonState extends State<FavIconButton> {
   bool isFavorited = false;
   List<dynamic> wishlistJobs = [];
+  bool _isDisposed = false; // Track whether the widget is disposed
 
   @override
   void initState() {
@@ -607,7 +695,7 @@ class _FavIconButtonState extends State<FavIconButton> {
 
     isFavorited = checkfav();
   }
-  
+
   Future<String?> _getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
@@ -632,8 +720,6 @@ class _FavIconButtonState extends State<FavIconButton> {
       if (response.statusCode == 200) {
         setState(() {
           wishlistJobs = jsonDecode(response.body)['data'];
-
-
         });
       } else {
         print('Failed to fetch wishlist jobs. Status code: ${response.statusCode}');
@@ -642,7 +728,8 @@ class _FavIconButtonState extends State<FavIconButton> {
       print('Error: $e');
     }
   }
-  bool checkfav(){
+
+  bool checkfav() {
     var bookmark = wishlistJobs.firstWhere((bookmark) => bookmark['job']['id'] == widget.job['id'], orElse: () => null);
     if (bookmark != null) {
       isFavorited = true;
@@ -726,5 +813,11 @@ class _FavIconButtonState extends State<FavIconButton> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true; // Set disposed flag
+    super.dispose();
   }
 }

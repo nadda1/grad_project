@@ -3,9 +3,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'Messaging.dart';
+
 class SpecificJobPage extends StatefulWidget {
   final String jobId;
-  final String specializationId; 
+  final String specializationId;
+
 
   SpecificJobPage({Key? key, required this.jobId, required this.specializationId}) : super(key: key); // Update this line
 
@@ -15,10 +18,12 @@ class SpecificJobPage extends StatefulWidget {
 
 class _SpecificJobPageState extends State<SpecificJobPage> {
   Map<String, dynamic> jobDetails = {};
-    String? userIDjob;
+  Map<String, dynamic> freelancer={};
+  String? userIDjob;
     String? userRole;
     String? userid;
     String? jobstatus;
+    int freelancer_id=0;
 
 
   @override
@@ -116,6 +121,7 @@ void showFreelancersPopup(BuildContext context) async {
             itemCount: freelancers.length,
             itemBuilder: (BuildContext context, int index) {
               var freelancer = freelancers[index];
+
               return Card(
                 color: Colors.deepPurple,
                 child: ListTile(
@@ -339,7 +345,7 @@ Widget buildCard(String details) {
   );
 }
 
-Widget buildApplicationCard(String freelancer, String bid, String duration, String coverLetter, String applicationSlug) {
+Widget buildApplicationCard(String freelancer, int id, String bid, String duration, String coverLetter, String applicationSlug) {
   return Card(
     color: const Color.fromARGB(255, 255, 255, 255),
     margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -364,6 +370,23 @@ Widget buildApplicationCard(String freelancer, String bid, String duration, Stri
             child: Text('Hire'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.lightGreen,
+            ),
+          ),
+          SizedBox(width: 8), // Add some spacing between buttons
+          ElevatedButton(
+            onPressed: () {
+              // Navigate to message page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MessagePage(userid: id,username:freelancer),
+                  // Replace MessagePage with your message page
+                ),
+              );
+            },
+            child: Text('Contact'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue, // Change button color as needed
             ),
           ),
         ],
@@ -463,9 +486,12 @@ Widget build(BuildContext context) {
               padding: const EdgeInsets.only(top: 16.0),
               child: Text('The Applicants', style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0), fontSize: 18, fontWeight: FontWeight.bold)),
             ),
+
           if (userRole == 'client' && jobDetails.containsKey('applications'))
             ...jobDetails['applications'].map((application) => buildApplicationCard(
-          application['freelancer'] ?? 'N/A',
+
+            application['freelancer']['name'] ?? 'N/A',
+            application['freelancer']['id'] ?? 0,
           application['bid'].toString() ?? '0',
           application['duration'].toString() ?? '0',
           application['cover_letter'] ?? 'N/A',
@@ -473,7 +499,7 @@ Widget build(BuildContext context) {
         )).toList(),
           if (userRole == 'freelancer' && jobDetails.containsKey('applications'))
             ...jobDetails['applications'].map((application) => buildApplicationCardForFreelance(
-          application['freelancer'] ?? 'N/A',
+          application['freelancer']['name'] ?? 'N/A',
           application['cover_letter'] ?? 'N/A',
         )).toList(),
                 ],

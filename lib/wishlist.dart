@@ -149,6 +149,9 @@ class _WishlistPageState extends State<WishlistPage> {
                 ],
               ),
               onTap: () {
+
+                // Handle tapping on the job card if needed
+
               },
             ),
           );
@@ -156,4 +159,5 @@ class _WishlistPageState extends State<WishlistPage> {
       ),
     );
   }
+
 }
