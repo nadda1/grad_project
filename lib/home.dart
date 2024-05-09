@@ -75,6 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('token');
   String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId?page=$page';
+
   if (specializationId.isEmpty) {
     url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
   }
@@ -87,24 +88,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (response.statusCode == 200) {
       var currentPageData = json.decode(response.body)['data'];
-      if (fetchAll) {
-        while (!currentPageData.isEmpty) {
-          jobList.addAll(currentPageData); // Append new jobs to the existing list
-          page++;
-          url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId?page=$page';
-          if (specializationId.isEmpty) {
-            url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
-          }
-          response = await http.get(
-            Uri.parse(url),
-            headers: {'Authorization': 'Bearer $token'},
-          );
-          currentPageData = json.decode(response.body)['data'];
-        }
-      } else {
-        jobList.addAll(currentPageData); // Append new jobs to the existing list
-        currentPage = page; // Update the current page
+      if (fetchAll || page == 1) {
+        jobList.clear();  // Clear the job list before adding new data
       }
+      jobList.addAll(currentPageData); // Append new jobs to the list
+      currentPage = page; // Update the current page
 
       setState(() {
         filteredJobs = List.from(jobList); // Update filtered jobs based on the complete list
@@ -114,6 +102,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 }
+
 
   Future<void> getRecommendedJobs() async {
     try {
