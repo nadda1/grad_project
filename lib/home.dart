@@ -74,44 +74,35 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> fetchJobs({String specializationId = '', int page = 1, bool fetchAll = false}) async {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
-    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
-    if (specializationId.isNotEmpty) {
-      url += '&specializationId=$specializationId';
-    }
+    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId?page=$page';
 
-    List<dynamic> allJobs = [];
+    if (specializationId.isEmpty) {
+      url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
+    }
 
     if (token != null) {
-      do {
-        final response = await http.get(
-          Uri.parse(url),
-          headers: {'Authorization': 'Bearer $token'},
-        );
+      var response = await http.get(
+        Uri.parse(url),
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
-        if (response.statusCode == 200) {
-          var currentPageData = json.decode(response.body)['data'];
-          allJobs.addAll(currentPageData);
-          if (!fetchAll || currentPageData.isEmpty) {
-            break; // Stop if not fetching all or no more data
-          }
-          page++; // Increment page to fetch next
-          url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
-          if (specializationId.isNotEmpty) {
-            url += '&specializationId=$specializationId';
-          }
-        } else {
-          print('Failed to fetch jobs');
-          break;
+      if (response.statusCode == 200) {
+        var currentPageData = json.decode(response.body)['data'];
+        if (fetchAll || page == 1) {
+          jobList.clear();  // Clear the job list before adding new data
         }
-      } while (fetchAll);
-
-      setState(() {
-        jobList = allJobs;
-        filteredJobs = List.from(jobList); // Update filtered jobs
+        jobList.addAll(currentPageData); // Append new jobs to the list
         currentPage = page; // Update the current page
-      });
+
+        setState(() {
+          filteredJobs = List.from(jobList); // Update filtered jobs based on the complete list
+        });
+      } else {
+        print('Failed to fetch jobs');
+      }
     }
   }
+
 
   Future<void> getRecommendedJobs() async {
     try {
@@ -381,7 +372,6 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
