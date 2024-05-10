@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:grad_project/recommendtion.dart';
 import 'package:grad_project/wishlist.dart';
 import 'package:latlong2/latlong.dart';
 import 'dart:convert';
@@ -56,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<dynamic> jobList = [];
   List<dynamic> filteredJobs = [];
   int currentPage = 1;
+  List<Widget> jobCards = [];
 
 
   @override
@@ -72,119 +74,77 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> fetchJobs({String specializationId = '', int page = 1, bool fetchAll = false}) async {
-  final prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('token');
-  String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId?page=$page';
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId?page=$page';
 
-  if (specializationId.isEmpty) {
-    url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
-  }
-
-  if (token != null) {
-    var response = await http.get(
-      Uri.parse(url),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    if (response.statusCode == 200) {
-      var currentPageData = json.decode(response.body)['data'];
-      if (fetchAll || page == 1) {
-        jobList.clear();  // Clear the job list before adding new data
-      }
-      jobList.addAll(currentPageData); // Append new jobs to the list
-      currentPage = page; // Update the current page
-
-      setState(() {
-        filteredJobs = List.from(jobList); // Update filtered jobs based on the complete list
-      });
-    } else {
-      print('Failed to fetch jobs');
+    if (specializationId.isEmpty) {
+      url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
     }
-  }
-}
 
-
-  Future<void> getRecommendedJobs() async {
-    try {
-      // Define your endpoint URL
-      String url = '';
-
-      // Define the user's skills
-      Map<String, dynamic> userSkills = {'skills': ['Graphic design', 'logo design']};
-
-      // Make a POST request with user skills
-      final response = await http.post(
+    if (token != null) {
+      var response = await http.get(
         Uri.parse(url),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(userSkills),
+        headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
-        // Parse the JSON response
-        Map<String, dynamic> responseData = jsonDecode(response.body);
-
-        // Extract recommended jobs
-        List<dynamic> recommendedJobs = responseData['recommended_jobs'];
-
-        // Display recommended jobs as cards
-        List<Widget> jobCards = [];
-        for (var job in recommendedJobs) {
-          String title = job[1];
-          String description = job[3];
-          double expectedBudget = job[5];
-
-          // Create card for each job
-          Widget jobCard = Card(
-            margin: EdgeInsets.all(8.0),
-            child: ListTile(
-              title: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF343ABA),
-                ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    description,
-                    style: TextStyle(
-                      color: Colors.black87,
-                    ),
-                  ),
-                  Text(
-                    'Budget: \$${expectedBudget.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
-              // Add any other details as needed
-            ),
-          );
-          jobCards.add(jobCard);
+        var currentPageData = json.decode(response.body)['data'];
+        if (fetchAll || page == 1) {
+          jobList.clear();  // Clear the job list before adding new data
         }
+        jobList.addAll(currentPageData); // Append new jobs to the list
+        currentPage = page; // Update the current page
 
-        // Update UI with job cards
-        if (mounted) {
-          setState(() {
-            jobCards = jobCards;
-          });
-        }
+        setState(() {
+          filteredJobs = List.from(jobList); // Update filtered jobs based on the complete list
+        });
       } else {
-        print('Error: ${response.statusCode}');
-        print(response.body);
+        print('Failed to fetch jobs');
       }
-    } catch (e) {
-      print('Error: $e');
     }
   }
+  Future<void> fetchData(String specializationId) async {
+  final String apiUrl = 'https://1nadda.pythonanywhere.com/recommend';
+  List<String> skills = ["python", "machine learning", "data analysis"];
+
+  try {
+    final http.Response response = await http.post(
+      Uri.parse(apiUrl),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({'skills': skills}),
+    );
+
+    if (response.statusCode == 200) {
+      String responseBody = response.body;
+      List<dynamic> recommendedJobs = jsonDecode(responseBody)["recommended_jobs"];
+
+      setState(() {
+        jobList = recommendedJobs;  // Update the main job list
+        filteredJobs = List.from(jobList);  // Filtered jobs are now the same as job list
+        buildJobCardsFromRecommendedJobs(recommendedJobs);  // Optionally build job cards
+      });
+    } else {
+      print('Request failed with status: ${response.statusCode}');
+    }
+  } catch (error) {
+    print('Error: $error');
+  }
+}  void buildJobCardsFromRecommendedJobs(List<dynamic> recommendedJobs) {
+    setState(() {
+      jobCards = recommendedJobs.map<Widget>((job) {
+        return Card(
+          child: ListTile(
+            title: Text(job[1]), // Job title
+            subtitle: Text(job[3]), // Job description
+          ),
+        );
+      }).toList();
+    });
+  }
+
 
 
 
@@ -372,7 +332,6 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -421,7 +380,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Row(
                 children: [
                   Jobs("all-inclusive.png", "all jobs", "", (id) => fetchJobs(specializationId: id)),
-                  Jobs("social-media.png", "Recommended", "", (_) => getRecommendedJobs()),
+                  Jobs("social-media.png", "Recommended", "", (id) => fetchData(id)),
                   Jobs("coffee.png", "web", "1", (id) => fetchJobs(specializationId: id)),
                   Jobs("delivery-man.png", "mobile", "2", (id) => fetchJobs(specializationId: id)),
                   Jobs("baby.png", "graphic", "3", (id) => fetchJobs(specializationId: id)),
@@ -446,141 +405,122 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: filteredJobs.length,
-                    itemBuilder: (context, index) {
-                      var job = filteredJobs[index];
-                      String formattedDate = job['created_at'] != null ? formatDate(job['created_at']) : 'Not available';
-                      List<String> userCoords = _locationController.text.split(',');
-                      String distance = 'Location not set';
-                      String message = job['status'] == "hired" ? 'this job is expired' : '';
-                      if (userCoords.length > 1 && userCoords[0].trim().isNotEmpty && userCoords[1].trim().isNotEmpty) {
-                        distance = calculateDistance(
-                            userCoords[0].trim(),  // User latitude
-                            userCoords[1].trim(),  // User longitude
-                            job['latitude'] as String?,  // Job latitude
-                            job['longitude'] as String?  // Job longitude
-                        );
-                        double distanceNumeric = double.tryParse(distance.split(' ')[0]) ?? double.infinity;
-                        if (distanceNumeric < 20.0) {
-                          distance = '$distance: Close to you, suit you';
-                        } else {
-                          distance = '$distance';
-                        }
-                      }
-                      return InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SpecificJobPage(
-                                jobId: job['id'].toString(),
-                                specializationId: job['specialization']['id'].toString(),
-                              ),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                          padding: EdgeInsets.all(12.0),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10.0),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.5),
-                                spreadRadius: 3,
-                                blurRadius: 5,
-                                offset: Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: ListTile(
-                            title: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    job['title'],
-                                    style: TextStyle(
-                                      fontSize: 16.0,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF343ABA),
-                                    ),
-                                  ),
-                                ),
-                                // Add your IconButton here
-                                SizedBox(
-                                  width: 30, // Adjust the width as needed
-                                ),
-                                FavIconButton(
-                                  job: job,
-                                  isBookmarked: true, // Pass the bookmarked status
-                                  updateUI: () {
-                                    setState(() {
-                                      // Update UI if necessary
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
+  child: ListView.builder(
+    itemCount: filteredJobs.length,
+    itemBuilder: (context, index) {
+      if (index >= filteredJobs.length) {
+        return Container(); // Safeguard against out of range errors
+      }
+      var job = filteredJobs[index];
+      String formattedDate = job['created_at'] != null ? formatDate(job['created_at']) : 'Not available';
+      List<String> userCoords = _locationController.text.split(',');
+      String distance = 'Location not set';
+      String message = job['status'] == "hired" ? 'this job is expired' : '';
 
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  job['description'],
-                                  style: TextStyle(
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                Text(
-                                  'Created at: $formattedDate',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                Text(
-                                  'Distance: ${distance}',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  message,
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            trailing: Text(
-                              'Budget: ${job['expected_budget']} \$',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+      if (userCoords.length > 1 && userCoords[0].trim().isNotEmpty && userCoords[1].trim().isNotEmpty) {
+        distance = calculateDistance(
+          userCoords[0].trim(),  // User latitude
+          userCoords[1].trim(),  // User longitude
+          job['latitude'] as String?,  // Job latitude
+          job['longitude'] as String?  // Job longitude
+        );
+        double distanceNumeric = double.tryParse(distance.split(' ')[0]) ?? double.infinity;
+        distance = distanceNumeric < 20.0 ? '$distance: Close to you, suit you' : distance;
+      }
+
+      return InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SpecificJobPage(
+                jobId: job['id'].toString(),
+                specializationId: job['specialization']['id'].toString(),
+              ),
+            ),
+          );
+        },
+        child: Container(
+          margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+          padding: EdgeInsets.all(12.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 3,
+                blurRadius: 5,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: ListTile(
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text(
+                    job['title'],
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF343ABA),
+                    ),
                   ),
                 ),
+                SizedBox(width: 30),  // Spacer
+                FavIconButton(
+                  job: job,
+                  isBookmarked: true,  // Assume this state is dynamic and can change
+                  updateUI: () => setState(() {}),
+                ),
+              ],
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  job['description'],
+                  style: TextStyle(color: Colors.black87),
+                ),
+                Text(
+                  'Created at: $formattedDate',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                Text(
+                  'Distance: $distance',
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  message,
+                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            trailing: Text(
+              'Budget: ${job['expected_budget']} \$',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+            ),
+          ),
+        ),
+      );
+    },
+  ),
+),
+
                 Center(
                   child: TextButton(
-                      onPressed: () {
-                        fetchJobs(page: currentPage + 1); // Increment page number to fetch the next page
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        backgroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                      ),
-                      child: Text('Load More', style: TextStyle(fontSize: 18)),
+                    onPressed: () {
+                      fetchJobs(page: currentPage + 1);
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.black,
+                      backgroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20), // تكبير حجم الزر
                     ),
+                    child: Text('Load More', style: TextStyle(fontSize: 18)), // تكبير حجم النص
+                  ),
                 ),
               ],
             ),
@@ -614,6 +554,12 @@ class _MyHomePageState extends State<MyHomePage> {
               title: Text('Change password'),
               onTap: () {
                 Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text('Recommendation'),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => RecommendedJobsWidget()));
               },
             ),
           ],
@@ -811,4 +757,4 @@ class _FavIconButtonState extends State<FavIconButton> {
     _isDisposed = true; // Set disposed flag
     super.dispose();
   }
-}
+} 

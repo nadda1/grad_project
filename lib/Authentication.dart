@@ -275,7 +275,7 @@ Future<void> _loadSpecializations() async {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return Center(child:SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
@@ -452,19 +452,37 @@ Future<void> _loadSpecializations() async {
               ),
             ),
             SizedBox(height: 20),
-            OutlinedButton(
-              onPressed: () => _selectDate(context),
-              child: Text(_selectedDate == null
-                  ? 'Select your date of birth'
-                  : "${_selectedDate!.toLocal()}".split(' ')[0]),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.black, backgroundColor: Colors.white,
-                side: BorderSide(color: Colors.grey, width: 1.0),
-                shape: RoundedRectangleBorder(
+            SizedBox(
+              width: 300.0,
+              height: 50.0,
+            child: TextField(
+              readOnly: true,
+              onTap: () => _selectDate(context),
+              controller: TextEditingController(
+                text: _selectedDate == null
+                    ? 'Select your date of birth'
+                    : "${_selectedDate!.toLocal()}".split(' ')[0],
+              ),
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
+                labelText: 'Date of Birth',
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: IconButton(
+                  icon: Icon(Icons.calendar_today),
+                  onPressed: () => _selectDate(context),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey, width: 1.0),
                   borderRadius: BorderRadius.circular(20.0),
                 ),
               ),
-            ),
+            ),),
+
             SizedBox(height: 15),
             SizedBox(
               width: 300.0,
@@ -609,7 +627,7 @@ Future<void> _loadSpecializations() async {
             ),
           ],
         ),
-      ),
+      ),),
     );
   }
 }
