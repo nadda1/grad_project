@@ -58,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<dynamic> filteredJobs = [];
   int currentPage = 1;
   List<Widget> jobCards = [];
+  String lastAction = 'all';
 
 
   @override
@@ -74,37 +75,39 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> fetchJobs({String specializationId = '', int page = 1, bool fetchAll = false}) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId?page=$page';
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+  String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId?page=$page';
 
-    if (specializationId.isEmpty) {
-      url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
-    }
+  if (specializationId.isEmpty) {
+    url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
+  }
 
-    if (token != null) {
-      var response = await http.get(
-        Uri.parse(url),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+  if (token != null) {
+    var response = await http.get(
+      Uri.parse(url),
+      headers: {'Authorization': 'Bearer $token'},
+    );
 
-      if (response.statusCode == 200) {
-        var currentPageData = json.decode(response.body)['data'];
-        if (fetchAll || page == 1) {
-          jobList.clear();  // Clear the job list before adding new data
-        }
-        jobList.addAll(currentPageData); // Append new jobs to the list
-        currentPage = page; // Update the current page
-
-        setState(() {
-          filteredJobs = List.from(jobList); // Update filtered jobs based on the complete list
-        });
-      } else {
-        print('Failed to fetch jobs');
+    if (response.statusCode == 200) {
+      var currentPageData = json.decode(response.body)['data'];
+      if (fetchAll || page == 1) {
+        jobList.clear();  // Clear the job list before adding new data
       }
+      jobList.addAll(currentPageData); // Append new jobs to the list
+      currentPage = page; // Update the current page
+
+      setState(() {
+        lastAction = 'all'; // Update last action to 'all'
+        filteredJobs = List.from(jobList); // Update filtered jobs based on the complete list
+      });
+    } else {
+      print('Failed to fetch jobs');
     }
   }
-  Future<void> fetchData(String specializationId) async {
+}
+
+  Future<void> fetchData(String specializationId, {int page = 1}) async {
   final String apiUrl = 'https://1nadda.pythonanywhere.com/recommend';
   List<String> skills = ["python", "machine learning", "data analysis"];
 
@@ -114,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode({'skills': skills}),
+      body: jsonEncode({'skills': skills, 'page': page}),  // Assume your API can handle pagination
     );
 
     if (response.statusCode == 200) {
@@ -122,6 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
       List<dynamic> recommendedJobs = jsonDecode(responseBody)["recommended_jobs"];
 
       setState(() {
+        lastAction = 'recommended'; // Update last action to 'recommended'
         jobList = recommendedJobs;  // Update the main job list
         filteredJobs = List.from(jobList);  // Filtered jobs are now the same as job list
         buildJobCardsFromRecommendedJobs(recommendedJobs);  // Optionally build job cards
@@ -132,7 +136,8 @@ class _MyHomePageState extends State<MyHomePage> {
   } catch (error) {
     print('Error: $error');
   }
-}  void buildJobCardsFromRecommendedJobs(List<dynamic> recommendedJobs) {
+}
+  void buildJobCardsFromRecommendedJobs(List<dynamic> recommendedJobs) {
     setState(() {
       jobCards = recommendedJobs.map<Widget>((job) {
         return Card(
@@ -510,19 +515,23 @@ class _MyHomePageState extends State<MyHomePage> {
   ),
 ),
 
-                Center(
-                  child: TextButton(
+               Center(
+                child: TextButton(
                     onPressed: () {
-                      fetchJobs(page: currentPage + 1);
+                        if (lastAction == 'all') {
+                            fetchJobs(page: currentPage + 1);
+                        } else if (lastAction == 'recommended') {
+                            fetchData('', page: currentPage ); // Assume fetchData can handle empty ID and page
+                        }
                     },
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      backgroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20), // تكبير حجم الزر
+                        foregroundColor: Colors.black,
+                        backgroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                     ),
-                    child: Text('Load More', style: TextStyle(fontSize: 18)), // تكبير حجم النص
-                  ),
+                    child: Text('Load More', style: TextStyle(fontSize: 18)),
                 ),
+            ),
               ],
             ),
           ),
