@@ -430,16 +430,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
       return InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SpecificJobPage(
-                jobId: job['id'].toString(),
-                specializationId: job['specialization']['id'].toString(),
-              ),
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SpecificJobPage(
+              jobId: job['id'].toString(),
+              specializationId: job['specialization']?['id']?.toString() ?? '1',
             ),
-          );
-        },
+          ),
+        );
+      },
+
         child: Container(
           margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
           padding: EdgeInsets.all(12.0),
