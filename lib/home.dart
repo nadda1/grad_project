@@ -107,9 +107,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-  Future<void> fetchData(String specializationId, {int page = 1}) async {
+ Future<void> fetchData(String specializationId, {int page = 1}) async {
+  final prefs = await SharedPreferences.getInstance();
+  List<String> skills = prefs.getStringList('user_skills') ?? ["html","css","js"]; // Provide a default skill if none found
+
   final String apiUrl = 'https://1nadda.pythonanywhere.com/recommend';
-  List<String> skills = ["python", "machine learning", "data analysis"];
 
   try {
     final http.Response response = await http.post(
@@ -117,12 +119,13 @@ class _MyHomePageState extends State<MyHomePage> {
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode({'skills': skills, 'page': page}),  // Assume your API can handle pagination
+      body: jsonEncode({'skills': skills, 'page': page}),  // Use dynamic skills
     );
 
     if (response.statusCode == 200) {
       String responseBody = response.body;
       List<dynamic> recommendedJobs = jsonDecode(responseBody)["recommended_jobs"];
+      print(skills);
 
       setState(() {
         lastAction = 'recommended'; // Update last action to 'recommended'
@@ -137,6 +140,7 @@ class _MyHomePageState extends State<MyHomePage> {
     print('Error: $error');
   }
 }
+
   void buildJobCardsFromRecommendedJobs(List<dynamic> recommendedJobs) {
     setState(() {
       jobCards = recommendedJobs.map<Widget>((job) {

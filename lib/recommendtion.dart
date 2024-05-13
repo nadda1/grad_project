@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 class RecommendedJobsWidget extends StatefulWidget {
@@ -12,7 +13,10 @@ class _RecommendedJobsWidgetState extends State<RecommendedJobsWidget> {
 
   Future<void> fetchData() async {
     final String apiUrl = 'https://1nadda.pythonanywhere.com/recommend';
-    List<String> skills = ["python", "machine learning", "data analysis"];
+
+    // Fetch skills from SharedPreferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> skills = prefs.getStringList('user_skills') ?? ["default skill"]; // Default skills if none found
 
     try {
       final http.Response response = await http.post(
@@ -46,6 +50,7 @@ class _RecommendedJobsWidgetState extends State<RecommendedJobsWidget> {
       print('Error: $error');
     }
   }
+
 
   @override
   void initState() {
