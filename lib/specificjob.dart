@@ -345,11 +345,43 @@ Widget buildCard(String details) {
   );
 }
 
-Widget buildApplicationCard(String freelancer, int id, String bid, String duration, String coverLetter, String applicationSlug) {
+Widget buildApplicationCard(String freelancer, int id, String bid, String duration, String coverLetter, String applicationSlug, Map<String, dynamic> freelancerDetails) {
   return Card(
     color: const Color.fromARGB(255, 255, 255, 255),
     margin: const EdgeInsets.symmetric(vertical: 8.0),
     child: ListTile(
+      onTap: () {
+        // عرض النافذة المنبثقة عند النقر على البطاقة
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Details of $freelancer'),
+              content: SingleChildScrollView(
+                child: ListBody(
+                  children: <Widget>[
+                    Text('Name: ${freelancerDetails['name']}'),
+                    Text('Email: ${freelancerDetails['email']}'),
+                    Text('Bio: ${freelancerDetails['bio'] ?? "Not available"}'),
+                    Text('Phone: ${freelancerDetails['phone'] ?? "Not available"}'),
+                    Text('Skills: ${freelancerDetails['skills'].map((s) => s['name']).join(", ")}'),
+                    Text('Education: ${freelancerDetails['educations'].map((e) => "${e['school']} - ${e['degree']}").join(", ")}'),
+                    Text('Certifications: ${freelancerDetails['certifications'].map((c) => c['name']).join(", ")}'),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('Close'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
       title: Text('Freelancer: $freelancer', style: TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,7 +411,7 @@ Widget buildApplicationCard(String freelancer, int id, String bid, String durati
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => MessagePage(userid: id,username:freelancer),
+                  builder: (context) => MessagePage(userid: id, username:freelancer),
                   // Replace MessagePage with your message page
                 ),
               );
@@ -487,21 +519,22 @@ Widget build(BuildContext context) {
               child: Text('The Applicants', style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0), fontSize: 18, fontWeight: FontWeight.bold)),
             ),
 
-          if (userRole == 'client' && jobDetails.containsKey('applications'))
-            ...jobDetails['applications'].map((application) => buildApplicationCard(
-
-            application['freelancer']['name'] ?? 'N/A',
-            application['freelancer']['id'] ?? 0,
+              if (userRole == 'client' && jobDetails.containsKey('applications'))
+        ...jobDetails['applications'].map((application) => buildApplicationCard(
+          application['freelancer']['name'] ?? 'N/A',
+          application['freelancer']['id'] ?? 0,
           application['bid'].toString() ?? '0',
           application['duration'].toString() ?? '0',
           application['cover_letter'] ?? 'N/A',
-          application['slug']
+          application['slug'],
+          application['freelancer']  // تمرير كائن الفريلانسر كاملًا
         )).toList(),
-          if (userRole == 'freelancer' && jobDetails.containsKey('applications'))
-            ...jobDetails['applications'].map((application) => buildApplicationCardForFreelance(
+      if (userRole == 'freelancer' && jobDetails.containsKey('applications'))
+        ...jobDetails['applications'].map((application) => buildApplicationCardForFreelance(
           application['freelancer']['name'] ?? 'N/A',
           application['cover_letter'] ?? 'N/A',
         )).toList(),
+
                 ],
               ),
             ),

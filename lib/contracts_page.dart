@@ -41,7 +41,8 @@ class _ContractsPageState extends State<ContractsPage> {
 
   if (response.statusCode == 200) {
     var data = json.decode(response.body)['data'];
-    allJobs.addAll(data);
+    // Filter jobs to include only those where status is 'hired'
+    allJobs.addAll(data.where((job) => job['status'] == 'hired'));
   } else {
     print('Failed to fetch jobs');
   }
@@ -50,8 +51,7 @@ class _ContractsPageState extends State<ContractsPage> {
     jobList = allJobs;
   });
 }
-
-Future<void> showChangeRequestDialog(String jobSlug) async {
+Future<void> showChangeRequestDialog(String jobSlug , String appSLug) async {
   TextEditingController bidController = TextEditingController();
   TextEditingController durationController = TextEditingController();
 
@@ -92,7 +92,9 @@ Future<void> showChangeRequestDialog(String jobSlug) async {
             child: Text('Submit'),
             onPressed: () {
               if (bidController.text.isNotEmpty && durationController.text.isNotEmpty) {
-                requestChange(jobSlug, bidController.text, durationController.text);
+                requestChange(jobSlug, appSLug, bidController.text, durationController.text);
+                print(appSLug);
+                print(jobSlug);
                 Navigator.of(context).pop();
               }
             },
@@ -104,8 +106,8 @@ Future<void> showChangeRequestDialog(String jobSlug) async {
 }
 
 
-  Future<void> requestCancel(String jobSlug ) async {
-    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-cancel/$jobSlug';
+  Future<void> requestCancel(String jobSlug, String appSlug ) async {
+    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-cancel/$appSlug/$jobSlug';
     final response = await http.put(
       Uri.parse(url),
       headers: {
@@ -124,16 +126,15 @@ Future<void> showChangeRequestDialog(String jobSlug) async {
         backgroundColor: Colors.green,
       ));
     } else {
-      var responseBody = json.decode(response.body);
-      var errorMessage = responseBody['message'] ?? 'Failed to process your request';
+      
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(errorMessage),
+        content: Text("you have not hired yet in this job to request "),
         backgroundColor: Colors.red,
       ));
     }
   }
-  Future<void> requestChange(String jobSlug, String newBid, String newDuration) async {
-  String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-change/$jobSlug';
+  Future<void> requestChange(String jobSlug, String appSlug, String newBid, String newDuration) async {
+  String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-change/$appSlug/$jobSlug';
   final response = await http.post(
     Uri.parse(url),
     headers: {
@@ -153,17 +154,15 @@ Future<void> showChangeRequestDialog(String jobSlug) async {
       backgroundColor: Colors.green,
     ));
   } else {
-    var responseBody = json.decode(response.body);
-    var errorMessage = responseBody['message'] ?? 'Failed to process your request';
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(errorMessage),
-      backgroundColor: Colors.red,
-    ));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("you have not hired yet in this job to request "),
+        backgroundColor: Colors.red,
+      ));
   }
 }
 
-  Future<void> requestSubmit(String jobSlug) async {
-    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-submit/$jobSlug';
+  Future<void> requestSubmit(String jobSlug, String appSlug) async {
+    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-submit/$appSlug/$jobSlug';
     final response = await http.put(
       Uri.parse(url),
       headers: {
@@ -181,10 +180,8 @@ Future<void> showChangeRequestDialog(String jobSlug) async {
         backgroundColor: Colors.green,
       ));
     } else {
-      var responseBody = json.decode(response.body);
-      var errorMessage = responseBody['message'] ?? 'Failed to process your request';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(errorMessage),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("you have not hired yet in this job to request "),
         backgroundColor: Colors.red,
       ));
     }
@@ -229,17 +226,17 @@ Widget build(BuildContext context) {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ElevatedButton(
-                      onPressed: () => requestCancel(job['slug']),
+                      onPressed: () => requestCancel(job['slug'],job['job']['slug']),
                       child: Text('Request to Cancel'),
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
                     ),
                     ElevatedButton(
-                      onPressed: () => showChangeRequestDialog(job['slug']),
+                      onPressed: () => showChangeRequestDialog(job['slug'],job['job']['slug']),
                       child: Text('Request to Change'),
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
                     ),
                     ElevatedButton(
-                      onPressed: () => requestSubmit(job['slug']),
+                      onPressed: () => requestSubmit(job['slug'],job['job']['slug']),
                       child: Text('Request to Submit'),
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                     ),
