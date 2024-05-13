@@ -41,7 +41,8 @@ class _ContractsPageState extends State<ContractsPage> {
 
   if (response.statusCode == 200) {
     var data = json.decode(response.body)['data'];
-    allJobs.addAll(data);
+    // Filter jobs to include only those where status is 'hired'
+    allJobs.addAll(data.where((job) => job['status'] == 'hired'));
   } else {
     print('Failed to fetch jobs');
   }
@@ -50,7 +51,6 @@ class _ContractsPageState extends State<ContractsPage> {
     jobList = allJobs;
   });
 }
-
 Future<void> showChangeRequestDialog(String jobSlug , String appSLug) async {
   TextEditingController bidController = TextEditingController();
   TextEditingController durationController = TextEditingController();
