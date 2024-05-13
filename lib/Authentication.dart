@@ -128,14 +128,20 @@ class _LoginFormState extends State<LoginForm> {
 
 if (response.statusCode == 200) {
   final jsonData = json.decode(response.body);
-
-  // Save token, user data, and role to shared preferences
+  
+List<String> skillNames = (jsonData['data']['user']['skills'] as List)
+    .map((skill) => skill['name'].toString())
+    .toList();
   SharedPreferences prefs = await SharedPreferences.getInstance();
+  
+  await prefs.setStringList('user_skills', skillNames);
   await prefs.setString('token', jsonData['data']['access_token']);
   await prefs.setString('user', json.encode(jsonData['data']['user']));
-  await prefs.setString('role', jsonData['data']['user']['role']);  // Assume 'role' is a field in the user object
- await prefs.setInt('user_id', jsonData['data']['user']['id']);  // Saving the user ID
- await prefs.setString('user_name', jsonData['data']['user']['name']);  // Saving the user ID
+  await prefs.setString('role', jsonData['data']['user']['role']); 
+ await prefs.setInt('user_id', jsonData['data']['user']['id']);  
+ await prefs.setString('user_name', jsonData['data']['user']['name']);  
+ List<String> storedSkills = prefs.getStringList('user_skills') ?? [];
+  print("Stored skills: $storedSkills");
 
   await persistRoute('/home');
   navigationService.navigateTo('/home');
