@@ -4,9 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home.dart';
 import 'profile.dart';
-import 'post.dart';
 import 'dart:async';
-import 'package:web_socket_channel/io.dart';
+
 
 class MessagePage extends StatefulWidget {
   final int userid;
