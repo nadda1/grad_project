@@ -7,6 +7,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'Messaging.dart';
+import 'Search.dart';
 import 'specificjob.dart';
 import 'profile.dart';
 import 'post.dart';
@@ -298,10 +300,7 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           Expanded(
             child: TextField(
-              controller: _searchController,
-              onChanged: (value) {
-                setState(() {});
-              },
+              //controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search',
                 prefixIcon: Icon(Icons.search),
@@ -312,9 +311,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   borderSide: BorderSide.none,
                 ),
               ),
+              onSubmitted: (String value) {
+                print("submit");
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SearchPage(searchQuery: value),
+                  ),
+                );
+              },
             ),
           ),
-          SizedBox(width: 10), // Spacer between search and location fields
+
+          SizedBox(width: 10),
           Expanded(
             child: TextField(
               controller: _locationController,
@@ -360,6 +369,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
               Spacer(),
+              IconButton(
+                icon: Icon(Icons.message, color: Color(0xFF343ABA), size: 26.0),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChatScreen(),
+                    ),
+                  );
+                },
+              ),
               IconButton(
                 icon: Icon(Icons.more_horiz, color: Color(0xFF343ABA), size: 36.0),
                 onPressed: () {

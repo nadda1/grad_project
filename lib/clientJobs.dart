@@ -17,43 +17,43 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
     super.initState();
     fetchJobs();
   }
-Future<bool> acceptRequest(BuildContext context, int requestId) async {
-  final prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('token');
-  var url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/response-accept/$requestId';
-  var headers = {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer $token',
-  };
+  Future<bool> acceptRequest(BuildContext context, int requestId) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    var url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/response-accept/$requestId';
+    var headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
 
-  var response = await http.put(Uri.parse(url), headers: headers);
-  
-  if (response.statusCode == 200) {
-    return true;
-  } else {
-    print('Error: ${response.body}');
-    return false;
+    var response = await http.put(Uri.parse(url), headers: headers);
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      print('Error: ${response.body}');
+      return false;
+    }
   }
-}
 
-Future<bool> declineRequest(BuildContext context, int requestId) async {
-  final prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('token');
-  var url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/response-decline/$requestId';
-  var headers = {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer $token',
-  };
+  Future<bool> declineRequest(BuildContext context, int requestId) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    var url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/response-decline/$requestId';
+    var headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
 
-  var response = await http.put(Uri.parse(url), headers: headers);
-  
-  if (response.statusCode == 200) {
-    return true;
-  } else {
-    print('Error: ${response.body}');
-    return false;
+    var response = await http.put(Uri.parse(url), headers: headers);
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      print('Error: ${response.body}');
+      return false;
+    }
   }
-}
 
   Future<void> fetchJobs() async {
     final prefs = await SharedPreferences.getInstance();
@@ -73,43 +73,43 @@ Future<bool> declineRequest(BuildContext context, int requestId) async {
       print('Failed to load jobs');
     }
   }
-AlertDialog buildRequestDialog(BuildContext context, dynamic request) {
-  return AlertDialog(
-    title: Text('Request Details'),
-    content: SingleChildScrollView(
-      child: ListBody(
-        children: <Widget>[
-          Text('Type: ${request['type']}'),
-          Text('New Bid: \$${request['new_bid'] ?? 'No change'}'),
-          Text('New Duration: ${request['new_duration'] ?? 'No change'} days'),
-        ],
+  AlertDialog buildRequestDialog(BuildContext context, dynamic request) {
+    return AlertDialog(
+      title: Text('Request Details'),
+      content: SingleChildScrollView(
+        child: ListBody(
+          children: <Widget>[
+            Text('Type: ${request['type']}'),
+            Text('New Bid: \$${request['new_bid'] ?? 'No change'}'),
+            Text('New Duration: ${request['new_duration'] ?? 'No change'} days'),
+          ],
+        ),
       ),
-    ),
-    actions: <Widget>[
-      TextButton(
-        onPressed: () async {
-          Navigator.of(context).pop(); // Close the dialog
-          bool success = await acceptRequest(context, request['id']);
-          String message = success ? 'Request accepted successfully.' : 'Failed to accept request.';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-        },
-        child: const Text('Accept'),
-        style: TextButton.styleFrom(backgroundColor: Colors.green),
-      ),
-      TextButton(
-        onPressed: () async {
-          Navigator.of(context).pop(); // Close the dialog
-          bool success = await declineRequest(context, request['id']);
-          String message = success ? 'Request declined.' : 'Failed to decline request.';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-        },
-        child: const Text('Decline'),
-        style: TextButton.styleFrom(backgroundColor: Colors.red),
-      ),
-    ],
-  );
-}
- @override
+      actions: <Widget>[
+        TextButton(
+          onPressed: () async {
+            Navigator.of(context).pop(); // Close the dialog
+            bool success = await acceptRequest(context, request['id']);
+            String message = success ? 'Request accepted successfully.' : 'Failed to accept request.';
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+          },
+          child: const Text('Accept'),
+          style: TextButton.styleFrom(backgroundColor: Colors.green),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.of(context).pop(); // Close the dialog
+            bool success = await declineRequest(context, request['id']);
+            String message = success ? 'Request declined.' : 'Failed to decline request.';
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+          },
+          child: const Text('Decline'),
+          style: TextButton.styleFrom(backgroundColor: Colors.red),
+        ),
+      ],
+    );
+  }
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

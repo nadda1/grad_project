@@ -12,7 +12,7 @@ class WishlistPage extends StatefulWidget {
 
 class _WishlistPageState extends State<WishlistPage> {
   List<dynamic> wishlistJobs = [];
-  int id=0;
+  int id = 0;
 
   @override
   void initState() {
@@ -44,11 +44,10 @@ class _WishlistPageState extends State<WishlistPage> {
       if (response.statusCode == 200) {
         setState(() {
           wishlistJobs = jsonDecode(response.body)['data'];
-
-
         });
       } else {
-        print('Failed to fetch wishlist jobs. Status code: ${response.statusCode}');
+        print(
+            'Failed to fetch wishlist jobs. Status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error: $e');
@@ -64,8 +63,12 @@ class _WishlistPageState extends State<WishlistPage> {
       body: ListView.builder(
         itemCount: wishlistJobs.length,
         itemBuilder: (context, index) {
-          final bookid= wishlistJobs[index]['id'];
+          final bookid = wishlistJobs[index]['id'];
           final job = wishlistJobs[index]['job'];
+          final requiredSkills = job['required_skills'];
+          final requiredSkillsText = requiredSkills != null
+              ? 'Skills: ${requiredSkills.join(', ')}'
+              : 'Skills: None';
           return Card(
             margin: EdgeInsets.all(8.0),
             child: ListTile(
@@ -73,7 +76,6 @@ class _WishlistPageState extends State<WishlistPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Flexible(
-
                     child: Text(
                       job['title'],
                       style: TextStyle(
@@ -100,7 +102,8 @@ class _WishlistPageState extends State<WishlistPage> {
 
                       try {
                         final deleteResponse = await http.delete(
-                          Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/bookmarks/$bookid'),
+                          Uri.parse(
+                              'https://snapwork-133ce78bbd88.herokuapp.com/api/bookmarks/$bookid'),
                           headers: {
                             'Authorization': 'Bearer $token',
                           },
@@ -114,44 +117,41 @@ class _WishlistPageState extends State<WishlistPage> {
 
                           // Remove the job from the original list fetched from the server
                           setState(() {
-                            wishlistJobs = List.from(wishlistJobs)..removeWhere((element) => element['id'] == bookid);
+                            wishlistJobs = List.from(wishlistJobs)
+                              ..removeWhere(
+                                      (element) => element['id'] == bookid);
                           });
 
                           print('Job removed from wishlist');
                         } else {
-                          print('Failed to remove job from wishlist: ${deleteResponse.body}');
+                          print(
+                              'Failed to remove job from wishlist: ${deleteResponse.body}');
                         }
-
                       } catch (e) {
                         print('Error: $e');
                       }
                     },
                   ),
-
                 ],
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   Text(
                     job['description'],
                     style: TextStyle(fontSize: 16.0),
                   ),
                   SizedBox(height: 8.0),
                   Text(
-                    'Skills: ${job['required_skills'].join(', ')}',
+                    requiredSkillsText,
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Text('Budget: \$${job['expected_budget']}'),
                   Text('Duration: ${job['expected_duration']} days'),
-
                 ],
               ),
               onTap: () {
-
                 // Handle tapping on the job card if needed
-
               },
             ),
           );
@@ -159,8 +159,4 @@ class _WishlistPageState extends State<WishlistPage> {
       ),
     );
   }
-
 }
-
-
-
