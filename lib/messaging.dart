@@ -6,7 +6,6 @@ import 'home.dart';
 import 'profile.dart';
 import 'dart:async';
 
-
 class MessagePage extends StatefulWidget {
   final int userid;
   final String username;
@@ -40,11 +39,9 @@ class _MessagePageState extends State<MessagePage> {
           }),
         );
 
-        print(response.body); // Print response body for debugging
-
         if (response.statusCode == 201) {
           var responseData = json.decode(response.body)['data'];
-          var messageContent = responseData['message'];
+          var messageContent = responseData['message']; // Use 'content' instead of 'message'
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Message sent successfully")));
           setState(() {
             sentMessages.add(messageContent); // Add sent message to the list
@@ -63,12 +60,14 @@ class _MessagePageState extends State<MessagePage> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:Text('Messages', style: TextStyle(color: Color(0xFF343ABA),)),
+        title: Text(
+          'Messages',
+          style: TextStyle(color: Color(0xFF343ABA)),
+        ),
       ),
       body: Container(
         color: Colors.white, // Set background color to white
@@ -132,12 +131,10 @@ class _MessagePageState extends State<MessagePage> {
       ),
     );
   }
+
   @override
   void initState() {
     super.initState();
-
-
-
   }
 }
 
@@ -148,25 +145,18 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   List<dynamic> futureMessages = [];
-
+  List<dynamic> Messages = [];
 
   @override
   void initState() {
     super.initState();
-
     fetchMessages();
-  }
-
-  @override
-  void dispose() {
-
-    super.dispose();
   }
 
   Future<void> fetchMessages() async {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
-    int id = prefs.getInt('user_id') ?? 0; // Provide a default value or handle the null case
+    int id = prefs.getInt('user_id') ?? 0;
 
     final response = await http.get(
       Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/messages'),
@@ -176,7 +166,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (response.statusCode == 200) {
       setState(() {
         List<dynamic> allMessages = json.decode(response.body)['data'];
-        futureMessages = allMessages.where((message) => message['sender']['id'] != id &&message['receiver']['id'] == id).toList();
+        futureMessages = allMessages.where((message) => message['sender']['id'] != id && message['receiver']['id'] == id).toList();
       });
     } else {
       throw Exception('Failed to load messages');
@@ -209,26 +199,43 @@ class _ChatScreenState extends State<ChatScreen> {
         itemCount: _getUniqueSenders().length,
         itemBuilder: (context, index) {
           var senderId = _getUniqueSenders()[index];
-          var sendername = _getname()[index];
-          var lastMessage = _getLastMessage(senderId);
-          var receiver_id= lastMessage['receiver']['id'];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            child: Card(
-              elevation: 4, // Add shadow to the card
-              child: ListTile(
-                title: Text('$sendername'),
-                subtitle: Text(lastMessage['message']),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatDetailScreen(senderId: senderId,receiverId: receiver_id,Sendername: sendername,),
+          var senderName = _getName(senderId);
+          return FutureBuilder<Map<String, dynamic>>(
+            future: _getLastMessage(senderId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator();
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else if (snapshot.hasData) {
+                var lastMessage = snapshot.data!;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Card(
+                    elevation: 4,
+                    child: ListTile(
+                      title: Text(senderName),
+                      subtitle: Text(lastMessage['message']),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatDetailScreen(
+                              senderId: senderId,
+                              receiverId: lastMessage['receiver']['id'],
+                              Sendername: senderName,
+
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-            ),
+                  ),
+                );
+              } else {
+                return Text('No messages');
+              }
+            },
           );
         },
       ),
@@ -262,22 +269,32 @@ class _ChatScreenState extends State<ChatScreen> {
     });
     return senders.toList();
   }
-  List<String> _getname() {
-    Set<String> senders = Set();
-    futureMessages.forEach((message) {
-      senders.add(message['sender']['name']);
-    });
-    return senders.toList();
+
+  String _getName(int senderId) {
+    var sender = futureMessages.firstWhere((message) => message['sender']['id'] == senderId);
+    return sender['sender']['name'];
   }
 
-  Map<String, dynamic> _getLastMessage(int senderId) {
-    var messagesFromSender =
-    futureMessages.where((message) => message['sender']['id'] == senderId);
-    return messagesFromSender.isNotEmpty
-        ? messagesFromSender.last
-        : {'message': 'No messages from this sender'};
+  Future<Map<String, dynamic>> _getLastMessage(int senderId) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    final response = await http.get(
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/messages/${senderId}'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      Messages = json.decode(response.body)['data'];
+      var messagesFromSender = Messages;
+      return messagesFromSender.isNotEmpty
+          ? messagesFromSender.last
+          : {'message': 'No messages from this sender'};
+    } else {
+      throw Exception('Failed to load messages');
+    }
   }
 }
+
 
 class ChatDetailScreen extends StatefulWidget {
   final int senderId;
@@ -310,38 +327,28 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     print(widget.receiverId);
 
     if (token != null && id != null) {
-      final response = await http.get(
-        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/messages'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
+
       final o_response = await http.get(
         Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/messages/${widget.senderId}'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
-      if (response.statusCode == 200 && o_response.statusCode==200) {
+      if (o_response.statusCode==200) {
 
         List<dynamic> allMessagess = json.decode(o_response.body)['data'];
-        List<dynamic> allMessages = json.decode(response.body)['data'];
-        print(allMessages);
-        List<dynamic> sentMessages = allMessages
-            .where((message) => message['sender']['id'] == id && message['receiver']['id'] == widget.senderId )
+
+        List<dynamic> sentMessages = allMessagess
+            .where((message) => message['sender']['id'] == id )
             .map((message) => {...message, 'type': 'received'})
             .toList();
-        print("the sent ");
-        print(sentMessages);
-
         List<dynamic> receivedMessages = allMessagess.where((message) => message['sender']['id'] ==  widget.senderId ).map((message) => {...message, 'type': 'sent'}).toList();
 
+        // Combine and sort messages by sent_at timestamp
+        List<dynamic> combinedMessages = [...receivedMessages,...sentMessages];
+        combinedMessages.sort((a, b) => DateTime.parse(a['sent_at']).compareTo(DateTime.parse(b['sent_at'])));
+
         setState(() {
-          messages = [...receivedMessages,...sentMessages];
-          // messages.sort((a, b) {
-          //   var aTimestamp = a['timestamp'];
-          //   var bTimestamp = b['timestamp'];
-          //   if (aTimestamp == null) return -1;
-          //   if (bTimestamp == null) return 1;
-          //   return DateTime.parse(aTimestamp).compareTo(DateTime.parse(bTimestamp));
-          // });
+          messages = combinedMessages;
         });
       } else {
         throw Exception('Failed to load messages');
@@ -350,6 +357,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Token or User ID not found")));
     }
   }
+
 
   Future<void> sendMessage(String content) async {
     final prefs = await SharedPreferences.getInstance();
@@ -410,7 +418,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 String messageContent = message['message'] ?? '';
                 Color color = isSender ? Color(0xFFADD8E6) : Color(0xFF90EE90); // Blue for sent, green for received
                 return Align(
-                  alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isSender ? Alignment.centerLeft : Alignment.centerRight,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                     child: ClipRRect(
@@ -469,6 +477,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
   @override
   void dispose() {
+    messageController.dispose();
     super.dispose();
   }
 
