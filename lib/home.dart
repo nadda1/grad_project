@@ -23,7 +23,7 @@ Container Jobs(String imagePath, String title, String id, Function(String) onTap
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Image.asset(
-                "assets/images/" + imagePath,
+                "images/" + imagePath,
                 fit: BoxFit.fill,
                 height: 50.0,
                 width: 40,
@@ -410,9 +410,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   Jobs("all-inclusive.png", "all jobs", "", (id) => fetchJobs(specializationId: id)),
                   Jobs("social-media.png", "Recommended", "", (id) => fetchData(id)),
-                  Jobs("coffee.png", "web", "1", (id) => fetchJobs(specializationId: id)),
-                  Jobs("delivery-man.png", "mobile", "2", (id) => fetchJobs(specializationId: id)),
-                  Jobs("baby.png", "graphic", "3", (id) => fetchJobs(specializationId: id)),
+                  Jobs("coding.png", "web", "1", (id) => fetchJobs(specializationId: id)),
+                  Jobs("mobile-development.png", "mobile", "2", (id) => fetchJobs(specializationId: id)),
+                  Jobs("graphic-designer.png", "graphic", "3", (id) => fetchJobs(specializationId: id)),
                 ],
               ),
             ),
@@ -634,6 +634,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -643,9 +644,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
 }
+
 class FavIconButton extends StatefulWidget {
   final Map<String, dynamic> job;
-  final bool isBookmarked; // New property to indicate if the job is bookmarked
+  final bool isBookmarked;
   final Function() updateUI;
 
   FavIconButton({required this.job, required this.isBookmarked, required this.updateUI});
@@ -664,6 +666,12 @@ class _FavIconButtonState extends State<FavIconButton> {
     super.initState();
     _fetchWishlistJobs();
     checkfav();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true; // Set disposed flag
+    super.dispose();
   }
 
   Future<String?> _getToken() async {
@@ -688,10 +696,11 @@ class _FavIconButtonState extends State<FavIconButton> {
       );
 
       if (response.statusCode == 200) {
-        setState(() {
-          wishlistJobs = jsonDecode(response.body)['data'];
-
-        });
+        if (!_isDisposed) {
+          setState(() {
+            wishlistJobs = jsonDecode(response.body)['data'];
+          });
+        }
       } else {
         print('Failed to fetch wishlist jobs. Status code: ${response.statusCode}');
       }
@@ -713,19 +722,25 @@ class _FavIconButtonState extends State<FavIconButton> {
       );
 
       if (response.statusCode == 200) {
-        setState(() {
-          wishlistJobs = jsonDecode(response.body)['data'];
-
-        });
+        if (!_isDisposed) {
+          setState(() {
+            wishlistJobs = jsonDecode(response.body)['data'];
+          });
+        }
       } else {
         print('Failed to fetch wishlist jobs. Status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error: $e');
     }
+
     var bookmark = wishlistJobs.firstWhere((bookmark) => bookmark['job']['id'] == widget.job['id'], orElse: () => null);
     if (bookmark != null) {
-      isFavorited = true;
+      if (!_isDisposed) {
+        setState(() {
+          isFavorited = true;
+        });
+      }
     }
     return isFavorited;
   }
@@ -735,15 +750,14 @@ class _FavIconButtonState extends State<FavIconButton> {
     return IconButton(
       icon: Icon(
         isFavorited ? Icons.favorite : Icons.favorite_border,
-        color: isFavorited ? Colors.red : Colors.black, // Set color based on favorited state
+        color: isFavorited ? Colors.red : Colors.black,
       ),
       onPressed: () async {
-        // Check if the job is already in the wishlist
         checkfav();
 
-        // If the job is already in the wishlist, do nothing
         if (isFavorited) {
           _showMessageDialog(context, 'Already in bookmarks');
+          return;
         }
 
         final prefs = await SharedPreferences.getInstance();
@@ -771,17 +785,25 @@ class _FavIconButtonState extends State<FavIconButton> {
         if (postResponse.statusCode == 201) {
           print('Job added to bookmarks');
           _showMessageDialog(context, 'Job added to bookmarks');
-          setState(() {
-            isFavorited = true; // Update favorited state
-          });
+          if (!_isDisposed) {
+            setState(() {
+              isFavorited = true;
+            });
+          }
         } else if (postResponse.statusCode == 422) {
           print('Job already in bookmarks');
           _showMessageDialog(context, 'Already in bookmarks');
-          setState(() {
-            isFavorited = true;
-          });
+          if (!_isDisposed) {
+            setState(() {
+              isFavorited = true;
+            });
+          }
         } else {
-          isFavorited = false;
+          if (!_isDisposed) {
+            setState(() {
+              isFavorited = false;
+            });
+          }
           print('Failed to add job to bookmarks. Response: ${postResponse.body}');
         }
       },
@@ -806,11 +828,5 @@ class _FavIconButtonState extends State<FavIconButton> {
         );
       },
     );
-  }
-
-  @override
-  void dispose() {
-    _isDisposed = true; // Set disposed flag
-    super.dispose();
   }
 }
