@@ -103,51 +103,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showReviewsDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Freelancer Reviews'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: _reviews.map((review) {
-              return Card(
-                margin: EdgeInsets.symmetric(vertical: 8.0),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        review['comment'],
-                        style: TextStyle(fontSize: 16.0),
-                      ),
-                      SizedBox(height: 5.0),
-                      Text(
-                        'Rating: ${review['value']}',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ],
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Freelancer Reviews'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: _reviews.map((review) {
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          review['comment'],
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                        SizedBox(height: 5.0),
+                        Text(
+                          'Rating: ${review['value']}',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text('Close'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -684,6 +683,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: const TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
               ),
               Text(_email),
+              const SizedBox(height: 10.0),
+              if (_averageRating > 2 && _averageRating<=3)
+                Image.asset(
+                  'assets/images/bronze-medal.png',
+                  height: 50.0,
+                ),
+              if (_averageRating > 3 && _averageRating<=4 )
+                Image.asset(
+                  'assets/images/silver-medal.png',
+                  height: 50.0,
+                ),
+              if (_averageRating > 4 && _averageRating<5)
+                Image.asset(
+                  'assets/images/medal.png',
+                  height: 50.0,
+                ),
+              if (_averageRating==5)
+                Image.asset(
+                  'assets/images/trophy.png',
+                  height: 50.0,
+                ),
+              ElevatedButton(
+                onPressed: () => _showReviewsDialog(context),
+                child: Text('Show Reviews'),
+              ),
               const SizedBox(height: 20.0),
               RatingBarIndicator(
                 rating: _averageRating,
@@ -695,11 +719,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 itemSize: 40.0,
                 direction: Axis.horizontal,
               ),
-              const SizedBox(height: 10.0),
-              ElevatedButton(
-                onPressed: () => _showReviewsDialog(context),
-                child: Text('Show Reviews'),
-              ),
+              
               const SizedBox(height: 20.0),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
