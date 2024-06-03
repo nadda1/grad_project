@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Your App Title',
+      title: 'Your Ap Title',
       initialRoute: initialRoute, // Dynamic initial route based on token
       routes: {
         '/': (context) => WelcomePage(),
