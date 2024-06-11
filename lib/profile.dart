@@ -247,14 +247,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   return;
                 }
 
-                final response = await http.put(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-employments'),
+                final response = await http.post(
+                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/employments'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
                   },
-                  body: jsonEncode({
-                    "employments": [
+                  body: jsonEncode(
+                
                       {
                         "company": _companyController.text,
                         "position": _positionController.text,
@@ -264,8 +264,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         "end_date": _endDateController.text,
                         "description": _descriptionController.text,
                       }
-                    ]
-                  }),
+
+                  ),
                 );
 
                 if (response.statusCode == 200) {
@@ -419,14 +419,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   return;
                 }
 
-                final response = await http.put(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-certifications'),
+                final response = await http.post(
+                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/certifications'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
                   },
-                  body: jsonEncode({
-                    "certifications": [
+                  body: jsonEncode(
+
                       {
                         "name": _nameController.text,
                         "issuer": _issuerController.text,
@@ -434,8 +434,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         "url": _urlController.text,
                         "description": _descriptionController.text,
                       }
-                    ]
-                  }),
+
+                  ),
                 );
 
                 if (response.statusCode == 200) {
@@ -523,14 +523,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   return;
                 }
 
-                final response = await http.put(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-educations'),
+                final response = await http.post(
+                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/educations'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
                   },
-                  body: jsonEncode({
-                    "educations": [
+                  body: jsonEncode(
+
                       {
                         "school": _schoolController.text,
                         "degree": _degreeController.text,
@@ -539,8 +539,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         "major": _majorController.text,
                         "description": _descriptionController.text,
                       }
-                    ]
-                  }),
+
+                  ),
                 );
 
                 if (response.statusCode == 200) {
@@ -562,6 +562,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
+ 
+
+
+
+
+
+
+
+
+
 
   Future<void> _showEditProfileDialog() async {
     return showDialog<void>(
