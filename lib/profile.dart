@@ -24,9 +24,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<dynamic>? _certifications;
   List<dynamic>? _employments;
   List<dynamic>? _skills;
+  List<dynamic>? _languages;
   double _averageRating = 0.0;
   List<dynamic> _reviews = [];
   String? role = '';
+  List<Map<String, dynamic>> _projects = [];
+
 
   @override
   void initState() {
@@ -53,6 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _certifications = userProfile['certifications'];
         _employments = userProfile['Employment'];
         _skills = userProfile['skills'];
+        _languages= userProfile['languages'];
       });
     } catch (e) {
       print('Error loading user profile: $e');
@@ -180,6 +184,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+Future<void> _showAddLanguageDialog() async {
+  TextEditingController _languageController = TextEditingController();
+  TextEditingController _levelController = TextEditingController();
+
+  return showDialog<void>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Add Language'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _languageController,
+                decoration: InputDecoration(labelText: 'Language'),
+              ),
+              TextFormField(
+                controller: _levelController,
+                decoration: InputDecoration(labelText: 'Level'),
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              String? token = prefs.getString('token');
+              if (token == null) {
+                Navigator.of(context).pop(); // Close the dialog
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("You're not logged in."),
+                ));
+                return;
+              }
+
+              final response = await http.post(
+                Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/languages'),
+                headers: <String, String>{
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                },
+                body: jsonEncode(
+                  {
+                    "name": _languageController.text,
+                    "level": _levelController.text,
+                  }
+                ),
+              );
+
+              if (response.statusCode == 200) {
+                Navigator.of(context).pop(); // Close the dialog
+                _loadUserProfile();
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("Language added successfully."),
+                ));
+              } else {
+                Navigator.of(context).pop(); // Close the dialog
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text("Failed to add language. Error: ${response.body}"),
+                ));
+              }
+            },
+            child: Text('Save'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
+
+
   Future<void> showAddEmploymentsDialog() async {
     TextEditingController _companyController = TextEditingController();
     TextEditingController _positionController = TextEditingController();
@@ -288,6 +373,120 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
+ 
+void _showAddProjectDialog() {
+  TextEditingController _titleController = TextEditingController();
+  TextEditingController _descriptionController = TextEditingController();
+  TextEditingController _urlController = TextEditingController();
+  TextEditingController _technologiesController = TextEditingController();
+  TextEditingController _completionDateController = TextEditingController();
+  TextEditingController _attachmentTitleController = TextEditingController();
+  TextEditingController _attachmentUrlController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Add Project'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _titleController,
+                decoration: InputDecoration(labelText: 'Title'),
+              ),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(labelText: 'Description'),
+              ),
+              TextFormField(
+                controller: _urlController,
+                decoration: InputDecoration(labelText: 'URL'),
+              ),
+              TextFormField(
+                controller: _technologiesController,
+                decoration: InputDecoration(labelText: 'Technologies'),
+              ),
+              TextFormField(
+                controller: _completionDateController,
+                decoration: InputDecoration(labelText: 'Completion Date'),
+              ),
+              TextFormField(
+                controller: _attachmentTitleController,
+                decoration: InputDecoration(labelText: 'Attachment Title'),
+              ),
+              TextFormField(
+                controller: _attachmentUrlController,
+                decoration: InputDecoration(labelText: 'Attachment URL'),
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              String? token = prefs.getString('token');
+              if (token == null) {
+                Navigator.of(context).pop(); // Close the dialog
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("You're not logged in."),
+                ));
+                return;
+              }
+
+              final response = await http.put(
+                Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-projects'),
+                headers: <String, String>{
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                },
+                body: jsonEncode(
+                  {
+                    "title": _titleController.text,
+                    "description": _descriptionController.text,
+                    "url": _urlController.text,
+                    "technologies": _technologiesController.text.split(','),
+                    "completion_date": _completionDateController.text,
+                    "attachments": [
+                      {
+                        "title": _attachmentTitleController.text,
+                        "url": _attachmentUrlController.text,
+                      }
+                    ]
+                  },
+                ),
+              );
+
+              if (response.statusCode == 200) {
+                Navigator.of(context).pop(); // Close the dialog
+                _loadUserProfile();
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("Project added successfully."),
+                ));
+              } else {
+                Navigator.of(context).pop(); // Close the dialog
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text("Failed to add project. Error: ${response.body}"),
+                ));
+              }
+            },
+            child: Text('Save'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
 
   Future<void> showAddSkillsDialog() async {
     TextEditingController _skillController = TextEditingController();
@@ -563,16 +762,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
  
-
-
-
-
-
-
-
-
-
-
   Future<void> _showEditProfileDialog() async {
     return showDialog<void>(
       context: context,
@@ -816,7 +1005,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Text('Start Date: ${education['start_date']}'),
                             Text('End Date: ${education['end_date']}'),
                             Text('Description: ${education['description']}'),
-                            const SizedBox(height: 20.0),
+                              const SizedBox(height: 20.0),
+                              const SeparatorLine(),
+                              const SizedBox(height: 20.0),
                           ],
                         ),
                     ],
@@ -824,7 +1015,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20.0),
-              const SeparatorLine(),
               Container(
                 padding: const EdgeInsets.all(15.0),
                 decoration: BoxDecoration(
@@ -861,7 +1051,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Text('Issue Date: ${certification['issue_date']}'),
                             Text('URL: ${certification['url']}'),
                             Text('Description: ${certification['description']}'),
-                            const SizedBox(height: 20.0),
+                              const SizedBox(height: 20.0),
+                              const SeparatorLine(),
+                              const SizedBox(height: 20.0),
                           ],
                         ),
                     ],
@@ -869,7 +1061,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20.0),
+
+              Container(
+  padding: const EdgeInsets.all(15.0),
+  decoration: BoxDecoration(
+    color: Colors.grey[200],
+    borderRadius: BorderRadius.circular(8.0),
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Languages:',
+            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+          ),
+          IconButton(
+            onPressed: _showAddLanguageDialog,
+            icon: Icon(Icons.add),
+          ),
+        ],
+      ),
+      const SizedBox(height: 10.0),
+      if (_languages != null) ...[
+        for (var language in _languages!)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Language: ${language['name']}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text('Level: ${language['level']}'),
+              const SizedBox(height: 20.0),
               const SeparatorLine(),
+              const SizedBox(height: 20.0),
+            ],
+          ),
+      ],
+    ],
+  ),
+),
+ const SizedBox(height: 20.0),
               Container(
                 padding: const EdgeInsets.all(15.0),
                 decoration: BoxDecoration(
@@ -908,7 +1143,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Text('Start Date: ${employment['start_date']}'),
                             Text('End Date: ${employment['end_date']}'),
                             Text('Description: ${employment['description']}'),
-                            const SizedBox(height: 20.0),
+                              const SizedBox(height: 20.0),
+                              const SeparatorLine(),
+                              const SizedBox(height: 20.0),
                           ],
                         ),
                     ],
@@ -916,7 +1153,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20.0),
-              const SeparatorLine(),
+             Container(
+  padding: const EdgeInsets.all(15.0),
+  decoration: BoxDecoration(
+    color: Colors.grey[200],
+    borderRadius: BorderRadius.circular(8.0),
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Projects:',
+            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+          ),
+          IconButton(
+            onPressed: _showAddProjectDialog,
+            icon: Icon(Icons.add),
+          ),
+        ],
+      ),
+      const SizedBox(height: 10.0),
+      if (_projects.isNotEmpty) ...[
+        for (var project in _projects)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Title: ${project['title']}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text('Description: ${project['description']}'),
+              if (project['url'] != null) Text('URL: ${project['url']}'),
+              if (project['completion_date'] != null) Text('Completion Date: ${project['completion_date']}'),
+              if (project['attachments'] != null) ...[
+                for (var attachment in project['attachments'])
+                  Text('${attachment['title']}: ${attachment['url']}'),
+              ],
+              
+              const SizedBox(height: 10.0),
+              const Divider(),
+              const SizedBox(height: 10.0),
+            ],
+          ),
+      ],
+    ],
+  ),
+),
+
+              const SizedBox(height: 20.0),
               Container(
                 padding: const EdgeInsets.all(15.0),
                 decoration: BoxDecoration(
@@ -984,7 +1271,7 @@ class SeparatorLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 1.0,
-      color: Colors.grey[300],
+      color: Color.fromARGB(255, 0, 0, 0),
       margin: const EdgeInsets.symmetric(horizontal: 10.0),
     );
   }
