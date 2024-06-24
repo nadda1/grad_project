@@ -318,88 +318,84 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Future<void> fetchMessages() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    int? id = prefs.getInt('user_id');
-    print("debug");
-    print(id);
-    print(widget.senderId);
-    print(widget.receiverId);
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+  int? id = prefs.getInt('user_id');
 
-    if (token != null && id != null) {
+  if (token != null && id != null) {
+    final o_response = await http.get(
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/messages/${widget.senderId}'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
 
-      final o_response = await http.get(
-        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/messages/${widget.senderId}'),
-        headers: {'Authorization': 'Bearer $token'},
+    if (o_response.statusCode == 200) {
+      List<dynamic> allMessages = json.decode(o_response.body)['data'];
+
+      List<dynamic> sentMessages = allMessages
+          .where((message) => message['sender']['id'] == id)
+          .map((message) => {...message, 'type': 'sent'})
+          .toList();
+
+      List<dynamic> receivedMessages = allMessages
+          .where((message) => message['sender']['id'] == widget.senderId)
+          .map((message) => {...message, 'type': 'received'})
+          .toList();
+
+      List<dynamic> combinedMessages = [...receivedMessages, ...sentMessages];
+      combinedMessages.sort((a, b) => DateTime.parse(a['sent_at']).compareTo(DateTime.parse(b['sent_at'])));
+
+      setState(() {
+        messages = combinedMessages;
+      });
+    } else {
+      throw Exception('Failed to load messages');
+    }
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Token or User ID not found")));
+  }
+}
+
+Future<void> sendMessage(String content) async {
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+
+  if (token != null) {
+    if (content.isNotEmpty) {
+      final response = await http.post(
+        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/messages'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'receiver_id': widget.senderId,
+          'content': content,
+        }),
       );
 
-      if (o_response.statusCode==200) {
-
-        List<dynamic> allMessagess = json.decode(o_response.body)['data'];
-
-        List<dynamic> sentMessages = allMessagess
-            .where((message) => message['sender']['id'] == id )
-            .map((message) => {...message, 'type': 'received'})
-            .toList();
-        List<dynamic> receivedMessages = allMessagess.where((message) => message['sender']['id'] ==  widget.senderId ).map((message) => {...message, 'type': 'sent'}).toList();
-
-        // Combine and sort messages by sent_at timestamp
-        List<dynamic> combinedMessages = [...receivedMessages,...sentMessages];
-        combinedMessages.sort((a, b) => DateTime.parse(a['sent_at']).compareTo(DateTime.parse(b['sent_at'])));
-
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Message sent successfully")));
+        fetchMessages();
         setState(() {
-          messages = combinedMessages;
+          messages.add({
+            'content': content,
+            'type': 'sent',
+          });
+          messageController.clear();
         });
       } else {
-        throw Exception('Failed to load messages');
+        var responseBody = json.decode(response.body);
+        var errorMessage = responseBody['message'];
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Token or User ID not found")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please enter a message")));
     }
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Token not found")));
   }
+}
 
-
-  Future<void> sendMessage(String content) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-
-    if (token != null) {
-      if (content.isNotEmpty) {
-        final response = await http.post(
-          Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/messages'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-          body: jsonEncode({
-            'receiver_id': widget.senderId,
-            'content': content,
-          }),
-        );
-
-        if (response.statusCode == 201) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Message sent successfully")));
-          setState(() {
-            messages.add({
-              'content': content,
-              'type': 'sent',
-            });
-            messageController.clear();
-          });
-
-
-        } else {
-          var responseBody = json.decode(response.body);
-          var errorMessage = responseBody['message'];
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please enter a message")));
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Token not found")));
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

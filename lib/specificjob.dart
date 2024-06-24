@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,8 +10,7 @@ class SpecificJobPage extends StatefulWidget {
   final String jobId;
   final String specializationId;
 
-
-  SpecificJobPage({Key? key, required this.jobId, required this.specializationId}) : super(key: key); // Update this line
+  SpecificJobPage({Key? key, required this.jobId, required this.specializationId}) : super(key: key);
 
   @override
   _SpecificJobPageState createState() => _SpecificJobPageState();
@@ -18,13 +18,12 @@ class SpecificJobPage extends StatefulWidget {
 
 class _SpecificJobPageState extends State<SpecificJobPage> {
   Map<String, dynamic> jobDetails = {};
-  Map<String, dynamic> freelancer={};
+  Map<String, dynamic> freelancer = {};
   String? userIDjob;
   String? userRole;
   String? userid;
   String? jobstatus;
-  int freelancer_id=0;
-
+  int freelancer_id = 0;
 
   @override
   void initState() {
@@ -34,7 +33,7 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     _loadUserid();
   }
 
-  Future<List<dynamic>> fetchFreelancers( ) async {
+  Future<List<dynamic>> fetchFreelancers() async {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
 
@@ -43,8 +42,6 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
         Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/freelancers/${widget.specializationId}'),
         headers: {'Authorization': 'Bearer $token'},
       );
-
-
 
       if (response.statusCode == 200) {
         List<dynamic> freelancers = json.decode(response.body)['data'];
@@ -82,6 +79,7 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
       }
     }
   }
+
   Future<void> hireFreelancer(String jobSlug, String applicationSlug) async {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
@@ -152,7 +150,6 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     );
   }
 
-
   Future<void> submitApplication(String bid, String duration, String coverLetter, BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
@@ -180,19 +177,20 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
     }
   }
+
   Future<void> _loadUserRole() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       userRole = prefs.getString('role');
     });
   }
+
   Future<void> _loadUserid() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       userid = prefs.getInt('user_id')?.toString();
     });
   }
-
 
   Future<void> fetchJobDetails() async {
     final prefs = await SharedPreferences.getInstance();
@@ -299,6 +297,7 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
       },
     );
   }
+
   Widget buildSkillsCard(List<dynamic> skills) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -316,6 +315,7 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
       ),
     );
   }
+
   Widget buildCard(String details) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -325,7 +325,6 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             Wrap(
               spacing: 6.0, // Horizontal space between chips
               runSpacing: 6.0,
@@ -357,18 +356,57 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
             builder: (BuildContext context) {
               return AlertDialog(
                 title: Text('Details of $freelancer'),
-                content: SingleChildScrollView(
-                  child: ListBody(
-                    children: <Widget>[
-                      Text('Name: ${freelancerDetails['name']}'),
-                      Text('Email: ${freelancerDetails['email']}'),
-                      Text('Bio: ${freelancerDetails['bio'] ?? "Not available"}'),
-                      Text('Phone: ${freelancerDetails['phone'] ?? "Not available"}'),
-                      Text('Skills: ${freelancerDetails['skills'].map((s) => s['name']).join(", ")}'),
-                      Text('Education: ${freelancerDetails['educations'].map((e) => "${e['school']} - ${e['degree']}").join(", ")}'),
-                      Text('Certifications: ${freelancerDetails['certifications'].map((c) => c['name']).join(", ")}'),
-                    ],
-                  ),
+                content: FutureBuilder<Map<String, dynamic>>(
+                  future: fetchFreelancerRating(freelancerDetails['id']),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (!snapshot.hasData || snapshot.data == null) {
+                      return Text('No rating data found.');
+                    } else {
+                      final ratingData = snapshot.data!;
+                      final averageRating = ratingData['averageRating'];
+                      final comments = ratingData['comments'];
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Name: ${freelancerDetails['name']}'),
+                          Text('Email: ${freelancerDetails['email']}'),
+                          Text('Bio: ${freelancerDetails['bio'] ?? "Not available"}'),
+                          Text('Phone: ${freelancerDetails['phone'] ?? "Not available"}'),
+                          Text('Skills: ${freelancerDetails['skills'].map((s) => s['name']).join(", ")}'),
+                          Text('Education: ${freelancerDetails['educations'].map((e) => "${e['school']} - ${e['degree']}").join(", ")}'),
+                          Text('Certifications: ${freelancerDetails['certifications'].map((c) => c['name']).join(", ")}'),
+                          SizedBox(height: 10),
+                          Text('Rating:'),
+                          RatingBarIndicator(
+                            rating: averageRating,
+                            itemBuilder: (context, index) => Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                            ),
+                            itemCount: 5,
+                            itemSize: 20.0,
+                            direction: Axis.horizontal,
+                          ),
+                          SizedBox(height: 10),
+                          Text('Comments:'),
+                          ...comments.map<Widget>((comment) {
+                            return Card(
+                              margin: EdgeInsets.symmetric(vertical: 4.0),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(comment),
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      );
+                    }
+                  },
                 ),
                 actions: <Widget>[
                   TextButton(
@@ -394,39 +432,73 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
             ),
           ],
         ),
-        trailing: userid == userIDjob && userRole=="client" ? Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ElevatedButton(
-              onPressed: () => hireFreelancer(jobDetails['slug'], applicationSlug),
-              child: Text('Hire'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.lightGreen,
-              ),
-            ),
-            SizedBox(width: 8), // Add some spacing between buttons
-            ElevatedButton(
-              onPressed: () {
-                // Navigate to message page
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MessagePage(userid: id, username:freelancer),
-                    // Replace MessagePage with your message page
+        trailing: userid == userIDjob && userRole == "client"
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => hireFreelancer(jobDetails['slug'], applicationSlug),
+                    child: Text('Hire'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.lightGreen,
+                    ),
                   ),
-                );
-              },
-              child: Text('Contact'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, // Change button color as needed
-              ),
-            ),
-          ],
-        ): SizedBox.shrink(),
+                  SizedBox(width: 8), // Add some spacing between buttons
+                  ElevatedButton(
+                    onPressed: () {
+                      // Navigate to message page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MessagePage(userid: id, username: freelancer),
+                          // Replace MessagePage with your message page
+                        ),
+                      );
+                    },
+                    child: Text('Contact'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue, // Change button color as needed
+                    ),
+                  ),
+                ],
+              )
+            : SizedBox.shrink(),
       ),
     );
   }
 
+  Future<Map<String, dynamic>> fetchFreelancerRating(int freelancerId) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    if (token == null) {
+      throw Exception('Token not found in shared preferences');
+    }
+
+    final response = await http.get(
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/rate?freelancer_id=$freelancerId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final ratingData = json.decode(response.body)['data'];
+      double totalRating = 0.0;
+      List<String> comments = [];
+
+      for (var rating in ratingData) {
+        totalRating += rating['value'];
+        comments.add(rating['comment']);
+      }
+
+      double averageRating = ratingData.isNotEmpty ? totalRating / ratingData.length : 0.0;
+
+      return {
+        'averageRating': averageRating,
+        'comments': comments,
+      };
+    } else {
+      throw Exception('Failed to load freelancer ratings');
+    }
+  }
 
   Widget buildApplicationCardForFreelance(String freelancer, String coverLetter) {
     // Split the cover letter into words
@@ -456,14 +528,12 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     );
   }
 
-
   @override
-
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color.fromARGB(255, 242, 242, 242),
-        title: Text('Job Details', style: TextStyle(color: Color(0xFF343ABA),)), // Blue color for the title
+        title: Text('Job Details', style: TextStyle(color: Color(0xFF343ABA))), // Blue color for the title
         centerTitle: true,
         elevation: 0,
       ),
@@ -473,18 +543,17 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
         child: ListView(
           children: <Widget>[
             if (jobDetails.containsKey('title'))
-              buildCard( jobDetails['title'] ?? 'N/A'),
+              buildCard(jobDetails['title'] ?? 'N/A'),
             if (jobDetails.containsKey('address'))
-              buildCard( jobDetails['address'] ?? 'Location not available'),
+              buildCard(jobDetails['address'] ?? 'Location not available'),
             if (jobDetails.containsKey('expected_budget'))
-              buildCard( '\$${jobDetails['expected_budget']}'),
+              buildCard('\$${jobDetails['expected_budget']}'),
             if (jobDetails.containsKey('description'))
-              buildCard( jobDetails['description'] ?? 'Description not available'),
+              buildCard(jobDetails['description'] ?? 'Description not available'),
             // if (jobDetails.containsKey('required_skills'))
             //   buildSkillsCard(jobDetails['required_skills']),
 
-
-            if (userRole == 'client' && userid==userIDjob && jobstatus!="hired")
+            if (userRole == 'client' && userid == userIDjob && jobstatus != "hired")
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 16.0),
                 child: Center(
@@ -498,7 +567,7 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                   ),
                 ),
               ),
-            if (userRole == 'freelancer' && jobstatus!="hired")
+            if (userRole == 'freelancer' && jobstatus != "hired")
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 16.0),
                 child: Center(
@@ -507,13 +576,13 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                       backgroundColor: Color.fromARGB(255, 224, 79, 53),
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: () => showApplicationDialog( context),
+                    onPressed: () => showApplicationDialog(context),
                     child: Text('apply for a job', style: TextStyle(fontSize: 16)),
                   ),
                 ),
               ),
 
-            if (  jobDetails.containsKey('applications'))
+            if (jobDetails.containsKey('applications'))
               Padding(
                 padding: const EdgeInsets.only(top: 16.0),
                 child: Text('The Applicants', style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0), fontSize: 18, fontWeight: FontWeight.bold)),
@@ -534,14 +603,9 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                 application['freelancer']['name'] ?? 'N/A',
                 application['cover_letter'] ?? 'N/A',
               )).toList(),
-
           ],
         ),
       ),
     );
   }
-
-
-
-
 }

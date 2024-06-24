@@ -34,7 +34,7 @@ dependencies:
   file_picker: ^4.0.0 
   flutter_map: ^6.1.0
   geolocator: ^8.2.1
-  web_socket_channel: ^2.2.0
+  flutter_rating_bar: ^4.0.0
 
 
 
