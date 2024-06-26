@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'specificjob.dart'; // تأكد من أن مسار الاستيراد هذا صحيح لكي تعمل التنقلات
+import 'specificjob.dart';
 
 class ClientJobsPage extends StatefulWidget {
   @override
@@ -176,37 +176,37 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Job Title: ${job['title']}', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('Job Title: ${job['title']}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                     SizedBox(height: 10),
                     Text('Client Name: ${job['client']['name']}'),
                     Text('Specialization: ${job['specialization']['name']}'),
                     Text('Description: ${job['description']}'),
-                    Text('Expected Budget: \$${job['expected_budget']}'),
+                    Text('Expected Budget: \$${job['expected_budget']}', style: TextStyle(color: Colors.green)),
                     Text('Expected Duration: ${job['expected_duration']} days'),
                     Text('Location: ${job['address']}'),
                     SizedBox(height: 10),
-                    Text('Required Skills:'),
+                    Text('Required Skills:', style: TextStyle(fontWeight: FontWeight.bold)),
                     Wrap(
                       spacing: 8.0,
                       runSpacing: 4.0,
                       children: job['required_skills'].map<Widget>((skill) {
                         return Chip(
-                          label: Text(skill),
+                          label: Text(skill, style: TextStyle(color: Colors.blueGrey[800])),
                           backgroundColor: Colors.blueGrey[100],
                         );
                       }).toList(),
                     ),
                     SizedBox(height: 10),
-                    Text('Attachments:'),
+                    Text('Attachments:', style: TextStyle(fontWeight: FontWeight.bold)),
                     if (job['attachments'] != null && job['attachments'].isNotEmpty)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: job['attachments'].map<Widget>((attachment) {
-                          return Text(attachment);
+                          return Text(attachment, style: TextStyle(color: Colors.grey[600]));
                         }).toList(),
                       ),
                     SizedBox(height: 10),
-                    Text('Hired Applications:'),
+                    Text('Hired Applications:', style: TextStyle(fontWeight: FontWeight.bold)),
                     Column(
                       children: hiredApplications.map<Widget>((app) {
                         return ListTile(
@@ -214,18 +214,19 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Bid: \$${app['bid']}'),
-                              Text('Duration: ${app['duration']} days'),
+                              Text('Bid: \$${app['bid']}', style: TextStyle(color: Colors.green)),
+                              Text('Duration: ${app['duration']} days', style: TextStyle(color: Colors.blue)),
                             ],
                           ),
                         );
                       }).toList(),
                     ),
+                    SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.rate_review),
+                          icon: Icon(Icons.rate_review, color: Colors.blue),
                           onPressed: () {
                             showRatingDialog(context, job['id']);
                           },

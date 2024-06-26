@@ -52,7 +52,7 @@ class _ContractsPageState extends State<ContractsPage> {
     });
   }
 
-  Future<void> showChangeRequestDialog(String jobSlug, String appSLug) async {
+  Future<void> showChangeRequestDialog(String jobSlug, String appSlug) async {
     TextEditingController bidController = TextEditingController();
     TextEditingController durationController = TextEditingController();
 
@@ -92,11 +92,9 @@ class _ContractsPageState extends State<ContractsPage> {
             TextButton(
               child: Text('Submit'),
               onPressed: () {
-                if (bidController.text.isNotEmpty &&
-                    durationController.text.isNotEmpty) {
-                  requestChange(jobSlug, appSLug, bidController.text,
-                      durationController.text);
-                  print(appSLug);
+                if (bidController.text.isNotEmpty && durationController.text.isNotEmpty) {
+                  requestChange(jobSlug, appSlug, bidController.text, durationController.text);
+                  print(appSlug);
                   print(jobSlug);
                   Navigator.of(context).pop();
                 }
@@ -109,15 +107,18 @@ class _ContractsPageState extends State<ContractsPage> {
   }
 
   Future<void> requestCancel(String jobSlug, String appSlug) async {
-    String url =
-        'https://snapwork-133ce78bbd88.herokuapp.com/api/request-cancel/$appSlug/$jobSlug';
+    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-cancel/$appSlug/$jobSlug';
     final response = await http.put(
       Uri.parse(url),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken'
       },
-      body: jsonEncode({'type': 'cancel', 'new_bid': '', 'new_duration': ''}),
+      body: jsonEncode({
+        'type': 'cancel',
+        'new_bid': '',
+        'new_duration': ''
+      }),
     );
     if (response.statusCode == 201) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -132,18 +133,19 @@ class _ContractsPageState extends State<ContractsPage> {
     }
   }
 
-  Future<void> requestChange(
-      String jobSlug, String appSlug, String newBid, String newDuration) async {
-    String url =
-        'https://snapwork-133ce78bbd88.herokuapp.com/api/request-change/$appSlug/$jobSlug';
+  Future<void> requestChange(String jobSlug, String appSlug, String newBid, String newDuration) async {
+    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-change/$appSlug/$jobSlug';
     final response = await http.post(
       Uri.parse(url),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken'
       },
-      body: jsonEncode(
-          {'type': 'change', 'new_bid': newBid, 'new_duration': newDuration}),
+      body: jsonEncode({
+        'type': 'change',
+        'new_bid': newBid,
+        'new_duration': newDuration
+      }),
     );
 
     if (response.statusCode == 201) {
@@ -160,8 +162,7 @@ class _ContractsPageState extends State<ContractsPage> {
   }
 
   Future<void> requestSubmit(String jobSlug, String appSlug) async {
-    String url =
-        'https://snapwork-133ce78bbd88.herokuapp.com/api/request-submit/$appSlug/$jobSlug';
+    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/request-submit/$appSlug/$jobSlug';
     final response = await http.put(
       Uri.parse(url),
       headers: {
@@ -197,55 +198,41 @@ class _ContractsPageState extends State<ContractsPage> {
         itemBuilder: (context, index) {
           final job = jobList[index];
 
-          // تحديث العرض ليشمل معلومات العرض ومدته والغطاء الخاص بالتقديم
           return Card(
             elevation: 4,
             margin: EdgeInsets.all(10),
             child: Padding(
-              padding: EdgeInsets.all(8),
+              padding: EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Freelancer: ${job['freelancer']['name']}',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
-                  Text('Bid: \$${job['bid']}'),
-                  Text('Duration: ${job['duration']} days'),
-                  if (job['cover_letter'] != null)
-                    Text('Cover Letter: ${job['cover_letter']}'),
-                  SizedBox(height: 10),
-                  Text('Attachments:'),
-                  if (job['attachments'] != null &&
-                      job['attachments'].isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: job['attachments'].map<Widget>((attachment) {
-                        return Text(attachment);
-                      }).toList(),
-                    ),
+                  // _buildInfoRow('Freelancer', job['freelancer']['name']),
+                  _buildInfoRow('Bid', '\$${job['bid']}'),
+                  _buildInfoRow('Duration', '${job['duration']} days'),
+                  _buildCoverLetter(job['cover_letter']),
+                  SizedBox(height: 12),
+                  _buildAttachments(job['attachments']),
+                  SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      ElevatedButton(
-                        onPressed: () =>
-                            requestCancel(job['slug'], job['job']['slug']),
-                        child: Text('Request to Cancel'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent),
+                      _buildIconButton(
+                        icon: Icons.cancel,
+                        label: 'Cancel',
+                        color: Colors.redAccent,
+                        onPressed: () => requestCancel(job['slug'], job['job']['slug']),
                       ),
-                      ElevatedButton(
-                        onPressed: () => showChangeRequestDialog(
-                            job['slug'], job['job']['slug']),
-                        child: Text('Request to Change'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange),
+                      _buildIconButton(
+                        icon: Icons.edit,
+                        label: 'Change',
+                        color: Colors.orange,
+                        onPressed: () => showChangeRequestDialog(job['slug'], job['job']['slug']),
                       ),
-                      ElevatedButton(
-                        onPressed: () =>
-                            requestSubmit(job['slug'], job['job']['slug']),
-                        child: Text('Request to Submit'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green),
+                      _buildIconButton(
+                        icon: Icons.check_circle,
+                        label: 'Submit',
+                        color: Colors.green,
+                        onPressed: () => requestSubmit(job['slug'], job['job']['slug']),
                       ),
                     ],
                   ),
@@ -254,6 +241,125 @@ class _ContractsPageState extends State<ContractsPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String title, String value) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$title:',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black54,
+              fontSize: 16,
+            ),
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoverLetter(String? coverLetter) {
+    if (coverLetter != null) {
+      return Container(
+        margin: EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            Text(
+              'Cover Letter:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black54,
+                fontSize: 16,
+
+              ),
+            ),
+            SizedBox(height: 4),
+            Container(
+              color: Colors.grey[100], // Light grey background color
+              padding: EdgeInsets.all(8),
+              child: Text(
+                coverLetter,
+                style: TextStyle(
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+
+          ],
+        ),
+      );
+    } else {
+      return SizedBox.shrink(); // Empty container if no cover letter
+    }
+  }
+
+  Widget _buildAttachments(List<String>? attachments) {
+    if (attachments != null && attachments.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Attachments:',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black54,
+
+            ),
+          ),
+          SizedBox(height: 4),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: attachments.map((attachment) {
+              return Text(
+                '- $attachment',
+                style: TextStyle(
+                  color: Colors.black87,
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      );
+    } else {
+      return SizedBox.shrink(); // Empty container if no attachments
+    }
+  }
+
+  Widget _buildIconButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Flexible(
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18, color: color),
+        label: Text(label),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: color),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
+        ),
       ),
     );
   }

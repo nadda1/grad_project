@@ -66,7 +66,7 @@ class _LoginFormState extends State<LoginForm> {
               child: TextField(
                 controller: _emailController,
                 decoration: InputDecoration(
-                  labelText: 'email',
+                  labelText: 'Email',
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
