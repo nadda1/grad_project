@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:grad_project/recommendtion.dart';
@@ -13,7 +12,9 @@ import 'Search.dart';
 import 'specificjob.dart';
 import 'profile.dart';
 import 'post.dart';
-Container Jobs(String imagePath, String title, String id, Function(String) onTap) {
+
+Container Jobs(
+    String imagePath, String title, String id, Function(String) onTap) {
   return Container(
     width: 150.0,
     child: GestureDetector(
@@ -47,7 +48,6 @@ class MyHomePage extends StatefulWidget {
 
   final String title;
 
-
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
@@ -63,7 +63,6 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Widget> jobCards = [];
   String lastAction = 'all';
 
-
   @override
   void initState() {
     super.initState();
@@ -73,17 +72,23 @@ class _MyHomePageState extends State<MyHomePage> {
     _loadUserRole();
     fetchJobs();
   }
+
   void refreshJobList() {
     fetchJobs(); // Assuming fetchJobs is the method that fetches all jobs
   }
 
-  Future<void> fetchJobs({String specializationId = '', int page = 1, bool fetchAll = false}) async {
+  Future<void> fetchJobs(
+      {String specializationId = '',
+      int page = 1,
+      bool fetchAll = false}) async {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
-    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId?page=$page';
+    String url =
+        'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization/$specializationId?page=$page';
 
     if (specializationId.isEmpty) {
-      url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
+      url =
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/specialization?page=$page';
     }
 
     if (token != null) {
@@ -95,14 +100,15 @@ class _MyHomePageState extends State<MyHomePage> {
       if (response.statusCode == 200) {
         var currentPageData = json.decode(response.body)['data'];
         if (fetchAll || page == 1) {
-          jobList.clear();  // Clear the job list before adding new data
+          jobList.clear(); // Clear the job list before adding new data
         }
         jobList.addAll(currentPageData); // Append new jobs to the list
         currentPage = page; // Update the current page
 
         setState(() {
           lastAction = 'all'; // Update last action to 'all'
-          filteredJobs = List.from(jobList); // Update filtered jobs based on the complete list
+          filteredJobs = List.from(
+              jobList); // Update filtered jobs based on the complete list
         });
       } else {
         print('Failed to fetch jobs');
@@ -112,7 +118,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> fetchData(String specializationId, {int page = 1}) async {
     final prefs = await SharedPreferences.getInstance();
-    List<String> skills = prefs.getStringList('user_skills') ?? ["html","css","js"]; // Provide a default skill if none found
+    List<String> skills = prefs.getStringList('user_skills') ??
+        ["html", "css", "js"]; // Provide a default skill if none found
 
     final String apiUrl = 'https://1nadda.pythonanywhere.com/recommend';
 
@@ -122,19 +129,23 @@ class _MyHomePageState extends State<MyHomePage> {
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
-        body: jsonEncode({'skills': skills, 'page': page}),  // Use dynamic skills
+        body:
+            jsonEncode({'skills': skills, 'page': page}), // Use dynamic skills
       );
 
       if (response.statusCode == 200) {
         String responseBody = response.body;
-        List<dynamic> recommendedJobs = jsonDecode(responseBody)["recommended_jobs"];
+        List<dynamic> recommendedJobs =
+            jsonDecode(responseBody)["recommended_jobs"];
         print(skills);
 
         setState(() {
           lastAction = 'recommended'; // Update last action to 'recommended'
-          jobList = recommendedJobs;  // Update the main job list
-          filteredJobs = List.from(jobList);  // Filtered jobs are now the same as job list
-          buildJobCardsFromRecommendedJobs(recommendedJobs);  // Optionally build job cards
+          jobList = recommendedJobs; // Update the main job list
+          filteredJobs =
+              List.from(jobList); // Filtered jobs are now the same as job list
+          buildJobCardsFromRecommendedJobs(
+              recommendedJobs); // Optionally build job cards
         });
       } else {
         print('Request failed with status: ${response.statusCode}');
@@ -157,9 +168,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-
-
-
   void _filterJobs() {
     String query = _searchController.text.toLowerCase();
     setState(() {
@@ -169,9 +177,14 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  String calculateDistance(String? userLatStr, String? userLongStr, String? jobLatStr, String? jobLongStr) {
-    if (userLatStr == null || userLongStr == null || userLatStr.isEmpty || userLongStr.isEmpty ||
-        jobLatStr == null || jobLongStr == null) {
+  String calculateDistance(String? userLatStr, String? userLongStr,
+      String? jobLatStr, String? jobLongStr) {
+    if (userLatStr == null ||
+        userLongStr == null ||
+        userLatStr.isEmpty ||
+        userLongStr.isEmpty ||
+        jobLatStr == null ||
+        jobLongStr == null) {
       return 'Location not set';
     } else {
       final double userLat = double.tryParse(userLatStr) ?? 0.0;
@@ -179,7 +192,8 @@ class _MyHomePageState extends State<MyHomePage> {
       final double jobLat = double.tryParse(jobLatStr) ?? 0.0;
       final double jobLong = double.tryParse(jobLongStr) ?? 0.0;
 
-      double distanceInMeters = Geolocator.distanceBetween(userLat, userLong, jobLat, jobLong);
+      double distanceInMeters =
+          Geolocator.distanceBetween(userLat, userLong, jobLat, jobLong);
       return '${(distanceInMeters / 1000).toStringAsFixed(2)} km';
     }
   }
@@ -193,10 +207,12 @@ class _MyHomePageState extends State<MyHomePage> {
       applyDistanceFilter(latStr, longStr);
     }
   }
+
   void applyDistanceFilter(String latStr, String longStr) {
     setState(() {
       filteredJobs = jobList.map((job) {
-        job['distance'] = calculateDistance(latStr, longStr, job['latitude'] as String?, job['longitude'] as String?);
+        job['distance'] = calculateDistance(latStr, longStr,
+            job['latitude'] as String?, job['longitude'] as String?);
         return job;
       }).toList();
 
@@ -204,25 +220,22 @@ class _MyHomePageState extends State<MyHomePage> {
         String distanceA = a['distance'];
         String distanceB = b['distance'];
 
-        double distanceANumeric = distanceA == 'Location not set' ? double.infinity : double.parse(distanceA.split(' ')[0]);
-        double distanceBNumeric = distanceB == 'Location not set' ? double.infinity : double.parse(distanceB.split(' ')[0]);
+        double distanceANumeric = distanceA == 'Location not set'
+            ? double.infinity
+            : double.parse(distanceA.split(' ')[0]);
+        double distanceBNumeric = distanceB == 'Location not set'
+            ? double.infinity
+            : double.parse(distanceB.split(' ')[0]);
 
         return distanceANumeric.compareTo(distanceBNumeric);
       });
     });
   }
 
-
-
-
-
   String formatDate(String dateString) {
     DateTime dateTime = DateTime.parse(dateString);
     return '${dateTime.year}-${dateTime.month}-${dateTime.day}';
   }
-
-
-
 
   Future<void> _loadUserRole() async {
     final prefs = await SharedPreferences.getInstance();
@@ -234,7 +247,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void _showLocationPicker(BuildContext context) async {
     LatLng selectedLocation = LatLng(0, 0);
 
-    Position currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    Position currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
 
     showDialog(
       context: context,
@@ -247,16 +261,19 @@ class _MyHomePageState extends State<MyHomePage> {
             child: FlutterMap(
               children: [
                 TileLayer(
-                  urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                  urlTemplate:
+                      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                   subdomains: ['a', 'b', 'c'],
                 ),
               ],
               options: MapOptions(
-                center: LatLng(currentPosition.latitude, currentPosition.longitude),
+                center:
+                    LatLng(currentPosition.latitude, currentPosition.longitude),
                 zoom: 13.0,
                 onTap: (_, position) {
                   selectedLocation = position;
-                  _locationController.text = "${selectedLocation.latitude}, ${selectedLocation.longitude}";
+                  _locationController.text =
+                      "${selectedLocation.latitude}, ${selectedLocation.longitude}";
                 },
               ),
             ),
@@ -266,7 +283,9 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Text("OK"),
               onPressed: () {
                 Navigator.of(context).pop();
-                _calculateDistanceForAllJobs(selectedLocation.latitude.toString(), selectedLocation.longitude.toString());
+                _calculateDistanceForAllJobs(
+                    selectedLocation.latitude.toString(),
+                    selectedLocation.longitude.toString());
               },
             ),
             TextButton(
@@ -323,7 +342,6 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
           ),
-
           SizedBox(width: 10),
           Expanded(
             child: TextField(
@@ -351,6 +369,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -382,7 +401,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               ),
               IconButton(
-                icon: Icon(Icons.more_horiz, color: Color(0xFF343ABA), size: 36.0),
+                icon: Icon(Icons.more_horiz,
+                    color: Color(0xFF343ABA), size: 36.0),
                 onPressed: () {
                   _scaffoldKey.currentState!.openDrawer();
                 },
@@ -409,11 +429,16 @@ class _MyHomePageState extends State<MyHomePage> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  Jobs("all-inclusive.png", "all jobs", "", (id) => fetchJobs(specializationId: id)),
-                  Jobs("social-media.png", "Recommended", "", (id) => fetchData(id)),
-                  Jobs("coding.png", "web", "1", (id) => fetchJobs(specializationId: id)),
-                  Jobs("mobile-development.png", "mobile", "2", (id) => fetchJobs(specializationId: id)),
-                  Jobs("graphic-designer.png", "graphic", "3", (id) => fetchJobs(specializationId: id)),
+                  Jobs("all-inclusive.png", "all jobs", "",
+                      (id) => fetchJobs(specializationId: id)),
+                  Jobs("social-media.png", "Recommended", "",
+                      (id) => fetchData(id)),
+                  Jobs("coding.png", "web", "1",
+                      (id) => fetchJobs(specializationId: id)),
+                  Jobs("mobile-development.png", "mobile", "2",
+                      (id) => fetchJobs(specializationId: id)),
+                  Jobs("graphic-designer.png", "graphic", "3",
+                      (id) => fetchJobs(specializationId: id)),
                 ],
               ),
             ),
@@ -442,20 +467,30 @@ class _MyHomePageState extends State<MyHomePage> {
                         return Container(); // Safeguard against out of range errors
                       }
                       var job = filteredJobs[index];
-                      String formattedDate = job['created_at'] != null ? formatDate(job['created_at']) : 'Not available';
-                      List<String> userCoords = _locationController.text.split(',');
+                      String formattedDate = job['created_at'] != null
+                          ? formatDate(job['created_at'])
+                          : 'Not available';
+                      List<String> userCoords =
+                          _locationController.text.split(',');
                       String distance = 'Location not set';
-                      String message = job['status'] == "hired" ? 'this job is expired' : '';
+                      String message =
+                          job['status'] == "hired" ? 'this job is expired' : '';
 
-                      if (userCoords.length > 1 && userCoords[0].trim().isNotEmpty && userCoords[1].trim().isNotEmpty) {
+                      if (userCoords.length > 1 &&
+                          userCoords[0].trim().isNotEmpty &&
+                          userCoords[1].trim().isNotEmpty) {
                         distance = calculateDistance(
-                            userCoords[0].trim(),  // User latitude
-                            userCoords[1].trim(),  // User longitude
-                            job['latitude'] as String?,  // Job latitude
-                            job['longitude'] as String?  // Job longitude
-                        );
-                        double distanceNumeric = double.tryParse(distance.split(' ')[0]) ?? double.infinity;
-                        distance = distanceNumeric < 20.0 ? '$distance: Close to you, suit you' : distance;
+                            userCoords[0].trim(), // User latitude
+                            userCoords[1].trim(), // User longitude
+                            job['latitude'] as String?, // Job latitude
+                            job['longitude'] as String? // Job longitude
+                            );
+                        double distanceNumeric =
+                            double.tryParse(distance.split(' ')[0]) ??
+                                double.infinity;
+                        distance = distanceNumeric < 20.0
+                            ? '$distance: Close to you, suit you'
+                            : distance;
                       }
 
                       return InkWell(
@@ -465,14 +500,16 @@ class _MyHomePageState extends State<MyHomePage> {
                             MaterialPageRoute(
                               builder: (context) => SpecificJobPage(
                                 jobId: job['id'].toString(),
-                                specializationId: job['specialization']?['id']?.toString() ?? '1',
+                                specializationId:
+                                    job['specialization']?['id']?.toString() ??
+                                        '1',
                               ),
                             ),
                           );
                         },
-
                         child: Container(
-                          margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                          margin: EdgeInsets.symmetric(
+                              vertical: 8.0, horizontal: 16.0),
                           padding: EdgeInsets.all(12.0),
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -500,10 +537,11 @@ class _MyHomePageState extends State<MyHomePage> {
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 30),  // Spacer
+                                SizedBox(width: 30), // Spacer
                                 FavIconButton(
                                   job: job,
-                                  isBookmarked: true,  // Assume this state is dynamic and can change
+                                  isBookmarked:
+                                      true, // Assume this state is dynamic and can change
                                   updateUI: () => setState(() {}),
                                 ),
                               ],
@@ -521,17 +559,23 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                                 Text(
                                   'Distance: $distance',
-                                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 Text(
                                   message,
-                                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
                             trailing: Text(
                               'Budget: ${job['expected_budget']} \$',
-                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black),
                             ),
                           ),
                         ),
@@ -539,20 +583,22 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                   ),
                 ),
-
                 Center(
                   child: TextButton(
                     onPressed: () {
                       if (lastAction == 'all') {
                         fetchJobs(page: currentPage + 1);
                       } else if (lastAction == 'recommended') {
-                        fetchData('', page: currentPage ); // Assume fetchData can handle empty ID and page
+                        fetchData('',
+                            page:
+                                currentPage); // Assume fetchData can handle empty ID and page
                       }
                     },
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.black,
                       backgroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                      padding:
+                          EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                     ),
                     child: Text('Load More', style: TextStyle(fontSize: 18)),
                   ),
@@ -575,8 +621,8 @@ class _MyHomePageState extends State<MyHomePage> {
             ListTile(
               title: Text('Wishlist'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => WishlistPage()));
-
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => WishlistPage()));
               },
             ),
             ListTile(
@@ -594,7 +640,10 @@ class _MyHomePageState extends State<MyHomePage> {
             ListTile(
               title: Text('Recommendation'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => RecommendedJobsWidget()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => RecommendedJobsWidget()));
               },
             ),
           ],
@@ -624,12 +673,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               ),
             IconButton(
-              icon: Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
+              icon:
+                  Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => ProfileScreen()));
               },
             ),
-
           ],
         ),
       ),
@@ -642,8 +692,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _locationController.dispose();
     super.dispose();
   }
-
-
 }
 
 class FavIconButton extends StatefulWidget {
@@ -651,7 +699,8 @@ class FavIconButton extends StatefulWidget {
   final bool isBookmarked;
   final Function() updateUI;
 
-  FavIconButton({required this.job, required this.isBookmarked, required this.updateUI});
+  FavIconButton(
+      {required this.job, required this.isBookmarked, required this.updateUI});
 
   @override
   _FavIconButtonState createState() => _FavIconButtonState();
@@ -703,7 +752,8 @@ class _FavIconButtonState extends State<FavIconButton> {
           });
         }
       } else {
-        print('Failed to fetch wishlist jobs. Status code: ${response.statusCode}');
+        print(
+            'Failed to fetch wishlist jobs. Status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error: $e');
@@ -729,13 +779,16 @@ class _FavIconButtonState extends State<FavIconButton> {
           });
         }
       } else {
-        print('Failed to fetch wishlist jobs. Status code: ${response.statusCode}');
+        print(
+            'Failed to fetch wishlist jobs. Status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error: $e');
     }
 
-    var bookmark = wishlistJobs.firstWhere((bookmark) => bookmark['job']['id'] == widget.job['id'], orElse: () => null);
+    var bookmark = wishlistJobs.firstWhere(
+        (bookmark) => bookmark['job']['id'] == widget.job['id'],
+        orElse: () => null);
     if (bookmark != null) {
       if (!_isDisposed) {
         setState(() {
@@ -770,7 +823,8 @@ class _FavIconButtonState extends State<FavIconButton> {
         }
 
         int jobId = widget.job['id'] as int;
-        String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/bookmarks';
+        String url =
+            'https://snapwork-133ce78bbd88.herokuapp.com/api/bookmarks';
 
         Map<String, String> headers = {
           'Authorization': 'Bearer $token',
@@ -805,7 +859,8 @@ class _FavIconButtonState extends State<FavIconButton> {
               isFavorited = false;
             });
           }
-          print('Failed to add job to bookmarks. Response: ${postResponse.body}');
+          print(
+              'Failed to add job to bookmarks. Response: ${postResponse.body}');
         }
       },
     );
