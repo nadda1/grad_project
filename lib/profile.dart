@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +9,7 @@ import 'main.dart';
 import 'navigation_service.dart';
 import 'clientJobs.dart';
 import 'contracts_page.dart';
+import 'wallet.dart';
 
 
 final NavigationService navigationService = NavigationService();
@@ -51,8 +54,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       Map<String, dynamic> userProfile = await _getUserProfile();
       setState(() {
-        _name = userProfile['name'];
-        _email = userProfile['email'];
+        _name = userProfile['user']['name'];
+        _email = userProfile['user']['email'];
         _educations = userProfile['educations'];
         _certifications = userProfile['certifications'];
         _employments = userProfile['Employment'];
@@ -165,7 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final response = await http.post(
         Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/logout'),
         headers: <String, String>{
-          'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer $token',
         },
       );
 
@@ -1059,54 +1062,62 @@ void _showAddProjectDialog() {
               ),
               
               const SizedBox(height: 20.0),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: ElevatedButton(
-                  onPressed: _showEditProfileDialog,
-                  child: const Text('Edit Profile'),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Change password button action
-                  },
-                  child: const Text('Change Password'),
-                ),
-              ),
-              role == "freelancer"
-                  ? Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => ContractsPage()),
-                          );
-                        },
-                        child: const Text('My Contracts'),
-                      ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.edit, size: 30),
+                    onPressed: _showEditProfileDialog,
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.lock, size: 30),
+                    onPressed: () {
+                      // Change password button action
+                    },
+                  ),
+                  if (role == "freelancer")
+                    IconButton(
+                      icon: Icon(Icons.work, size: 30),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ContractsPage()),
+                        );
+                      },
                     )
-                  : Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => ClientJobsPage()),
-                          );
-                        },
-                        child: const Text('my posted jobs'),
-                      ),
+                  else
+                    IconButton(
+                      icon: Icon(Icons.assignment, size: 30),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ClientJobsPage()),
+                        );
+                      },
                     ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: ElevatedButton(
-                  onPressed: _logout,
-                  child: const Text('Logout'),
-                ),
+                  IconButton(
+                    icon: Icon(Icons.logout, size: 30),
+                    onPressed: _logout,
+                  ),
+                   IconButton(
+      icon: Icon(Icons.account_balance_wallet, size: 30),
+      onPressed: () {
+        // Navigate to the wallet screen or perform wallet-related action
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => WalletPage()),
+        );
+      },
+    ),
+                ],
               ),
+              const SizedBox(height: 20.0),
+              Container(
+                padding: const EdgeInsets.all(15.0),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8.0),
+                )),
 Container(
   padding: const EdgeInsets.all(15.0),
   decoration: BoxDecoration(
@@ -1125,7 +1136,7 @@ Container(
           ),
           IconButton(
             onPressed: _showAddEducationDialog,
-            icon: Icon(Icons.add),
+            icon: const Icon(Icons.add),
           ),
         ],
       ),
