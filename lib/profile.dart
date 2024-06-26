@@ -189,11 +189,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _deleteLanguage(int index) async {
     final languageId = _languages![index]['id'];
+     SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
 
     final response = await http.delete(
-      Uri.parse('https://yourapi.com/languages/$languageId'),
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/languages/$languageId'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+        
       },
     );
 
@@ -203,7 +207,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     } else {
       // Handle error case
-      print('Failed to delete language entry');
+    print('Failed to delete language entry');
+    print('Status code: ${response.statusCode}');
+    print('Response body: ${response.body}');
     }
   }
 
@@ -292,11 +298,14 @@ Future<void> _showAddLanguageDialog() async {
 
   Future<void> _deleteEmployment(int index) async {
     final employmentId = _employments![index]['id'];
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
 
     final response = await http.delete(
-      Uri.parse('https://yourapi.com/employments/$employmentId'),
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/employments/$employmentId'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
       },
     );
 
@@ -424,11 +433,13 @@ Future<void> _showAddLanguageDialog() async {
 
 Future<void> _deleteProject(int index) async {
     final projectId = _projects[index]['id'];
-
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
     final response = await http.delete(
-      Uri.parse('https://yourapi.com/projects/$projectId'),
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/projects/$projectId'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
       },
     );
 
@@ -635,11 +646,14 @@ void _showAddProjectDialog() {
 
  Future<void> _deleteCertification(int index) async {
     final certificationId = _certifications![index]['id'];
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
 
     final response = await http.delete(
-      Uri.parse('https://yourapi.com/certifications/$certificationId'),
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/certifications/$certificationId'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
       },
     );
 
@@ -862,11 +876,14 @@ void _showAddProjectDialog() {
  
  Future<void> _deleteEducation(int index) async {
     final educationId = _educations![index]['id'];
+     SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
 
     final response = await http.delete(
-      Uri.parse('https://yourapi.com/educations/$educationId'),
+      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/educations/$educationId'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
       },
     );
 
