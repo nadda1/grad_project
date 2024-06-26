@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +8,6 @@ import 'navigation_service.dart';
 import 'clientJobs.dart';
 import 'contracts_page.dart';
 import 'wallet.dart';
-
 
 final NavigationService navigationService = NavigationService();
 
@@ -28,12 +25,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<dynamic>? _certifications;
   List<dynamic>? _employments;
   List<dynamic>? _skills;
-  List<dynamic>? _languages;
   double _averageRating = 0.0;
   List<dynamic> _reviews = [];
   String? role = '';
   List<Map<String, dynamic>> _projects = [];
-
 
   @override
   void initState() {
@@ -54,13 +49,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       Map<String, dynamic> userProfile = await _getUserProfile();
       setState(() {
-        _name = userProfile['user']['name'];
-        _email = userProfile['user']['email'];
+        _name = userProfile['name'];
+        _email = userProfile['email'];
         _educations = userProfile['educations'];
         _certifications = userProfile['certifications'];
         _employments = userProfile['Employment'];
         _skills = userProfile['skills'];
-        _languages= userProfile['languages'];
+        _languages = userProfile['languages'];
       });
     } catch (e) {
       print('Error loading user profile: $e');
@@ -168,7 +163,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final response = await http.post(
         Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/logout'),
         headers: <String, String>{
-        'Authorization': 'Bearer $token',
+          'Authorization': 'Bearer $token',
         },
       );
 
@@ -200,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $token',
-        
+
       },
     );
 
@@ -396,19 +391,15 @@ Future<void> _showAddLanguageDialog() async {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
                   },
-                  body: jsonEncode(
-                
-                      {
-                        "company": _companyController.text,
-                        "position": _positionController.text,
-                        "city": _cityController.text,
-                        "country": _countryController.text,
-                        "start_date": _startDateController.text,
-                        "end_date": _endDateController.text,
-                        "description": _descriptionController.text,
-                      }
-
-                  ),
+                  body: jsonEncode({
+                    "company": _companyController.text,
+                    "position": _positionController.text,
+                    "city": _cityController.text,
+                    "country": _countryController.text,
+                    "start_date": _startDateController.text,
+                    "end_date": _endDateController.text,
+                    "description": _descriptionController.text,
+                  }),
                 );
 
                 if (response.statusCode == 200) {
@@ -431,149 +422,6 @@ Future<void> _showAddLanguageDialog() async {
       },
     );
   }
- 
-
-
-Future<void> _deleteProject(int index) async {
-    final projectId = _projects[index]['id'];
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    final response = await http.delete(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/projects/$projectId'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _projects.removeAt(index);
-      });
-    } else {
-      // Handle error case
-      print('Failed to delete project entry');
-    }
-  }
-
-
-
-
-
-
-void _showAddProjectDialog() {
-  TextEditingController _titleController = TextEditingController();
-  TextEditingController _descriptionController = TextEditingController();
-  TextEditingController _urlController = TextEditingController();
-  TextEditingController _technologiesController = TextEditingController();
-  TextEditingController _completionDateController = TextEditingController();
-  TextEditingController _attachmentTitleController = TextEditingController();
-  TextEditingController _attachmentUrlController = TextEditingController();
-
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Add Project'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(labelText: 'Title'),
-              ),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
-              ),
-              TextFormField(
-                controller: _urlController,
-                decoration: InputDecoration(labelText: 'URL'),
-              ),
-              TextFormField(
-                controller: _technologiesController,
-                decoration: InputDecoration(labelText: 'Technologies'),
-              ),
-              TextFormField(
-                controller: _completionDateController,
-                decoration: InputDecoration(labelText: 'Completion Date'),
-              ),
-              TextFormField(
-                controller: _attachmentTitleController,
-                decoration: InputDecoration(labelText: 'Attachment Title'),
-              ),
-              TextFormField(
-                controller: _attachmentUrlController,
-                decoration: InputDecoration(labelText: 'Attachment URL'),
-              ),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              SharedPreferences prefs = await SharedPreferences.getInstance();
-              String? token = prefs.getString('token');
-              if (token == null) {
-                Navigator.of(context).pop(); // Close the dialog
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("You're not logged in."),
-                ));
-                return;
-              }
-
-              final response = await http.put(
-                Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-projects'),
-                headers: <String, String>{
-                  'Content-Type': 'application/json',
-                  'Authorization': 'Bearer $token',
-                },
-                body: jsonEncode(
-                  {
-                    "title": _titleController.text,
-                    "description": _descriptionController.text,
-                    "url": _urlController.text,
-                    "technologies": _technologiesController.text.split(','),
-                    "completion_date": _completionDateController.text,
-                    "attachments": [
-                      {
-                        "title": _attachmentTitleController.text,
-                        "url": _attachmentUrlController.text,
-                      }
-                    ]
-                  },
-                ),
-              );
-
-              if (response.statusCode == 200) {
-                Navigator.of(context).pop(); // Close the dialog
-                _loadUserProfile();
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("Project added successfully."),
-                ));
-              } else {
-                Navigator.of(context).pop(); // Close the dialog
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text("Failed to add project. Error: ${response.body}"),
-                ));
-              }
-            },
-            child: Text('Save'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
-
 
   Future<void> showAddSkillsDialog() async {
     TextEditingController _skillController = TextEditingController();
@@ -876,11 +724,6 @@ void _showAddProjectDialog() {
       },
     );
   }
- 
- Future<void> _deleteEducation(int index) async {
-    final educationId = _educations![index]['id'];
-     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
 
     final response = await http.delete(
       Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/educations/$educationId'),
@@ -1411,7 +1254,7 @@ Container(
           ],
         ],
       ),
-    
+
 ),
 
               const SizedBox(height: 20.0),
@@ -1482,7 +1325,7 @@ class SeparatorLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 1.0,
-      color: Color.fromARGB(255, 0, 0, 0),
+      color: Colors.grey[300],
       margin: const EdgeInsets.symmetric(horizontal: 10.0),
     );
   }
