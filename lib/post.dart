@@ -17,18 +17,42 @@ class Post extends StatefulWidget {
 
 class _PostState extends State<Post> {
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _specialization_id = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _skillsController = TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
-  final TextEditingController _typeController = TextEditingController();
-  final TextEditingController _locationTypeController = TextEditingController();
   final TextEditingController _longitudeController = TextEditingController();
   final TextEditingController _latitudeController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
   List<PlatformFile>? _pickedFiles;
+  String _selectedLocationType = 'remote';
+  String _selectedJobType = 'open';
+  String? _selectedSpecialization;
+  List<Map<String, dynamic>> _specializations = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchSpecializations();
+  }
+
+  Future<void> fetchSpecializations() async {
+    final response = await http.get(Uri.parse(
+        'https://snapwork-133ce78bbd88.herokuapp.com/api/specializations'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        _specializations = List<Map<String, dynamic>>.from(data['data']);
+        _selectedSpecialization = _specializations.isNotEmpty
+            ? _specializations[0]['id'].toString()
+            : null;
+      });
+    } else {
+      print('Failed to load specializations');
+    }
+  }
 
   Future<void> pickFiles() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -59,12 +83,12 @@ class _PostState extends State<Post> {
     var request = http.MultipartRequest('POST', uri)
       ..headers.addAll({'Authorization': 'Bearer $token'})
       ..fields['title'] = _titleController.text
-      ..fields['specialization_id'] = _specialization_id.text
+      ..fields['specialization_id'] = _selectedSpecialization!
       ..fields['description'] = _descriptionController.text
       ..fields['expected_budget'] = _budgetController.text
       ..fields['expected_duration'] = _durationController.text
-      ..fields['type'] = _typeController.text
-      ..fields['location_type'] = _locationTypeController.text
+      ..fields['type'] = _selectedJobType
+      ..fields['location_type'] = _selectedLocationType
       ..fields['longitude'] = _longitudeController.text
       ..fields['latitude'] = _latitudeController.text
       ..fields['address'] = _addressController.text;
@@ -211,12 +235,25 @@ class _PostState extends State<Post> {
                 decoration: InputDecoration(
                     labelText: 'Job Title', hintText: 'Enter job title'),
               ),
-              TextField(
-                controller: _specialization_id,
-                decoration: InputDecoration(
-                    labelText: 'specialization id',
-                    hintText: 'Enter specialization id'),
-              ),
+              if (_specializations.isNotEmpty)
+                DropdownButtonFormField<String>(
+                  value: _selectedSpecialization,
+                  decoration: InputDecoration(
+                    labelText: 'Specialization',
+                    hintText: 'Select specialization',
+                  ),
+                  items: _specializations.map((specialization) {
+                    return DropdownMenuItem<String>(
+                      value: specialization['id'].toString(),
+                      child: Text(specialization['name']),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedSpecialization = newValue!;
+                    });
+                  },
+                ),
               TextField(
                 controller: _descriptionController,
                 decoration: InputDecoration(
@@ -241,17 +278,41 @@ class _PostState extends State<Post> {
                     labelText: 'Expected Duration (days)',
                     hintText: 'Enter expected duration in days'),
               ),
-              TextField(
-                controller: _typeController,
+              DropdownButtonFormField<String>(
+                value: _selectedLocationType,
                 decoration: InputDecoration(
-                    labelText: 'Job Type',
-                    hintText: 'Enter job type (open/closed)'),
+                  labelText: 'Location Type',
+                  hintText: 'Select location type',
+                ),
+                items: ['remote', 'on-site'].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedLocationType = newValue!;
+                  });
+                },
               ),
-              TextField(
-                controller: _locationTypeController,
+              DropdownButtonFormField<String>(
+                value: _selectedJobType,
                 decoration: InputDecoration(
-                    labelText: 'Location Type',
-                    hintText: 'Enter location type (remote/on-site)'),
+                  labelText: 'Job Type',
+                  hintText: 'Select job type',
+                ),
+                items: ['open', 'closed'].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedJobType = newValue!;
+                  });
+                },
               ),
               Row(
                 children: [
