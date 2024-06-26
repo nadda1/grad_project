@@ -9,8 +9,6 @@ import 'main.dart';
 import 'navigation_service.dart';
 import 'clientJobs.dart';
 import 'contracts_page.dart';
-import 'wallet.dart';
-
 
 final NavigationService navigationService = NavigationService();
 
@@ -32,8 +30,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   double _averageRating = 0.0;
   List<dynamic> _reviews = [];
   String? role = '';
-  List<Map<String, dynamic>> _projects = [];
-
 
   @override
   void initState() {
@@ -60,7 +56,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _certifications = userProfile['certifications'];
         _employments = userProfile['Employment'];
         _skills = userProfile['skills'];
-        _languages= userProfile['languages'];
       });
     } catch (e) {
       print('Error loading user profile: $e');
@@ -78,7 +73,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       setState(() {
-        _averageRating = ratingsData.isNotEmpty ? totalRating / ratingsData.length : 0.0;
+        _averageRating =
+            ratingsData.isNotEmpty ? totalRating / ratingsData.length : 0.0;
         _reviews = ratingsData;
       });
 
@@ -160,13 +156,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
     if (token == null) {
-      Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
       return;
     }
 
     try {
       final response = await http.post(
-        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/logout'),
+        Uri.parse(
+            'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/logout'),
         headers: <String, String>{
         'Authorization': 'Bearer $token',
         },
@@ -174,7 +172,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (response.statusCode == 200) {
         await prefs.remove('token');
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text("Failed to log out."),
@@ -187,141 +186,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ));
     }
   }
-
-
-
-  Future<void> _deleteLanguage(int index) async {
-    final languageId = _languages![index]['id'];
-     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-
-    final response = await http.delete(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/languages/$languageId'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token',
-        
-      },
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _languages!.removeAt(index);
-      });
-    } else {
-      // Handle error case
-    print('Failed to delete language entry');
-    print('Status code: ${response.statusCode}');
-    print('Response body: ${response.body}');
-    }
-  }
-
-
-
-Future<void> _showAddLanguageDialog() async {
-  TextEditingController _languageController = TextEditingController();
-  TextEditingController _levelController = TextEditingController();
-
-  return showDialog<void>(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Add Language'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _languageController,
-                decoration: InputDecoration(labelText: 'Language'),
-              ),
-              TextFormField(
-                controller: _levelController,
-                decoration: InputDecoration(labelText: 'Level'),
-              ),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              SharedPreferences prefs = await SharedPreferences.getInstance();
-              String? token = prefs.getString('token');
-              if (token == null) {
-                Navigator.of(context).pop(); // Close the dialog
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("You're not logged in."),
-                ));
-                return;
-              }
-
-              final response = await http.post(
-                Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/languages'),
-                headers: <String, String>{
-                  'Content-Type': 'application/json',
-                  'Authorization': 'Bearer $token',
-                },
-                body: jsonEncode(
-                  {
-                    "name": _languageController.text,
-                    "level": _levelController.text,
-                  }
-                ),
-              );
-
-              if (response.statusCode == 200) {
-                Navigator.of(context).pop(); // Close the dialog
-                _loadUserProfile();
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("Language added successfully."),
-                ));
-              } else {
-                Navigator.of(context).pop(); // Close the dialog
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text("Failed to add language. Error: ${response.body}"),
-                ));
-              }
-            },
-            child: Text('Save'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
-
-
-
-  Future<void> _deleteEmployment(int index) async {
-    final employmentId = _employments![index]['id'];
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-
-    final response = await http.delete(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/employments/$employmentId'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _employments!.removeAt(index);
-      });
-    } else {
-      // Handle error case
-      print('Failed to delete employment entry');
-    }
-  }
-
 
   Future<void> showAddEmploymentsDialog() async {
     TextEditingController _companyController = TextEditingController();
@@ -390,14 +254,14 @@ Future<void> _showAddLanguageDialog() async {
                   return;
                 }
 
-                final response = await http.post(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/employments'),
+                final response = await http.put(
+                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-employments'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
                   },
-                  body: jsonEncode(
-                
+                  body: jsonEncode({
+                    "employments": [
                       {
                         "company": _companyController.text,
                         "position": _positionController.text,
@@ -407,8 +271,8 @@ Future<void> _showAddLanguageDialog() async {
                         "end_date": _endDateController.text,
                         "description": _descriptionController.text,
                       }
-
-                  ),
+                    ]
+                  }),
                 );
 
                 if (response.statusCode == 200) {
@@ -431,149 +295,6 @@ Future<void> _showAddLanguageDialog() async {
       },
     );
   }
- 
-
-
-Future<void> _deleteProject(int index) async {
-    final projectId = _projects[index]['id'];
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    final response = await http.delete(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/projects/$projectId'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _projects.removeAt(index);
-      });
-    } else {
-      // Handle error case
-      print('Failed to delete project entry');
-    }
-  }
-
-
-
-
-
-
-void _showAddProjectDialog() {
-  TextEditingController _titleController = TextEditingController();
-  TextEditingController _descriptionController = TextEditingController();
-  TextEditingController _urlController = TextEditingController();
-  TextEditingController _technologiesController = TextEditingController();
-  TextEditingController _completionDateController = TextEditingController();
-  TextEditingController _attachmentTitleController = TextEditingController();
-  TextEditingController _attachmentUrlController = TextEditingController();
-
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Add Project'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(labelText: 'Title'),
-              ),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
-              ),
-              TextFormField(
-                controller: _urlController,
-                decoration: InputDecoration(labelText: 'URL'),
-              ),
-              TextFormField(
-                controller: _technologiesController,
-                decoration: InputDecoration(labelText: 'Technologies'),
-              ),
-              TextFormField(
-                controller: _completionDateController,
-                decoration: InputDecoration(labelText: 'Completion Date'),
-              ),
-              TextFormField(
-                controller: _attachmentTitleController,
-                decoration: InputDecoration(labelText: 'Attachment Title'),
-              ),
-              TextFormField(
-                controller: _attachmentUrlController,
-                decoration: InputDecoration(labelText: 'Attachment URL'),
-              ),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              SharedPreferences prefs = await SharedPreferences.getInstance();
-              String? token = prefs.getString('token');
-              if (token == null) {
-                Navigator.of(context).pop(); // Close the dialog
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("You're not logged in."),
-                ));
-                return;
-              }
-
-              final response = await http.put(
-                Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-projects'),
-                headers: <String, String>{
-                  'Content-Type': 'application/json',
-                  'Authorization': 'Bearer $token',
-                },
-                body: jsonEncode(
-                  {
-                    "title": _titleController.text,
-                    "description": _descriptionController.text,
-                    "url": _urlController.text,
-                    "technologies": _technologiesController.text.split(','),
-                    "completion_date": _completionDateController.text,
-                    "attachments": [
-                      {
-                        "title": _attachmentTitleController.text,
-                        "url": _attachmentUrlController.text,
-                      }
-                    ]
-                  },
-                ),
-              );
-
-              if (response.statusCode == 200) {
-                Navigator.of(context).pop(); // Close the dialog
-                _loadUserProfile();
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("Project added successfully."),
-                ));
-              } else {
-                Navigator.of(context).pop(); // Close the dialog
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text("Failed to add project. Error: ${response.body}"),
-                ));
-              }
-            },
-            child: Text('Save'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
-
 
   Future<void> showAddSkillsDialog() async {
     TextEditingController _skillController = TextEditingController();
@@ -614,7 +335,8 @@ void _showAddProjectDialog() {
                 }
 
                 final response = await http.put(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-skills'),
+                  Uri.parse(
+                      'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-skills'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
@@ -646,34 +368,6 @@ void _showAddProjectDialog() {
       },
     );
   }
-
- Future<void> _deleteCertification(int index) async {
-    final certificationId = _certifications![index]['id'];
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-
-    final response = await http.delete(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/certifications/$certificationId'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _certifications!.removeAt(index);
-      });
-    } else {
-      // Handle error case
-      print('Failed to delete certification entry');
-    }
-  }
-
-
-
-
-
 
   Future<void> showAddCertificateDialog() async {
     TextEditingController _nameController = TextEditingController();
@@ -733,14 +427,14 @@ void _showAddProjectDialog() {
                   return;
                 }
 
-                final response = await http.post(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/certifications'),
+                final response = await http.put(
+                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-certifications'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
                   },
-                  body: jsonEncode(
-
+                  body: jsonEncode({
+                    "certifications": [
                       {
                         "name": _nameController.text,
                         "issuer": _issuerController.text,
@@ -748,8 +442,8 @@ void _showAddProjectDialog() {
                         "url": _urlController.text,
                         "description": _descriptionController.text,
                       }
-
-                  ),
+                    ]
+                  }),
                 );
 
                 if (response.statusCode == 200) {
@@ -837,14 +531,14 @@ void _showAddProjectDialog() {
                   return;
                 }
 
-                final response = await http.post(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/educations'),
+                final response = await http.put(
+                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-educations'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
                   },
-                  body: jsonEncode(
-
+                  body: jsonEncode({
+                    "educations": [
                       {
                         "school": _schoolController.text,
                         "degree": _degreeController.text,
@@ -853,8 +547,8 @@ void _showAddProjectDialog() {
                         "major": _majorController.text,
                         "description": _descriptionController.text,
                       }
-
-                  ),
+                    ]
+                  }),
                 );
 
                 if (response.statusCode == 200) {
@@ -876,33 +570,6 @@ void _showAddProjectDialog() {
       },
     );
   }
- 
- Future<void> _deleteEducation(int index) async {
-    final educationId = _educations![index]['id'];
-     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-
-    final response = await http.delete(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/educations/$educationId'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _educations!.removeAt(index);
-      });
-    } else {
-      // Handle error case
-      print('Failed to delete education entry');
-    }
-  }
-
-
-
-
 
   Future<void> _showEditProfileDialog() async {
     return showDialog<void>(
@@ -970,7 +637,8 @@ void _showAddProjectDialog() {
                 }
 
                 final response = await http.put(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-profile'),
+                  Uri.parse(
+                      'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-profile'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
@@ -979,7 +647,8 @@ void _showAddProjectDialog() {
                     'name': editedName,
                     'email': editedEmail,
                     if (editedPassword.isNotEmpty) 'password': editedPassword,
-                    if (editedConfirmPassword.isNotEmpty) 'password_confirmation': editedConfirmPassword,
+                    if (editedConfirmPassword.isNotEmpty)
+                      'password_confirmation': editedConfirmPassword,
                   }),
                 );
 
@@ -992,7 +661,8 @@ void _showAddProjectDialog() {
                 } else {
                   Navigator.of(context).pop(); // Close the dialog
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text("Failed to update profile. Error: ${response.body}"),
+                    content: Text(
+                        "Failed to update profile. Error: ${response.body}"),
                   ));
                 }
               },
@@ -1015,32 +685,34 @@ void _showAddProjectDialog() {
           child: Column(
             children: [
               const CircleAvatar(
-                backgroundImage: NetworkImage('https://placeholdit.img/200x200'),
+                backgroundImage:
+                    NetworkImage('https://placeholdit.img/200x200'),
                 radius: 50.0,
               ),
               const SizedBox(height: 20.0),
               Text(
                 _name,
-                style: const TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    fontSize: 30.0, fontWeight: FontWeight.bold),
               ),
               Text(_email),
               const SizedBox(height: 10.0),
-              if (_averageRating > 2 && _averageRating<=3)
+              if (_averageRating > 2 && _averageRating <= 3)
                 Image.asset(
                   'assets/images/bronze-medal.png',
                   height: 50.0,
                 ),
-              if (_averageRating > 3 && _averageRating<=4 )
+              if (_averageRating > 3 && _averageRating <= 4)
                 Image.asset(
                   'assets/images/silver-medal.png',
                   height: 50.0,
                 ),
-              if (_averageRating > 4 && _averageRating<5)
+              if (_averageRating > 4 && _averageRating < 5)
                 Image.asset(
                   'assets/images/medal.png',
                   height: 50.0,
                 ),
-              if (_averageRating==5)
+              if (_averageRating == 5)
                 Image.asset(
                   'assets/images/trophy.png',
                   height: 50.0,
@@ -1060,360 +732,99 @@ void _showAddProjectDialog() {
                 itemSize: 40.0,
                 direction: Axis.horizontal,
               ),
-              
               const SizedBox(height: 20.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.edit, size: 30),
-                    onPressed: _showEditProfileDialog,
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.lock, size: 30),
-                    onPressed: () {
-                      // Change password button action
-                    },
-                  ),
-                  if (role == "freelancer")
-                    IconButton(
-                      icon: Icon(Icons.work, size: 30),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ContractsPage()),
-                        );
-                      },
-                    )
-                  else
-                    IconButton(
-                      icon: Icon(Icons.assignment, size: 30),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ClientJobsPage()),
-                        );
-                      },
-                    ),
-                  IconButton(
-                    icon: Icon(Icons.logout, size: 30),
-                    onPressed: _logout,
-                  ),
-                   IconButton(
-      icon: Icon(Icons.account_balance_wallet, size: 30),
-      onPressed: () {
-        // Navigate to the wallet screen or perform wallet-related action
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => WalletPage()),
-        );
-      },
-    ),
-                ],
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: ElevatedButton(
+                  onPressed: _showEditProfileDialog,
+                  child: const Text('Edit Profile'),
+                ),
               ),
-              const SizedBox(height: 20.0),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Change password button action
+                  },
+                  child: const Text('Change Password'),
+                ),
+              ),
+              role == "freelancer"
+                  ? Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => ContractsPage()),
+                          );
+                        },
+                        child: const Text('My Contracts'),
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => ClientJobsPage()),
+                          );
+                        },
+                        child: const Text('my posted jobs'),
+                      ),
+                    ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: ElevatedButton(
+                  onPressed: _logout,
+                  child: const Text('Logout'),
+                ),
+              ),
               Container(
                 padding: const EdgeInsets.all(15.0),
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(8.0),
-                )),
-Container(
-  padding: const EdgeInsets.all(15.0),
-  decoration: BoxDecoration(
-    color: Colors.grey[200],
-    borderRadius: BorderRadius.circular(8.0),
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'Education:',
-            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-          ),
-          IconButton(
-            onPressed: _showAddEducationDialog,
-            icon: const Icon(Icons.add),
-          ),
-        ],
-      ),
-      const SizedBox(height: 10.0),
-      if (_educations != null) ...[
-        for (var i = 0; i < _educations!.length; i++)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'School: ${_educations![i]['school']}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text('Degree: ${_educations![i]['degree']}'),
-                      Text('Major: ${_educations![i]['major']}'),
-                      Text('Start Date: ${_educations![i]['start_date']}'),
-                      Text('End Date: ${_educations![i]['end_date']}'),
-                      Text('Description: ${_educations![i]['description']}'),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Education:',
+                          style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+                        ),
+                        IconButton(
+                          onPressed: _showAddEducationDialog,
+                          icon: Icon(Icons.add),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10.0),
+                    if (_educations != null) ...[
+                      for (var education in _educations!)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'School: ${education['school']}',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Text('Degree: ${education['degree']}'),
+                            Text('Major: ${education['major']}'),
+                            Text('Start Date: ${education['start_date']}'),
+                            Text('End Date: ${education['end_date']}'),
+                            Text('Description: ${education['description']}'),
+                            const SizedBox(height: 20.0),
+                          ],
+                        ),
                     ],
-                  ),
-                  IconButton(
-                    onPressed: () => _deleteEducation(i),
-                    icon: Icon(Icons.delete, color: Colors.red),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20.0),
-              const SeparatorLine(),
-              const SizedBox(height: 20.0),
-            ],
-          ),
-      ],
-    ],
-  ),
-),
-              const SizedBox(height: 20.0),
-              Container(
-      padding: const EdgeInsets.all(15.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Certification:',
-                style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                onPressed: showAddCertificateDialog,
-                icon: Icon(Icons.add),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10.0),
-          if (_certifications != null) ...[
-            for (var i = 0; i < _certifications!.length; i++)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Name: ${_certifications![i]['name']}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text('Issuer: ${_certifications![i]['issuer']}'),
-                          Text('Issue Date: ${_certifications![i]['issue_date']}'),
-                          Text('URL: ${_certifications![i]['url']}'),
-                          Text('Description: ${_certifications![i]['description']}'),
-                        ],
-                      ),
-                      IconButton(
-                        onPressed: () => _deleteCertification(i),
-                        icon: Icon(Icons.delete, color: Colors.red),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20.0),
-                  const SeparatorLine(),
-                  const SizedBox(height: 20.0),
-                ],
-              ),
-          ],
-        ],
-      ),
-    ),
-              const SizedBox(height: 20.0),
-Container(
-      padding: const EdgeInsets.all(15.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Languages:',
-                style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                onPressed: _showAddLanguageDialog,
-                icon: Icon(Icons.add),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10.0),
-          if (_languages != null) ...[
-            for (var i = 0; i < _languages!.length; i++)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Language: ${_languages![i]['name']}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text('Level: ${_languages![i]['level']}'),
-                        ],
-                      ),
-                      IconButton(
-                        onPressed: () => _deleteLanguage(i),
-                        icon: Icon(Icons.delete, color: Colors.red),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20.0),
-                  const SeparatorLine(),
-                  const SizedBox(height: 20.0),
-                ],
-              ),
-          ],
-        ],
-      ),
-    ),
- const SizedBox(height: 20.0),
-             Container(
-      padding: const EdgeInsets.all(15.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Employments:',
-                style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                onPressed: showAddEmploymentsDialog,
-                icon: Icon(Icons.add),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10.0),
-          if (_employments != null) ...[
-            for (var i = 0; i < _employments!.length; i++)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Company: ${_employments![i]['company']}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text('Position: ${_employments![i]['position']}'),
-                          Text('City: ${_employments![i]['city']}'),
-                          Text('Country: ${_employments![i]['country']}'),
-                          Text('Start Date: ${_employments![i]['start_date']}'),
-                          Text('End Date: ${_employments![i]['end_date']}'),
-                          Text('Description: ${_employments![i]['description']}'),
-                        ],
-                      ),
-                      IconButton(
-                        onPressed: () => _deleteEmployment(i),
-                        icon: Icon(Icons.delete, color: Colors.red),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20.0),
-                  const SeparatorLine(),
-                  const SizedBox(height: 20.0),
-                ],
-              ),
-          ],
-        ],
-      ),
-    ),
-              const SizedBox(height: 20.0),
-            Container(
-      padding: const EdgeInsets.all(15.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Projects:',
-                style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                onPressed: _showAddProjectDialog,
-                icon: Icon(Icons.add),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10.0),
-          if (_projects.isNotEmpty) ...[
-            for (var i = 0; i < _projects.length; i++)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Title: ${_projects[i]['title']}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text('Description: ${_projects[i]['description']}'),
-                  if (_projects[i]['url'] != null) Text('URL: ${_projects[i]['url']}'),
-                  if (_projects[i]['completion_date'] != null)
-                    Text('Completion Date: ${_projects[i]['completion_date']}'),
-                  if (_projects[i]['attachments'] != null) ...[
-                    for (var attachment in _projects[i]['attachments'])
-                      Text('${attachment['title']}: ${attachment['url']}'),
                   ],
-                  const SizedBox(height: 10.0),
-                  ElevatedButton(
-                    onPressed: () => _deleteProject(i),
-                    child: Text('Delete Project'),
-                  ),
-                  const SizedBox(height: 10.0),
-                  const Divider(),
-                  const SizedBox(height: 10.0),
-                ],
+                ),
               ),
-          ],
-        ],
-      ),
-    
-),
-
               const SizedBox(height: 20.0),
               Container(
                 padding: const EdgeInsets.all(15.0),
@@ -1428,8 +839,101 @@ Container(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Skills:',
+                          'Certification:',
                           style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+                        ),
+                        IconButton(
+                          onPressed: showAddCertificateDialog,
+                          icon: Icon(Icons.add),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10.0),
+                    if (_certifications != null) ...[
+                      for (var certification in _certifications!)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Name: ${certification['name']}',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Text('Issuer: ${certification['issuer']}'),
+                            Text('Issue Date: ${certification['issue_date']}'),
+                            Text('URL: ${certification['url']}'),
+                            Text('Description: ${certification['description']}'),
+                            const SizedBox(height: 20.0),
+                          ],
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20.0),
+              const SeparatorLine(),
+              Container(
+                padding: const EdgeInsets.all(15.0),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Employments:',
+                          style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+                        ),
+                        IconButton(
+                          onPressed: showAddEmploymentsDialog,
+                          icon: Icon(Icons.add),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10.0),
+                    if (_employments != null) ...[
+                      for (var employment in _employments!)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Company: ${employment['company']}',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Text('Position: ${employment['position']}'),
+                            Text('City: ${employment['city']}'),
+                            Text('Country: ${employment['country']}'),
+                            Text('Start Date: ${employment['start_date']}'),
+                            Text('End Date: ${employment['end_date']}'),
+                            Text('Description: ${employment['description']}'),
+                            const SizedBox(height: 20.0),
+                          ],
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20.0),
+              const SeparatorLine(),
+              Container(
+                padding: const EdgeInsets.all(15.0),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Skills:',
+                          style: TextStyle(
+                              fontSize: 18.0, fontWeight: FontWeight.bold),
                         ),
                         IconButton(
                           onPressed: showAddSkillsDialog,
@@ -1439,8 +943,7 @@ Container(
                     ),
                     const SizedBox(height: 10.0),
                     if (_skills != null) ...[
-                      for (var skill in _skills!)
-                        Text(skill['name']),
+                      for (var skill in _skills!) Text(skill['name']),
                     ],
                   ],
                 ),
@@ -1460,7 +963,8 @@ Container(
     }
 
     final response = await http.get(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/user-profile'),
+      Uri.parse(
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/user-profile'),
       headers: <String, String>{
         'Authorization': 'Bearer $token',
       },

@@ -10,7 +10,9 @@ class SpecificJobPage extends StatefulWidget {
   final String jobId;
   final String specializationId;
 
-  SpecificJobPage({Key? key, required this.jobId, required this.specializationId}) : super(key: key);
+  SpecificJobPage(
+      {Key? key, required this.jobId, required this.specializationId})
+      : super(key: key);
 
   @override
   _SpecificJobPageState createState() => _SpecificJobPageState();
@@ -39,7 +41,8 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
 
     if (token != null) {
       final response = await http.get(
-        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/freelancers/${widget.specializationId}'),
+        Uri.parse(
+            'https://snapwork-133ce78bbd88.herokuapp.com/api/freelancers/${widget.specializationId}'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -59,7 +62,8 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     String? token = prefs.getString('token');
     if (token != null) {
       final response = await http.post(
-        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/invitations'),
+        Uri.parse(
+            'https://snapwork-133ce78bbd88.herokuapp.com/api/invitations'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -71,11 +75,13 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
       );
 
       if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Invitation sent successfully!")));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Invitation sent successfully!")));
       } else {
         var responseBody = json.decode(response.body);
         var errorMessage = responseBody['message'];
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(errorMessage)));
       }
     }
   }
@@ -84,22 +90,26 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
     if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Authentication error. Please log in again.")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Authentication error. Please log in again.")));
       return;
     }
 
     final response = await http.put(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/hire/$jobSlug/$applicationSlug'),
+      Uri.parse(
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/hire/$jobSlug/$applicationSlug'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
       fetchJobDetails();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Freelancer hired successfully!")));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Freelancer hired successfully!")));
     } else {
       var responseBody = json.decode(response.body);
       var error = responseBody['message'];
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
     }
   }
 
@@ -124,7 +134,8 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                   color: Colors.deepPurple,
                   child: ListTile(
                     title: Text('Name: ${freelancer['username'] ?? 'No data'}'),
-                    subtitle: Text('Gender: ${freelancer['gender'] ?? 'No data'}\nEmail: ${freelancer['email'] ?? 'No data'}'),
+                    subtitle: Text(
+                        'Gender: ${freelancer['gender'] ?? 'No data'}\nEmail: ${freelancer['email'] ?? 'No data'}'),
                     trailing: ElevatedButton(
                       onPressed: () {
                         sendInvitation(freelancer['id'].toString());
@@ -150,7 +161,8 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     );
   }
 
-  Future<void> submitApplication(String bid, String duration, String coverLetter, BuildContext context) async {
+  Future<void> submitApplication(String bid, String duration,
+      String coverLetter, BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
 
@@ -170,11 +182,13 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
 
     if (response.statusCode == 201) {
       fetchJobDetails();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Freelancer hired successfully!")));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Freelancer hired successfully!")));
     } else {
       var responseBody = json.decode(response.body);
       var error = responseBody['message'];
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
     }
   }
 
@@ -198,7 +212,8 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
 
     if (token != null) {
       final response = await http.get(
-        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/${widget.jobId}'),
+        Uri.parse(
+            'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs/${widget.jobId}'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -280,12 +295,8 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
             TextButton(
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
-                  submitApplication(
-                      bidController.text,
-                      durationController.text,
-                      coverLetterController.text,
-                      context
-                  );
+                  submitApplication(bidController.text, durationController.text,
+                      coverLetterController.text, context);
 
                   Navigator.of(context).pop();
                 }
@@ -301,16 +312,19 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
   Widget buildSkillsCard(List<dynamic> skills) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
-      color: Color.fromARGB(255, 255, 255, 255),  // You can customize the background color
+      color: Color.fromARGB(
+          255, 255, 255, 255), // You can customize the background color
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Wrap(
           spacing: 6.0, // Horizontal space between chips
           runSpacing: 6.0, // Vertical space between chips
-          children: skills.map((skill) => Chip(
-            label: Text(skill, style: TextStyle(color: Colors.white)),
-            backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-          )).toList(),
+          children: skills
+              .map((skill) => Chip(
+                    label: Text(skill, style: TextStyle(color: Colors.white)),
+                    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
+                  ))
+              .toList(),
         ),
       ),
     );
@@ -344,7 +358,14 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     );
   }
 
-  Widget buildApplicationCard(String freelancer, int id, String bid, String duration, String coverLetter, String applicationSlug, Map<String, dynamic> freelancerDetails) {
+  Widget buildApplicationCard(
+      String freelancer,
+      int id,
+      String bid,
+      String duration,
+      String coverLetter,
+      String applicationSlug,
+      Map<String, dynamic> freelancerDetails) {
     return Card(
       color: const Color.fromARGB(255, 255, 255, 255),
       margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -375,11 +396,16 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                         children: [
                           Text('Name: ${freelancerDetails['name']}'),
                           Text('Email: ${freelancerDetails['email']}'),
-                          Text('Bio: ${freelancerDetails['bio'] ?? "Not available"}'),
-                          Text('Phone: ${freelancerDetails['phone'] ?? "Not available"}'),
-                          Text('Skills: ${freelancerDetails['skills'].map((s) => s['name']).join(", ")}'),
-                          Text('Education: ${freelancerDetails['educations'].map((e) => "${e['school']} - ${e['degree']}").join(", ")}'),
-                          Text('Certifications: ${freelancerDetails['certifications'].map((c) => c['name']).join(", ")}'),
+                          Text(
+                              'Bio: ${freelancerDetails['bio'] ?? "Not available"}'),
+                          Text(
+                              'Phone: ${freelancerDetails['phone'] ?? "Not available"}'),
+                          Text(
+                              'Skills: ${freelancerDetails['skills'].map((s) => s['name']).join(", ")}'),
+                          Text(
+                              'Education: ${freelancerDetails['educations'].map((e) => "${e['school']} - ${e['degree']}").join(", ")}'),
+                          Text(
+                              'Certifications: ${freelancerDetails['certifications'].map((c) => c['name']).join(", ")}'),
                           SizedBox(height: 10),
                           Text('Rating:'),
                           RatingBarIndicator(
@@ -420,15 +446,18 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
             },
           );
         },
-        title: Text('Freelancer: $freelancer', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Freelancer: $freelancer',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Bid: \$$bid', style: TextStyle(color: Colors.black)),
-            Text('Duration: $duration days', style: TextStyle(color: Colors.black)),
+            Text('Duration: $duration days',
+                style: TextStyle(color: Colors.black)),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text('Cover Letter: $coverLetter', style: TextStyle(color: Colors.black)),
+              child: Text('Cover Letter: $coverLetter',
+                  style: TextStyle(color: Colors.black)),
             ),
           ],
         ),
@@ -437,7 +466,8 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ElevatedButton(
-                    onPressed: () => hireFreelancer(jobDetails['slug'], applicationSlug),
+                    onPressed: () =>
+                        hireFreelancer(jobDetails['slug'], applicationSlug),
                     child: Text('Hire'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.lightGreen,
@@ -450,14 +480,16 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MessagePage(userid: id, username: freelancer),
+                          builder: (context) =>
+                              MessagePage(userid: id, username: freelancer),
                           // Replace MessagePage with your message page
                         ),
                       );
                     },
                     child: Text('Contact'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue, // Change button color as needed
+                      backgroundColor:
+                          Colors.blue, // Change button color as needed
                     ),
                   ),
                 ],
@@ -475,7 +507,8 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     }
 
     final response = await http.get(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/rate?freelancer_id=$freelancerId'),
+      Uri.parse(
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/rate?freelancer_id=$freelancerId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -489,7 +522,8 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
         comments.add(rating['comment']);
       }
 
-      double averageRating = ratingData.isNotEmpty ? totalRating / ratingData.length : 0.0;
+      double averageRating =
+          ratingData.isNotEmpty ? totalRating / ratingData.length : 0.0;
 
       return {
         'averageRating': averageRating,
@@ -500,7 +534,8 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     }
   }
 
-  Widget buildApplicationCardForFreelance(String freelancer, String coverLetter) {
+  Widget buildApplicationCardForFreelance(
+      String freelancer, String coverLetter) {
     // Split the cover letter into words
     List<String> words = coverLetter.split(' ');
     // Take only the first 8 words or fewer if there aren't enough
@@ -514,13 +549,15 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
       color: const Color.fromARGB(255, 255, 255, 255),
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: ListTile(
-        title: Text('Freelancer: $freelancer', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Freelancer: $freelancer',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text('Cover Letter: $displayText', style: TextStyle(color: Colors.black)),
+              child: Text('Cover Letter: $displayText',
+                  style: TextStyle(color: Colors.black)),
             ),
           ],
         ),
@@ -533,7 +570,9 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color.fromARGB(255, 242, 242, 242),
-        title: Text('Job Details', style: TextStyle(color: Color(0xFF343ABA))), // Blue color for the title
+        title: Text('Job Details',
+            style: TextStyle(
+                color: Color(0xFF343ABA))), // Blue color for the title
         centerTitle: true,
         elevation: 0,
       ),
@@ -549,11 +588,13 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
             if (jobDetails.containsKey('expected_budget'))
               buildCard('\$${jobDetails['expected_budget']}'),
             if (jobDetails.containsKey('description'))
-              buildCard(jobDetails['description'] ?? 'Description not available'),
-            // if (jobDetails.containsKey('required_skills'))
-            //   buildSkillsCard(jobDetails['required_skills']),
-
-            if (userRole == 'client' && userid == userIDjob && jobstatus != "hired")
+              buildCard(
+                  jobDetails['description'] ?? 'Description not available'),
+            if (jobDetails.containsKey('required_skills'))
+              buildSkillsCard(jobDetails['required_skills']),
+            if (userRole == 'client' &&
+                userid == userIDjob &&
+                jobstatus != "hired")
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 16.0),
                 child: Center(
@@ -563,7 +604,8 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () => showFreelancersPopup(context),
-                    child: Text('Suggestion Invite', style: TextStyle(fontSize: 16)),
+                    child: Text('Suggestion Invite',
+                        style: TextStyle(fontSize: 16)),
                   ),
                 ),
               ),
@@ -577,32 +619,40 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () => showApplicationDialog(context),
-                    child: Text('apply for a job', style: TextStyle(fontSize: 16)),
+                    child:
+                        Text('apply for a job', style: TextStyle(fontSize: 16)),
                   ),
                 ),
               ),
-
             if (jobDetails.containsKey('applications'))
               Padding(
                 padding: const EdgeInsets.only(top: 16.0),
-                child: Text('The Applicants', style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0), fontSize: 18, fontWeight: FontWeight.bold)),
+                child: Text('The Applicants',
+                    style: TextStyle(
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold)),
               ),
-
             if (userRole == 'client' && jobDetails.containsKey('applications'))
-              ...jobDetails['applications'].map((application) => buildApplicationCard(
-                  application['freelancer']['name'] ?? 'N/A',
-                  application['freelancer']['id'] ?? 0,
-                  application['bid'].toString() ?? '0',
-                  application['duration'].toString() ?? '0',
-                  application['cover_letter'] ?? 'N/A',
-                  application['slug'],
-                  application['freelancer']  // تمرير كائن الفريلانسر كاملًا
-              )).toList(),
-            if (userRole == 'freelancer' && jobDetails.containsKey('applications'))
-              ...jobDetails['applications'].map((application) => buildApplicationCardForFreelance(
-                application['freelancer']['name'] ?? 'N/A',
-                application['cover_letter'] ?? 'N/A',
-              )).toList(),
+              ...jobDetails['applications']
+                  .map((application) => buildApplicationCard(
+                      application['freelancer']['name'] ?? 'N/A',
+                      application['freelancer']['id'] ?? 0,
+                      application['bid'].toString() ?? '0',
+                      application['duration'].toString() ?? '0',
+                      application['cover_letter'] ?? 'N/A',
+                      application['slug'],
+                      application['freelancer'] // تمرير كائن الفريلانسر كاملًا
+                      ))
+                  .toList(),
+            if (userRole == 'freelancer' &&
+                jobDetails.containsKey('applications'))
+              ...jobDetails['applications']
+                  .map((application) => buildApplicationCardForFreelance(
+                        application['freelancer']['name'] ?? 'N/A',
+                        application['cover_letter'] ?? 'N/A',
+                      ))
+                  .toList(),
           ],
         ),
       ),
