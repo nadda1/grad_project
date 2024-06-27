@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:grad_project/specificjob.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +14,7 @@ class WishlistPage extends StatefulWidget {
 class _WishlistPageState extends State<WishlistPage> {
   List<dynamic> wishlistJobs = [];
   int id = 0;
+  Map<int, bool> expandedJobs = {};
 
   @override
   void initState() {
@@ -69,90 +71,122 @@ class _WishlistPageState extends State<WishlistPage> {
           final requiredSkillsText = requiredSkills != null
               ? 'Skills: ${requiredSkills.join(', ')}'
               : 'Skills: None';
-          return Card(
-            margin: EdgeInsets.all(8.0),
-            child: ListTile(
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Text(
-                      job['title'],
-                      style: TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF343ABA),
+
+          bool isExpanded = expandedJobs[index] ?? false;
+          String description = job['description'];
+          bool showSeeMore = description.length > 100;
+
+          if (!isExpanded && showSeeMore) {
+            description = description.substring(0, 100) + '...';
+          }
+
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SpecificJobPage(
+                    jobId: bookid.toString(),
+                    specializationId: job['specialization']?['id']?.toString() ?? '1',
+                  ),
+                ),
+              );
+            },
+            child: Card(
+              margin: EdgeInsets.all(8.0),
+              child: ListTile(
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        job['title'],
+                        style: TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF343ABA),
+                        ),
                       ),
                     ),
-                  ),
-                  // Add your IconButton here
-                  SizedBox(
-                    width: 30, // Adjust the width as needed
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () async {
-                      final prefs = await SharedPreferences.getInstance();
-                      String? token = prefs.getString('token');
+                    SizedBox(
+                      width: 30,
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.favorite),
+                      color: Colors.red,
+                      onPressed: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        String? token = prefs.getString('token');
 
-                      if (token == null) {
-                        print('No token found');
-                        return;
-                      }
-
-                      try {
-                        final deleteResponse = await http.delete(
-                          Uri.parse(
-                              'https://snapwork-133ce78bbd88.herokuapp.com/api/bookmarks/$bookid'),
-                          headers: {
-                            'Authorization': 'Bearer $token',
-                          },
-                        );
-
-                        if (deleteResponse.statusCode == 200) {
-                          // Remove the job from the wishlist locally
-                          setState(() {
-                            wishlistJobs.removeAt(index); // Remove from UI list
-                          });
-
-                          // Remove the job from the original list fetched from the server
-                          setState(() {
-                            wishlistJobs = List.from(wishlistJobs)
-                              ..removeWhere(
-                                      (element) => element['id'] == bookid);
-                          });
-
-                          print('Job removed from wishlist');
-                        } else {
-                          print(
-                              'Failed to remove job from wishlist: ${deleteResponse.body}');
+                        if (token == null) {
+                          print('No token found');
+                          return;
                         }
-                      } catch (e) {
-                        print('Error: $e');
-                      }
-                    },
-                  ),
-                ],
+
+                        try {
+                          final deleteResponse = await http.delete(
+                            Uri.parse(
+                                'https://snapwork-133ce78bbd88.herokuapp.com/api/bookmarks/$bookid'),
+                            headers: {
+                              'Authorization': 'Bearer $token',
+                            },
+                          );
+
+                          if (deleteResponse.statusCode == 200) {
+                            setState(() {
+                              wishlistJobs.removeAt(index);
+                            });
+
+                            setState(() {
+                              wishlistJobs = List.from(wishlistJobs)
+                                ..removeWhere(
+                                        (element) => element['id'] == bookid);
+                            });
+
+                            print('Job removed from wishlist');
+                          } else {
+                            print(
+                                'Failed to remove job from wishlist: ${deleteResponse.body}');
+                          }
+                        } catch (e) {
+                          print('Error: $e');
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      description,
+                      style: TextStyle(fontSize: 16.0),
+                    ),
+                    if (showSeeMore)
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            expandedJobs[index] = !isExpanded;
+                          });
+                        },
+                        child: Text(
+                          isExpanded ? 'See less' : 'See more',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    SizedBox(height: 8.0),
+                    Text(
+                      requiredSkillsText,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text('Budget: \$${job['expected_budget']}'),
+                    Text('Duration: ${job['expected_duration']} days'),
+                  ],
+                ),
               ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    job['description'],
-                    style: TextStyle(fontSize: 16.0),
-                  ),
-                  SizedBox(height: 8.0),
-                  Text(
-                    requiredSkillsText,
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text('Budget: \$${job['expected_budget']}'),
-                  Text('Duration: ${job['expected_duration']} days'),
-                ],
-              ),
-              onTap: () {
-                // Handle tapping on the job card if needed
-              },
             ),
           );
         },
@@ -160,3 +194,5 @@ class _WishlistPageState extends State<WishlistPage> {
     );
   }
 }
+
+

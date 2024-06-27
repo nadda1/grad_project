@@ -362,11 +362,12 @@ Future<void> _loadSpecializations() async {
             SizedBox(height: 20),
             SizedBox(
               width: 300.0,
-              height: 50.0,
+              height: 60.0,
               child: DropdownButtonFormField(
                 value: _selectedRole,
                 decoration: InputDecoration(
                   labelText: 'Role',
+                  labelStyle: TextStyle(fontSize: 12),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -376,7 +377,7 @@ Future<void> _loadSpecializations() async {
                 items: _roles.map((String role) {
                   return DropdownMenuItem(
                     value: role,
-                    child: Text(role),
+                    child: Text(role,style: TextStyle(fontSize: 14)),
                   );
                 }).toList(),
                 onChanged: (String? newValue) {
@@ -389,7 +390,7 @@ Future<void> _loadSpecializations() async {
             SizedBox(height: 15),
               SizedBox(
             width: 300.0,
-            height: 50.0,
+            height: 60.0,
             child: DropdownButtonFormField<String>(
               value: _selectedSpecializationId,
               decoration: InputDecoration(
@@ -403,7 +404,7 @@ Future<void> _loadSpecializations() async {
               items: _specializations.map((spec) {
                 return DropdownMenuItem(
                   value: spec['id'].toString(),
-                  child: Text(spec['name']),
+                  child: Text(spec['name'],style: TextStyle(fontSize: 14)),
                 );
               }).toList(),
               onChanged: (String? newValue) {
@@ -433,7 +434,7 @@ Future<void> _loadSpecializations() async {
             SizedBox(height: 20),
             SizedBox(
               width: 300.0,
-              height: 50.0,
+              height: 60.0,
               child: DropdownButtonFormField(
                 value: _selectedGender,
                 decoration: InputDecoration(
@@ -447,7 +448,7 @@ Future<void> _loadSpecializations() async {
                 items: _genders.map((String gender) {
                   return DropdownMenuItem(
                     value: gender,
-                    child: Text(gender),
+                    child: Text(gender,style: TextStyle(fontSize: 13)),
                   );
                 }).toList(),
                 onChanged: (String? newValue) {

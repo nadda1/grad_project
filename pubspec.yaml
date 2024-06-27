@@ -68,10 +68,10 @@ flutter:
 
     - assets/images/
     - assets/images/logo.png
-#  fonts:
-#    - family: CustomFont
-#      fonts:
-#        - asset: fonts/PlaywriteDEGrund-VariableFont_wght.ttf
+  fonts:
+    - family: CustomFont
+      fonts:
+        - asset: assets/fonts/PlaywriteDEGrund-VariableFont_wght.ttf
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

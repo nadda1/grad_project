@@ -196,6 +196,20 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  String formatDate(String dateString) {
+    DateTime dateTime = DateTime.parse(dateString);
+    return '${dateTime.year}-${dateTime.month}-${dateTime.day}';
+  }
+
+
+
+
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('role');
+    });
+  }
 
 
 
@@ -255,25 +269,23 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
 
-  String formatDate(String dateString) {
-    DateTime dateTime = DateTime.parse(dateString);
-    return '${dateTime.year}-${dateTime.month}-${dateTime.day}';
-  }
 
-
-
-
-  Future<void> _loadUserRole() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userRole = prefs.getString('role');
-    });
-  }
 
   void _showLocationPicker(BuildContext context) async {
     LatLng selectedLocation = LatLng(0, 0);
 
-    Position currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    LocationPermission permission;
+    Position currentPosition;
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.deniedForever) {
+        return Future.error('Location Not Available');
+      }
+    }
+
+    currentPosition= await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+
 
     showDialog(
       context: context,
@@ -339,46 +351,50 @@ class _MyHomePageState extends State<MyHomePage> {
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              //controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search',
-                prefixIcon: Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              onSubmitted: (String value) {
-                print("submit");
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SearchPage(searchQuery: value),
-                  ),
-                );
-              },
+            child: Container(
+      height: 50, // Adjust the height as needed
+        child: TextField(
+          //controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search',
+            prefixIcon: Icon(Icons.search),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.0),
+              borderSide: BorderSide.none,
             ),
           ),
+          onSubmitted: (String value) {
+            print("submit");
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SearchPage(searchQuery: value),
+              ),
+            );
+          },
+        ),
+      ),
+
+    ),
 
           SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: _locationController,
-              decoration: InputDecoration(
-                hintText: 'Nearest jobs for you',
-                prefixIcon: Icon(Icons.place),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
+          // Expanded(
+          //   child: TextField(
+          //     controller: _locationController,
+          //     decoration: InputDecoration(
+          //       hintText: 'Nearest jobs for you',
+          //       prefixIcon: Icon(Icons.place),
+          //       filled: true,
+          //       fillColor: Colors.white,
+          //       border: OutlineInputBorder(
+          //         borderRadius: BorderRadius.circular(10.0),
+          //         borderSide: BorderSide.none,
+          //       ),
+          //     ),
+          //   ),
+          // ),
           IconButton(
             icon: Icon(Icons.map),
             onPressed: () {
@@ -428,7 +444,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ],
           ),
-          SizedBox(height: 20.0),
+          // SizedBox(height: 10.0),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 17),
             child: Text(
@@ -512,7 +528,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
                         child: Container(
                           margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                          padding: EdgeInsets.all(12.0),
+                          padding: EdgeInsets.all(10.0),
+
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10.0),
