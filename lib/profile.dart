@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -57,7 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _educations = userProfile['educations'];
         _certifications = userProfile['certifications'];
         _employments = userProfile['Employment'];
-        _skills = userProfile['skills'];
+        _skills = userProfile['user']['skills'];
         _languages = userProfile['languages'];
       });
     } catch (e) {
@@ -686,13 +684,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   controller: _issueDateController,
                   decoration: InputDecoration(labelText: 'Issue Date'),
                 ),
-                TextFormField(
-                  controller: _urlController,
-                  decoration: InputDecoration(labelText: 'URL'),
+                Flexible(
+                  child: TextFormField(
+                    controller: _urlController,
+                    decoration: InputDecoration(labelText: 'URL'),
+                  ),
                 ),
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: InputDecoration(labelText: 'Description'),
+                Flexible(
+                  child: TextFormField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(labelText: 'Description'),
+                  ),
                 ),
               ],
             ),
@@ -991,44 +993,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              const CircleAvatar(
-                backgroundImage:
-                    NetworkImage('https://placeholdit.img/200x200'),
+              CircleAvatar(
+                backgroundImage: NetworkImage(
+                    'https://static.vecteezy.com/system/resources/previews/005/129/844/original/profile-user-icon-isolated-on-white-background-eps10-free-vector.jpg'),
                 radius: 50.0,
               ),
-              const SizedBox(height: 20.0),
+              SizedBox(height: 20.0),
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment
+                      .center, // Aligns content horizontally in the center
+                  children: [
+                    Text(
+                      _name,
+                      style: TextStyle(
+                          fontSize: 30.0,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'CustomFont'),
+                    ),
+                    if (_averageRating > 2 && _averageRating <= 3)
+                      Image.asset(
+                        'assets/images/bronze-medal.png',
+                        height: 50.0,
+                      ),
+                    if (_averageRating > 3 && _averageRating <= 4)
+                      Image.asset(
+                        'assets/images/silver-medal.png',
+                        height: 50.0,
+                      ),
+                    if (_averageRating > 4 && _averageRating < 5)
+                      Image.asset(
+                        'assets/images/medal.png',
+                        height: 50.0,
+                      ),
+                    if (_averageRating == 5)
+                      Image.asset(
+                        'assets/images/trophy.png',
+                        height: 50.0,
+                      ),
+                  ],
+                ),
+              ),
+
               Text(
-                _name,
-                style: const TextStyle(
-                    fontSize: 30.0, fontWeight: FontWeight.bold),
+                _email,
+                style: TextStyle(fontSize: 16.0, color: Colors.grey[600]),
               ),
-              Text(_email),
-              const SizedBox(height: 10.0),
-              if (_averageRating > 2 && _averageRating <= 3)
-                Image.asset(
-                  'assets/images/bronze-medal.png',
-                  height: 50.0,
-                ),
-              if (_averageRating > 3 && _averageRating <= 4)
-                Image.asset(
-                  'assets/images/silver-medal.png',
-                  height: 50.0,
-                ),
-              if (_averageRating > 4 && _averageRating < 5)
-                Image.asset(
-                  'assets/images/medal.png',
-                  height: 50.0,
-                ),
-              if (_averageRating == 5)
-                Image.asset(
-                  'assets/images/trophy.png',
-                  height: 50.0,
-                ),
-              ElevatedButton(
-                onPressed: () => _showReviewsDialog(context),
-                child: Text('Show Reviews'),
-              ),
-              const SizedBox(height: 20.0),
+              SizedBox(height: 20.0),
+
+              SizedBox(height: 20.0),
+              // ElevatedButton(
+              //   onPressed: () => _showReviewsDialog(context),
+              //   style: ElevatedButton.styleFrom(
+              //     // backgroundColor: Colors.teal,
+              //     shape: RoundedRectangleBorder(
+              //       borderRadius: BorderRadius.circular(12.0),
+              //     ),
+              //   ),
+              //   child: Text('Show Reviews'),
+              // ),
+              // SizedBox(height: 20.0),
               RatingBarIndicator(
                 rating: _averageRating,
                 itemBuilder: (context, index) => Icon(
@@ -1039,65 +1063,102 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 itemSize: 40.0,
                 direction: Axis.horizontal,
               ),
-              const SizedBox(height: 20.0),
+              SizedBox(height: 20.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.edit, size: 30),
-                    onPressed: _showEditProfileDialog,
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [Colors.red, Colors.orange, Colors.yellow],
+                      tileMode: TileMode.mirror,
+                    ).createShader(bounds),
+                    child: IconButton(
+                      icon: Icon(Icons.edit, size: 30, color: Colors.white),
+                      onPressed: _showEditProfileDialog,
+                    ),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.lock, size: 30),
-                    onPressed: () {
-                      // Change password button action
-                    },
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [Colors.blue, Colors.purple, Colors.pink],
+                      tileMode: TileMode.mirror,
+                    ).createShader(bounds),
+                    child: IconButton(
+                      icon: Icon(Icons.lock, size: 30, color: Colors.white),
+                      onPressed: () {
+                        // Change password button action
+                      },
+                    ),
                   ),
                   if (role == "freelancer")
-                    IconButton(
-                      icon: Icon(Icons.work, size: 30),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => ContractsPage()),
-                        );
-                      },
+                    ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: [Colors.green, Colors.lightGreen, Colors.lime],
+                        tileMode: TileMode.mirror,
+                      ).createShader(bounds),
+                      child: IconButton(
+                        icon: Icon(Icons.work, size: 30, color: Colors.white),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ContractsPage()),
+                          );
+                        },
+                      ),
                     )
                   else
-                    IconButton(
-                      icon: Icon(Icons.assignment, size: 30),
+                    ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: [Colors.cyan, Colors.blue, Colors.indigo],
+                        tileMode: TileMode.mirror,
+                      ).createShader(bounds),
+                      child: IconButton(
+                        icon: Icon(Icons.assignment,
+                            size: 30, color: Colors.white),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ClientJobsPage()),
+                          );
+                        },
+                      ),
+                    ),
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [Colors.red, Colors.pink, Colors.purple],
+                      tileMode: TileMode.mirror,
+                    ).createShader(bounds),
+                    child: IconButton(
+                      icon: Icon(Icons.logout, size: 30, color: Colors.white),
+                      onPressed: _logout,
+                    ),
+                  ),
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [Colors.orange, Colors.yellow, Colors.green],
+                      tileMode: TileMode.mirror,
+                    ).createShader(bounds),
+                    child: IconButton(
+                      icon: Icon(Icons.account_balance_wallet,
+                          size: 30, color: Colors.white),
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => ClientJobsPage()),
+                          MaterialPageRoute(builder: (context) => WalletPage()),
                         );
                       },
                     ),
-                  IconButton(
-                    icon: Icon(Icons.logout, size: 30),
-                    onPressed: _logout,
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.account_balance_wallet, size: 30),
-                    onPressed: () {
-                      // Navigate to the wallet screen or perform wallet-related action
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => WalletPage()),
-                      );
-                    },
                   ),
                 ],
               ),
               const SizedBox(height: 20.0),
               Container(
-                  padding: const EdgeInsets.all(15.0),
+                  // padding: const EdgeInsets.all(15.0),
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(8.0),
-                  )),
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8.0),
+              )),
               Container(
                 padding: const EdgeInsets.all(15.0),
                 decoration: BoxDecoration(
@@ -1117,7 +1178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         IconButton(
                           onPressed: _showAddEducationDialog,
-                          icon: const Icon(Icons.add),
+                          icon: Icon(Icons.add),
                         ),
                       ],
                     ),
@@ -1197,22 +1258,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Name: ${_certifications![i]['name']}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    Text(
-                                        'Issuer: ${_certifications![i]['issuer']}'),
-                                    Text(
-                                        'Issue Date: ${_certifications![i]['issue_date']}'),
-                                    Text('URL: ${_certifications![i]['url']}'),
-                                    Text(
-                                        'Description: ${_certifications![i]['description']}'),
-                                  ],
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Name: ${_certifications![i]['name']}',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                          'Issuer: ${_certifications![i]['issuer']}'),
+                                      Text(
+                                          'Issue Date: ${_certifications![i]['issue_date']}'),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('URL: '),
+                                          Flexible(
+                                            child: Text(
+                                              '${_certifications![i]['url']}',
+                                              style:
+                                                  TextStyle(color: Colors.blue),
+                                              overflow: TextOverflow.visible,
+                                              softWrap: true,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Text(
+                                          'Description: ${_certifications![i]['description']}'),
+                                    ],
+                                  ),
                                 ),
                                 IconButton(
                                   onPressed: () => _deleteCertification(i),
@@ -1229,6 +1308,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
+
               const SizedBox(height: 20.0),
               Container(
                 padding: const EdgeInsets.all(15.0),
@@ -1418,6 +1498,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
+
               const SizedBox(height: 20.0),
               Container(
                 padding: const EdgeInsets.all(15.0),

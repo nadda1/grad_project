@@ -400,12 +400,12 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                               'Bio: ${freelancerDetails['bio'] ?? "Not available"}'),
                           Text(
                               'Phone: ${freelancerDetails['phone'] ?? "Not available"}'),
-                          Text(
-                              'Skills: ${freelancerDetails['skills'].map((s) => s['name']).join(", ")}'),
-                          Text(
-                              'Education: ${freelancerDetails['educations'].map((e) => "${e['school']} - ${e['degree']}").join(", ")}'),
-                          Text(
-                              'Certifications: ${freelancerDetails['certifications'].map((c) => c['name']).join(", ")}'),
+                          // Text(
+                          //     'Skills: ${freelancerDetails['skills'].map((s) => s['name']).join(", ")}'),
+                          // Text(
+                          //     'Education: ${freelancerDetails['educations'].map((e) => "${e['school']} - ${e['degree']}").join(", ")}'),
+                          // Text(
+                          //     'Certifications: ${freelancerDetails['certifications'].map((c) => c['name']).join(", ")}'),
                           SizedBox(height: 10),
                           Text('Rating:'),
                           RatingBarIndicator(
