@@ -1,14 +1,20 @@
+
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:grad_project/utils.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'main.dart';
 import 'navigation_service.dart';
 import 'clientJobs.dart';
 import 'contracts_page.dart';
 import 'wallet.dart';
-
+import 'package:image_picker/image_picker.dart';
+import 'utils.dart';
 
 final NavigationService navigationService = NavigationService();
 
@@ -20,6 +26,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  Uint8List? _image;
   String _name = 'Loading...';
   String _email = 'Loading...';
   List<dynamic>? _educations;
@@ -31,7 +38,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<dynamic> _reviews = [];
   String? role = '';
   List<Map<String, dynamic>> _projects = [];
-
 
   @override
   void initState() {
@@ -58,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _certifications = userProfile['certifications'];
         _employments = userProfile['Employment'];
         _skills = userProfile['user']['skills'];
-        _languages= userProfile['languages'];
+        _languages = userProfile['languages'];
       });
     } catch (e) {
       print('Error loading user profile: $e');
@@ -76,7 +82,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       setState(() {
-        _averageRating = ratingsData.isNotEmpty ? totalRating / ratingsData.length : 0.0;
+        _averageRating =
+            ratingsData.isNotEmpty ? totalRating / ratingsData.length : 0.0;
         _reviews = ratingsData;
       });
 
@@ -158,13 +165,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
     if (token == null) {
-      Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
       return;
     }
 
     try {
       final response = await http.post(
-        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/logout'),
+        Uri.parse(
+            'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/logout'),
         headers: <String, String>{
           'Authorization': 'Bearer $token',
         },
@@ -172,7 +181,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (response.statusCode == 200) {
         await prefs.remove('token');
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text("Failed to log out."),
@@ -186,19 +196,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-
-
   Future<void> _deleteLanguage(int index) async {
     final languageId = _languages![index]['id'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
 
     final response = await http.delete(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/languages/$languageId'),
+      Uri.parse(
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/languages/$languageId'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $token',
-
       },
     );
 
@@ -213,8 +221,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('Response body: ${response.body}');
     }
   }
-
-
 
   Future<void> _showAddLanguageDialog() async {
     TextEditingController _languageController = TextEditingController();
@@ -260,17 +266,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
 
                 final response = await http.post(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/languages'),
+                  Uri.parse(
+                      'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/languages'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
                   },
-                  body: jsonEncode(
-                      {
-                        "name": _languageController.text,
-                        "level": _levelController.text,
-                      }
-                  ),
+                  body: jsonEncode({
+                    "name": _languageController.text,
+                    "level": _levelController.text,
+                  }),
                 );
 
                 if (response.statusCode == 200) {
@@ -282,7 +287,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 } else {
                   Navigator.of(context).pop(); // Close the dialog
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text("Failed to add language. Error: ${response.body}"),
+                    content:
+                        Text("Failed to add language. Error: ${response.body}"),
                   ));
                 }
               },
@@ -294,16 +300,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-
-
-
   Future<void> _deleteEmployment(int index) async {
     final employmentId = _employments![index]['id'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
 
     final response = await http.delete(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/employments/$employmentId'),
+      Uri.parse(
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/employments/$employmentId'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $token',
@@ -319,7 +323,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('Failed to delete employment entry');
     }
   }
-
 
   Future<void> showAddEmploymentsDialog() async {
     TextEditingController _companyController = TextEditingController();
@@ -389,24 +392,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
 
                 final response = await http.post(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/employments'),
+                  Uri.parse(
+                      'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/employments'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
                   },
-                  body: jsonEncode(
-
-                      {
-                        "company": _companyController.text,
-                        "position": _positionController.text,
-                        "city": _cityController.text,
-                        "country": _countryController.text,
-                        "start_date": _startDateController.text,
-                        "end_date": _endDateController.text,
-                        "description": _descriptionController.text,
-                      }
-
-                  ),
+                  body: jsonEncode({
+                    "company": _companyController.text,
+                    "position": _positionController.text,
+                    "city": _cityController.text,
+                    "country": _countryController.text,
+                    "start_date": _startDateController.text,
+                    "end_date": _endDateController.text,
+                    "description": _descriptionController.text,
+                  }),
                 );
 
                 if (response.statusCode == 200) {
@@ -430,14 +430,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-
-
   Future<void> _deleteProject(int index) async {
     final projectId = _projects[index]['id'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
     final response = await http.delete(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/projects/$projectId'),
+      Uri.parse(
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/projects/$projectId'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $token',
@@ -453,11 +452,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('Failed to delete project entry');
     }
   }
-
-
-
-
-
 
   void _showAddProjectDialog() {
     TextEditingController _titleController = TextEditingController();
@@ -528,7 +522,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
 
                 final response = await http.put(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-projects'),
+                  Uri.parse(
+                      'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-projects'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
@@ -559,7 +554,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 } else {
                   Navigator.of(context).pop(); // Close the dialog
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text("Failed to add project. Error: ${response.body}"),
+                    content:
+                        Text("Failed to add project. Error: ${response.body}"),
                   ));
                 }
               },
@@ -570,8 +566,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
-
-
 
   Future<void> showAddSkillsDialog() async {
     TextEditingController _skillController = TextEditingController();
@@ -612,7 +606,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
 
                 final response = await http.put(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-skills'),
+                  Uri.parse(
+                      'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-skills'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
@@ -651,7 +646,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String? token = prefs.getString('token');
 
     final response = await http.delete(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/certifications/$certificationId'),
+      Uri.parse(
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/certifications/$certificationId'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $token',
@@ -667,11 +663,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('Failed to delete certification entry');
     }
   }
-
-
-
-
-
 
   Future<void> showAddCertificateDialog() async {
     TextEditingController _nameController = TextEditingController();
@@ -702,16 +693,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: InputDecoration(labelText: 'Issue Date'),
                 ),
                 Flexible(
-                  child:TextFormField(
+                  child: TextFormField(
                     controller: _urlController,
                     decoration: InputDecoration(labelText: 'URL'),
-                  ),),
+                  ),
+                ),
                 Flexible(
-                  child:
-                  TextFormField(
+                  child: TextFormField(
                     controller: _descriptionController,
                     decoration: InputDecoration(labelText: 'Description'),
-                  ),),
+                  ),
+                ),
               ],
             ),
           ),
@@ -735,22 +727,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
 
                 final response = await http.post(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/certifications'),
+                  Uri.parse(
+                      'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/certifications'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
                   },
-                  body: jsonEncode(
-
-                      {
-                        "name": _nameController.text,
-                        "issuer": _issuerController.text,
-                        "issue_date": _issueDateController.text,
-                        "url": _urlController.text,
-                        "description": _descriptionController.text,
-                      }
-
-                  ),
+                  body: jsonEncode({
+                    "name": _nameController.text,
+                    "issuer": _issuerController.text,
+                    "issue_date": _issueDateController.text,
+                    "url": _urlController.text,
+                    "description": _descriptionController.text,
+                  }),
                 );
 
                 if (response.statusCode == 200) {
@@ -839,23 +828,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
 
                 final response = await http.post(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/educations'),
+                  Uri.parse(
+                      'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/educations'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
                   },
-                  body: jsonEncode(
-
-                      {
-                        "school": _schoolController.text,
-                        "degree": _degreeController.text,
-                        "start_date": _startDateController.text,
-                        "end_date": _endDateController.text,
-                        "major": _majorController.text,
-                        "description": _descriptionController.text,
-                      }
-
-                  ),
+                  body: jsonEncode({
+                    "school": _schoolController.text,
+                    "degree": _degreeController.text,
+                    "start_date": _startDateController.text,
+                    "end_date": _endDateController.text,
+                    "major": _majorController.text,
+                    "description": _descriptionController.text,
+                  }),
                 );
 
                 if (response.statusCode == 200) {
@@ -884,7 +870,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String? token = prefs.getString('token');
 
     final response = await http.delete(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/educations/$educationId'),
+      Uri.parse(
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/educations/$educationId'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $token',
@@ -900,10 +887,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('Failed to delete education entry');
     }
   }
-
-
-
-
 
   Future<void> _showEditProfileDialog() async {
     return showDialog<void>(
@@ -971,7 +954,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
 
                 final response = await http.put(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-profile'),
+                  Uri.parse(
+                      'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-profile'),
                   headers: <String, String>{
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token',
@@ -980,7 +964,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'name': editedName,
                     'email': editedEmail,
                     if (editedPassword.isNotEmpty) 'password': editedPassword,
-                    if (editedConfirmPassword.isNotEmpty) 'password_confirmation': editedConfirmPassword,
+                    if (editedConfirmPassword.isNotEmpty)
+                      'password_confirmation': editedConfirmPassword,
                   }),
                 );
 
@@ -993,7 +978,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 } else {
                   Navigator.of(context).pop(); // Close the dialog
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text("Failed to update profile. Error: ${response.body}"),
+                    content: Text(
+                        "Failed to update profile. Error: ${response.body}"),
                   ));
                 }
               },
@@ -1003,6 +989,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
+  Future<void> selectImage() async {
+    XFile? imgFile = await pickImage(ImageSource.gallery);
+    if (imgFile != null) {
+      Uint8List imgBytes = await imgFile.readAsBytes();
+      setState(() {
+        _image = imgBytes;
+      });
+      await uploadImage(imgFile.path); // Passing file path
+    }
+  }
+       Future<void> uploadImage(String filePath) async {
+     SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    String url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-picture';
+
+ 
+     try {
+      var request = http.MultipartRequest('PUT', Uri.parse(url));
+      request.headers['Authorization'] = 'Bearer $token';
+
+      // Adding the file using file path with the correct field name 'picture'
+      request.files.add(await http.MultipartFile.fromPath('picture', filePath));
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        var jsonResponse = jsonDecode(response.body);
+        print('Image uploaded successfully');
+        print('Response Body: $jsonResponse');
+      } else {
+        print('Failed to upload image');
+        print('Status Code: ${response.statusCode}');
+        print('Response Body: ${response.body}');
+      }
+    } catch (e) {
+      print('Error during image upload: $e');
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -1015,18 +1041,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              CircleAvatar(
-                backgroundImage: NetworkImage('https://static.vecteezy.com/system/resources/previews/005/129/844/original/profile-user-icon-isolated-on-white-background-eps10-free-vector.jpg'),
-                radius: 50.0,
+              Stack(
+                children: [
+                  _image != null
+                      ? CircleAvatar(
+                          radius: 64,
+                          backgroundImage: MemoryImage(_image!),
+                        )
+                      : CircleAvatar(
+                          radius: 64,
+                          backgroundImage: NetworkImage(
+                              'https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png'),
+                        ),
+                  Positioned(
+                    child: IconButton(
+                      onPressed: selectImage,
+                      icon: Icon(
+                        Icons.add_a_photo,
+                      ),
+                    ),
+                    bottom: -10,
+                    left: 80,
+                  )
+                ],
               ),
               SizedBox(height: 20.0),
               Center(
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center, // Aligns content horizontally in the center
+                  mainAxisAlignment: MainAxisAlignment
+                      .center, // Aligns content horizontally in the center
                   children: [
                     Text(
                       _name,
-                      style: TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold, fontFamily: 'CustomFont'),
+                      style: TextStyle(
+                          fontSize: 30.0,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'CustomFont'),
                     ),
                     if (_averageRating > 2 && _averageRating <= 3)
                       Image.asset(
@@ -1051,7 +1101,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-
 
               Text(
                 _email,
@@ -1118,7 +1167,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => ContractsPage()),
+                            MaterialPageRoute(
+                                builder: (context) => ContractsPage()),
                           );
                         },
                       ),
@@ -1130,11 +1180,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         tileMode: TileMode.mirror,
                       ).createShader(bounds),
                       child: IconButton(
-                        icon: Icon(Icons.assignment, size: 30, color: Colors.white),
+                        icon: Icon(Icons.assignment,
+                            size: 30, color: Colors.white),
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => ClientJobsPage()),
+                            MaterialPageRoute(
+                                builder: (context) => ClientJobsPage()),
                           );
                         },
                       ),
@@ -1155,7 +1207,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       tileMode: TileMode.mirror,
                     ).createShader(bounds),
                     child: IconButton(
-                      icon: Icon(Icons.account_balance_wallet, size: 30, color: Colors.white),
+                      icon: Icon(Icons.account_balance_wallet,
+                          size: 30, color: Colors.white),
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -1168,11 +1221,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 20.0),
               Container(
-                // padding: const EdgeInsets.all(15.0),
+                  // padding: const EdgeInsets.all(15.0),
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(8.0),
-                  )),
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8.0),
+              )),
               Container(
                 padding: const EdgeInsets.all(15.0),
                 decoration: BoxDecoration(
@@ -1187,7 +1240,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         const Text(
                           'Education:',
-                          style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 18.0, fontWeight: FontWeight.bold),
                         ),
                         IconButton(
                           onPressed: _showAddEducationDialog,
@@ -1209,13 +1263,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   children: [
                                     Text(
                                       'School: ${_educations![i]['school']}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
                                     ),
-                                    Text('Degree: ${_educations![i]['degree']}'),
+                                    Text(
+                                        'Degree: ${_educations![i]['degree']}'),
                                     Text('Major: ${_educations![i]['major']}'),
-                                    Text('Start Date: ${_educations![i]['start_date']}'),
-                                    Text('End Date: ${_educations![i]['end_date']}'),
-                                    Text('Description: ${_educations![i]['description']}'),
+                                    Text(
+                                        'Start Date: ${_educations![i]['start_date']}'),
+                                    Text(
+                                        'End Date: ${_educations![i]['end_date']}'),
+                                    Text(
+                                        'Description: ${_educations![i]['description']}'),
                                   ],
                                 ),
                                 IconButton(
@@ -1248,7 +1307,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         const Text(
                           'Certification:',
-                          style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 18.0, fontWeight: FontWeight.bold),
                         ),
                         IconButton(
                           onPressed: showAddCertificateDialog,
@@ -1267,29 +1327,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Name: ${_certifications![i]['name']}',
-                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold),
                                       ),
-                                      Text('Issuer: ${_certifications![i]['issuer']}'),
-                                      Text('Issue Date: ${_certifications![i]['issue_date']}'),
+                                      Text(
+                                          'Issuer: ${_certifications![i]['issuer']}'),
+                                      Text(
+                                          'Issue Date: ${_certifications![i]['issue_date']}'),
                                       Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           const Text('URL: '),
                                           Flexible(
                                             child: Text(
                                               '${_certifications![i]['url']}',
-                                              style: TextStyle(color: Colors.blue),
+                                              style:
+                                                  TextStyle(color: Colors.blue),
                                               overflow: TextOverflow.visible,
                                               softWrap: true,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      Text('Description: ${_certifications![i]['description']}'),
+                                      Text(
+                                          'Description: ${_certifications![i]['description']}'),
                                     ],
                                   ),
                                 ),
@@ -1324,7 +1391,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         const Text(
                           'Languages:',
-                          style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 18.0, fontWeight: FontWeight.bold),
                         ),
                         IconButton(
                           onPressed: _showAddLanguageDialog,
@@ -1346,7 +1414,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   children: [
                                     Text(
                                       'Language: ${_languages![i]['name']}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
                                     ),
                                     Text('Level: ${_languages![i]['level']}'),
                                   ],
@@ -1381,7 +1450,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         const Text(
                           'Employments:',
-                          style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 18.0, fontWeight: FontWeight.bold),
                         ),
                         IconButton(
                           onPressed: showAddEmploymentsDialog,
@@ -1403,14 +1473,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   children: [
                                     Text(
                                       'Company: ${_employments![i]['company']}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
                                     ),
-                                    Text('Position: ${_employments![i]['position']}'),
+                                    Text(
+                                        'Position: ${_employments![i]['position']}'),
                                     Text('City: ${_employments![i]['city']}'),
-                                    Text('Country: ${_employments![i]['country']}'),
-                                    Text('Start Date: ${_employments![i]['start_date']}'),
-                                    Text('End Date: ${_employments![i]['end_date']}'),
-                                    Text('Description: ${_employments![i]['description']}'),
+                                    Text(
+                                        'Country: ${_employments![i]['country']}'),
+                                    Text(
+                                        'Start Date: ${_employments![i]['start_date']}'),
+                                    Text(
+                                        'End Date: ${_employments![i]['end_date']}'),
+                                    Text(
+                                        'Description: ${_employments![i]['description']}'),
                                   ],
                                 ),
                                 IconButton(
@@ -1443,7 +1519,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         const Text(
                           'Projects:',
-                          style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 18.0, fontWeight: FontWeight.bold),
                         ),
                         IconButton(
                           onPressed: _showAddProjectDialog,
@@ -1459,15 +1536,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           children: [
                             Text(
                               'Title: ${_projects[i]['title']}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             Text('Description: ${_projects[i]['description']}'),
-                            if (_projects[i]['url'] != null) Text('URL: ${_projects[i]['url']}'),
+                            if (_projects[i]['url'] != null)
+                              Text('URL: ${_projects[i]['url']}'),
                             if (_projects[i]['completion_date'] != null)
-                              Text('Completion Date: ${_projects[i]['completion_date']}'),
+                              Text(
+                                  'Completion Date: ${_projects[i]['completion_date']}'),
                             if (_projects[i]['attachments'] != null) ...[
-                              for (var attachment in _projects[i]['attachments'])
-                                Text('${attachment['title']}: ${attachment['url']}'),
+                              for (var attachment in _projects[i]
+                                  ['attachments'])
+                                Text(
+                                    '${attachment['title']}: ${attachment['url']}'),
                             ],
                             const SizedBox(height: 10.0),
                             ElevatedButton(
@@ -1482,7 +1564,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ],
                 ),
-
               ),
 
               const SizedBox(height: 20.0),
@@ -1500,7 +1581,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         const Text(
                           'Skills:',
-                          style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 18.0, fontWeight: FontWeight.bold),
                         ),
                         IconButton(
                           onPressed: showAddSkillsDialog,
@@ -1510,8 +1592,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 10.0),
                     if (_skills != null) ...[
-                      for (var skill in _skills!)
-                        Text(skill['name']),
+                      for (var skill in _skills!) Text(skill['name']),
                     ],
                   ],
                 ),
@@ -1531,7 +1612,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     final response = await http.get(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/user-profile'),
+      Uri.parse(
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/user-profile'),
       headers: <String, String>{
         'Authorization': 'Bearer $token',
       },
