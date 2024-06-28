@@ -10,7 +10,8 @@ class MessagePage extends StatefulWidget {
   final int userid;
   final String username;
 
-  const MessagePage({Key? key, required this.userid, required this.username}) : super(key: key);
+  const MessagePage({Key? key, required this.userid, required this.username})
+      : super(key: key);
 
   @override
   _MessagePageState createState() => _MessagePageState();
@@ -41,8 +42,10 @@ class _MessagePageState extends State<MessagePage> {
 
         if (response.statusCode == 201) {
           var responseData = json.decode(response.body)['data'];
-          var messageContent = responseData['message']; // Use 'content' instead of 'message'
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Message sent successfully")));
+          var messageContent =
+              responseData['message']; // Use 'content' instead of 'message'
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Message sent successfully")));
           setState(() {
             sentMessages.add(messageContent); // Add sent message to the list
           });
@@ -50,13 +53,16 @@ class _MessagePageState extends State<MessagePage> {
         } else {
           var responseBody = json.decode(response.body);
           var errorMessage = responseBody['message'];
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(errorMessage)));
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please enter a message")));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Please enter a message")));
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Token not found")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Token not found")));
     }
   }
 
@@ -107,7 +113,8 @@ class _MessagePageState extends State<MessagePage> {
                       decoration: InputDecoration(
                         hintText: 'Type your message...',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20.0), // Set border radius
+                          borderRadius:
+                              BorderRadius.circular(20.0), // Set border radius
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(Icons.emoji_emotions),
@@ -166,7 +173,11 @@ class _ChatScreenState extends State<ChatScreen> {
     if (response.statusCode == 200) {
       setState(() {
         List<dynamic> allMessages = json.decode(response.body)['data'];
-        futureMessages = allMessages.where((message) => message['sender']['id'] != id && message['receiver']['id'] == id).toList();
+        futureMessages = allMessages
+            .where((message) =>
+                message['sender']['id'] != id &&
+                message['receiver']['id'] == id)
+            .toList();
       });
     } else {
       throw Exception('Failed to load messages');
@@ -210,7 +221,8 @@ class _ChatScreenState extends State<ChatScreen> {
               } else if (snapshot.hasData) {
                 var lastMessage = snapshot.data!;
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 4.0),
                   child: Card(
                     elevation: 4,
                     child: ListTile(
@@ -224,7 +236,6 @@ class _ChatScreenState extends State<ChatScreen> {
                               senderId: senderId,
                               receiverId: lastMessage['receiver']['id'],
                               Sendername: senderName,
-
                             ),
                           ),
                         );
@@ -247,13 +258,18 @@ class _ChatScreenState extends State<ChatScreen> {
             IconButton(
               icon: Icon(Icons.home, color: Color(0xFF343ABA)),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => MyHomePage(title: "home")));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => MyHomePage(title: "home")));
               },
             ),
             IconButton(
-              icon: Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
+              icon:
+                  Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => ProfileScreen()));
               },
             ),
           ],
@@ -271,7 +287,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   String _getName(int senderId) {
-    var sender = futureMessages.firstWhere((message) => message['sender']['id'] == senderId);
+    var sender = futureMessages
+        .firstWhere((message) => message['sender']['id'] == senderId);
     return sender['sender']['name'];
   }
 
@@ -279,7 +296,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
     final response = await http.get(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/messages/${senderId}'),
+      Uri.parse(
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/messages/${senderId}'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -295,13 +313,17 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-
 class ChatDetailScreen extends StatefulWidget {
   final int senderId;
   final int receiverId;
   final String Sendername;
 
-  const ChatDetailScreen({Key? key, required this.senderId, required this.receiverId, required this.Sendername}) : super(key: key);
+  const ChatDetailScreen(
+      {Key? key,
+      required this.senderId,
+      required this.receiverId,
+      required this.Sendername})
+      : super(key: key);
 
   @override
   _ChatDetailScreenState createState() => _ChatDetailScreenState();
@@ -318,84 +340,90 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Future<void> fetchMessages() async {
-  final prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('token');
-  int? id = prefs.getInt('user_id');
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    int? id = prefs.getInt('user_id');
 
-  if (token != null && id != null) {
-    final o_response = await http.get(
-      Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/messages/${widget.senderId}'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    if (o_response.statusCode == 200) {
-      List<dynamic> allMessages = json.decode(o_response.body)['data'];
-
-      List<dynamic> sentMessages = allMessages
-          .where((message) => message['sender']['id'] == id)
-          .map((message) => {...message, 'type': 'sent'})
-          .toList();
-
-      List<dynamic> receivedMessages = allMessages
-          .where((message) => message['sender']['id'] == widget.senderId)
-          .map((message) => {...message, 'type': 'received'})
-          .toList();
-
-      List<dynamic> combinedMessages = [...receivedMessages, ...sentMessages];
-      combinedMessages.sort((a, b) => DateTime.parse(a['sent_at']).compareTo(DateTime.parse(b['sent_at'])));
-
-      setState(() {
-        messages = combinedMessages;
-      });
-    } else {
-      throw Exception('Failed to load messages');
-    }
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Token or User ID not found")));
-  }
-}
-
-Future<void> sendMessage(String content) async {
-  final prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('token');
-
-  if (token != null) {
-    if (content.isNotEmpty) {
-      final response = await http.post(
-        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/messages'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'receiver_id': widget.senderId,
-          'content': content,
-        }),
+    if (token != null && id != null) {
+      final o_response = await http.get(
+        Uri.parse(
+            'https://snapwork-133ce78bbd88.herokuapp.com/api/messages/${widget.senderId}'),
+        headers: {'Authorization': 'Bearer $token'},
       );
 
-      if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Message sent successfully")));
-        fetchMessages();
+      if (o_response.statusCode == 200) {
+        List<dynamic> allMessages = json.decode(o_response.body)['data'];
+
+        List<dynamic> sentMessages = allMessages
+            .where((message) => message['sender']['id'] == id)
+            .map((message) => {...message, 'type': 'sent'})
+            .toList();
+
+        List<dynamic> receivedMessages = allMessages
+            .where((message) => message['sender']['id'] == widget.senderId)
+            .map((message) => {...message, 'type': 'received'})
+            .toList();
+
+        List<dynamic> combinedMessages = [...receivedMessages, ...sentMessages];
+        combinedMessages.sort((a, b) => DateTime.parse(a['sent_at'])
+            .compareTo(DateTime.parse(b['sent_at'])));
+
         setState(() {
-          messages.add({
-            'content': content,
-            'type': 'sent',
-          });
-          messageController.clear();
+          messages = combinedMessages;
         });
       } else {
-        var responseBody = json.decode(response.body);
-        var errorMessage = responseBody['message'];
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
+        throw Exception('Failed to load messages');
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please enter a message")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Token or User ID not found")));
     }
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Token not found")));
   }
-}
 
+  Future<void> sendMessage(String content) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null) {
+      if (content.isNotEmpty) {
+        final response = await http.post(
+          Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/messages'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'receiver_id': widget.senderId,
+            'content': content,
+          }),
+        );
+
+        if (response.statusCode == 201) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Message sent successfully")));
+          fetchMessages();
+          setState(() {
+            messages.add({
+              'content': content,
+              'type': 'sent',
+            });
+            messageController.clear();
+          });
+        } else {
+          var responseBody = json.decode(response.body);
+          var errorMessage = responseBody['message'];
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(errorMessage)));
+        }
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Please enter a message")));
+      }
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Token not found")));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -412,17 +440,23 @@ Future<void> sendMessage(String content) async {
                 var message = messages[index];
                 bool isSender = message['type'] == 'sent';
                 String messageContent = message['message'] ?? '';
-                Color color = isSender ? Color(0xFFADD8E6) : Color(0xFF90EE90); // Blue for sent, green for received
+                Color color = isSender
+                    ? Color(0xFFADD8E6)
+                    : Color(0xFF90EE90); // Blue for sent, green for received
                 return Align(
-                  alignment: isSender ? Alignment.centerLeft : Alignment.centerRight,
+                  alignment:
+                      isSender ? Alignment.centerLeft : Alignment.centerRight,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 8.0, horizontal: 16.0),
                     child: ClipRRect(
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(20.0),
                         topRight: Radius.circular(20.0),
-                        bottomRight: isSender ? Radius.circular(20.0) : Radius.zero,
-                        bottomLeft: isSender ? Radius.zero : Radius.circular(20.0),
+                        bottomRight:
+                            isSender ? Radius.circular(20.0) : Radius.zero,
+                        bottomLeft:
+                            isSender ? Radius.zero : Radius.circular(20.0),
                       ),
                       child: Container(
                         decoration: BoxDecoration(
@@ -458,7 +492,6 @@ Future<void> sendMessage(String content) async {
                           sendMessage(messageController.text);
                           fetchMessages();
                           messageController.clear();
-
                         },
                       ),
                     ),
@@ -471,10 +504,10 @@ Future<void> sendMessage(String content) async {
       ),
     );
   }
+
   @override
   void dispose() {
     messageController.dispose();
     super.dispose();
   }
-
 }

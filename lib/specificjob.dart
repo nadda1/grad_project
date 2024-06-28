@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'Messaging.dart';
+import 'messaging.dart';
 
 class SpecificJobPage extends StatefulWidget {
   final String jobId;
@@ -116,6 +116,13 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
   void showFreelancersPopup(BuildContext context) async {
     List<dynamic> freelancers = await fetchFreelancers();
 
+    // Sort freelancers by total_average_rating in descending order
+    freelancers.sort((a, b) {
+      double ratingA = (a['user']['total_average_rating'] ?? 0).toDouble();
+      double ratingB = (b['user']['total_average_rating'] ?? 0).toDouble();
+      return ratingB.compareTo(ratingA);
+    });
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -130,23 +137,7 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
               itemBuilder: (BuildContext context, int index) {
                 var freelancer = freelancers[index];
 
-                return Card(
-                  color: Colors.deepPurple,
-                  child: ListTile(
-                    title: Text('Name: ${freelancer['username'] ?? 'No data'}'),
-                    subtitle: Text(
-                        'Gender: ${freelancer['gender'] ?? 'No data'}\nEmail: ${freelancer['email'] ?? 'No data'}'),
-                    trailing: ElevatedButton(
-                      onPressed: () {
-                        sendInvitation(freelancer['id'].toString());
-                      },
-                      child: Text('Invite'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                      ),
-                    ),
-                  ),
-                );
+                return buildFreelancerTile(freelancer);
               },
             ),
           ),
@@ -158,6 +149,85 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
           ],
         );
       },
+    );
+  }
+
+  Widget buildFreelancerTile(Map<String, dynamic> freelancer) {
+    double totalAverageRating =
+        (freelancer['user']['total_average_rating'] ?? 0).toDouble();
+
+    return Card(
+      color: Colors.white,
+      child: ListTile(
+        title: Text(
+          'Name: ${freelancer['user']['name'] ?? 'No data'}',
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Gender: ${freelancer['user']['gender'] ?? 'No data'}\nEmail: ${freelancer['user']['email'] ?? 'No data'}',
+            ),
+            SizedBox(height: 4),
+            Row(
+              children: [
+                Text('Rating:'),
+                RatingBarIndicator(
+                  rating: totalAverageRating,
+                  itemBuilder: (context, index) => Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                  ),
+                  itemCount: 5,
+                  itemSize: 20.0,
+                  direction: Axis.horizontal,
+                ),
+                if (totalAverageRating > 2 && totalAverageRating <= 3)
+                  Image.asset(
+                    'assets/images/bronze-medal.png',
+                    height: 50.0,
+                  ),
+                if (totalAverageRating > 3 && totalAverageRating <= 4)
+                  Image.asset(
+                    'assets/images/silver-medal.png',
+                    height: 50.0,
+                  ),
+                if (totalAverageRating > 4 && totalAverageRating < 5)
+                  Image.asset(
+                    'assets/images/medal.png',
+                    height: 50.0,
+                  ),
+                if (totalAverageRating == 5)
+                  Image.asset(
+                    'assets/images/trophy.png',
+                    height: 50.0,
+                  ),
+              ],
+            ),
+          ],
+        ),
+        trailing: ElevatedButton(
+          onPressed: () {
+            sendInvitation(freelancer['user']['id'].toString());
+          },
+          child: Text(
+            'Invite',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: Color(0xFF69C26A), // Text color
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          ),
+        ),
+      ),
     );
   }
 
@@ -312,45 +382,61 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
   Widget buildSkillsCard(List<dynamic> skills) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
-      color: Color.fromARGB(
-          255, 255, 255, 255), // You can customize the background color
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Wrap(
-          spacing: 6.0, // Horizontal space between chips
-          runSpacing: 6.0, // Vertical space between chips
-          children: skills
-              .map((skill) => Chip(
-                    label: Text(skill, style: TextStyle(color: Colors.white)),
-                    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-                  ))
-              .toList(),
-        ),
-      ),
-    );
-  }
-
-  Widget buildCard(String details) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      color: Color.fromARGB(255, 255, 255, 255),
+      color: Color.fromARGB(255, 255, 255, 255), // White background color
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              'Skills',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8.0), // Space between title and chips
             Wrap(
               spacing: 6.0, // Horizontal space between chips
-              runSpacing: 6.0,
-              children: [
-                Chip(
-                  label: Text(
-                    details,
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-                ),
-              ],
+              runSpacing: 6.0, // Vertical space between chips
+              children: skills
+                  .map((skill) => Chip(
+                        label:
+                            Text(skill, style: TextStyle(color: Colors.black)),
+                        backgroundColor: Colors.white,
+                      ))
+                  .toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildCard(String attributeName, String details) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      color: Colors.white, // Background color set to white
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              attributeName,
+              style: TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'CustomFont',
+              ), // Attribute name in grey
+            ),
+            SizedBox(height: 4.0),
+            Text(
+              details,
+              style: TextStyle(color: Color(0xFF333333)), // Value in black
+              softWrap: true, // Allow text to wrap
+              overflow: TextOverflow.visible, // Ensure text is visible
             ),
           ],
         ),
@@ -468,9 +554,11 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                   ElevatedButton(
                     onPressed: () =>
                         hireFreelancer(jobDetails['slug'], applicationSlug),
-                    child: Text('Hire'),
+                    child:
+                        Text(' Hire ', style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.lightGreen,
+                      backgroundColor:
+                          Color(0xFF69C26A), // New color for "Hire" button
                     ),
                   ),
                   SizedBox(width: 8), // Add some spacing between buttons
@@ -486,10 +574,11 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                         ),
                       );
                     },
-                    child: Text('Contact'),
+                    child:
+                        Text('Contact', style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          Colors.blue, // Change button color as needed
+                          Color(0xFF87AFCC), // New color for "Contact" button
                     ),
                   ),
                 ],
@@ -569,44 +658,60 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(255, 242, 242, 242),
-        title: Text('Job Details',
-            style: TextStyle(
-                color: Color(0xFF343ABA))), // Blue color for the title
+        backgroundColor: Color.fromARGB(255, 242, 242, 242), // Original color
+        title: Text(
+          'Job Tracking',
+          style: TextStyle(
+            color: Color(0xFF343ABA), // Blue color for the title
+          ),
+        ),
         centerTitle: true,
         elevation: 0,
       ),
-      backgroundColor: Color.fromARGB(255, 242, 242, 242),
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: ListView(
           children: <Widget>[
             if (jobDetails.containsKey('title'))
-              buildCard(jobDetails['title'] ?? 'N/A'),
+              buildCard('Title', jobDetails['title'] ?? 'N/A'),
             if (jobDetails.containsKey('address'))
-              buildCard(jobDetails['address'] ?? 'Location not available'),
+              buildCard('Location',
+                  jobDetails['address'] ?? 'Location not available'),
             if (jobDetails.containsKey('expected_budget'))
-              buildCard('\$${jobDetails['expected_budget']}'),
-            if (jobDetails.containsKey('description'))
               buildCard(
+                  'Expected Budget', '\$${jobDetails['expected_budget']}'),
+            if (jobDetails.containsKey('description'))
+              buildCard('Description',
                   jobDetails['description'] ?? 'Description not available'),
-            if (jobDetails.containsKey('required_skills'))
-              buildSkillsCard(jobDetails['required_skills']),
+            if (jobDetails.containsKey('required_skills') &&
+                jobDetails['required_skills'] is List)
+              buildSkillsCard(jobDetails['required_skills'])
+            else
+              buildCard('Required Skills',
+                  'Skills not specified or incorrect format'),
             if (userRole == 'client' &&
                 userid == userIDjob &&
                 jobstatus != "hired")
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 16.0),
-                child: Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.add),
+                      onPressed: () => showFreelancersPopup(context),
+                      color: Color(0xFF28A745), // Green color
                     ),
-                    onPressed: () => showFreelancersPopup(context),
-                    child: Text('Suggestion Invite',
-                        style: TextStyle(fontSize: 16)),
-                  ),
+                    SizedBox(width: 8), // Add spacing between icon and text
+                    Text(
+                      'Find Collaborators', // Updated button name
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF28A745), // Green color
+                      ),
+                    ),
+                  ],
                 ),
               ),
             if (userRole == 'freelancer' && jobstatus != "hired")
@@ -615,36 +720,60 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                 child: Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color.fromARGB(255, 224, 79, 53),
+                      backgroundColor: Color(0xFFE04F35), // Red color
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () => showApplicationDialog(context),
-                    child:
-                        Text('apply for a job', style: TextStyle(fontSize: 16)),
+                    child: Text(
+                      'Apply for a Job',
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
                 ),
               ),
             if (jobDetails.containsKey('applications'))
               Padding(
                 padding: const EdgeInsets.only(top: 16.0),
-                child: Text('The Applicants',
-                    style: TextStyle(
-                        color: const Color.fromARGB(255, 0, 0, 0),
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold)),
+                child: Text(
+                  'The Applicants',
+                  style: TextStyle(
+                    color: Color(0xFF343ABA),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             if (userRole == 'client' && jobDetails.containsKey('applications'))
-              ...jobDetails['applications']
-                  .map((application) => buildApplicationCard(
-                      application['freelancer']['name'] ?? 'N/A',
-                      application['freelancer']['id'] ?? 0,
-                      application['bid'].toString() ?? '0',
-                      application['duration'].toString() ?? '0',
-                      application['cover_letter'] ?? 'N/A',
-                      application['slug'],
-                      application['freelancer'] // تمرير كائن الفريلانسر كاملًا
-                      ))
-                  .toList(),
+              if (jobDetails['applications'].isEmpty)
+                Card(
+                  color: Colors.grey[200],
+                  margin: EdgeInsets.symmetric(vertical: 10),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'No applicants yet',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              else
+                ...jobDetails['applications']
+                    .map((application) => buildApplicationCard(
+                          application['freelancer']['name'] ?? 'N/A',
+                          application['freelancer']['id'] ?? 0,
+                          application['bid'].toString() ?? '0',
+                          application['duration'].toString() ?? '0',
+                          application['cover_letter'] ?? 'N/A',
+                          application['slug'],
+                          application[
+                              'freelancer'], // Pass the entire freelancer object
+                        ))
+                    .toList(),
             if (userRole == 'freelancer' &&
                 jobDetails.containsKey('applications'))
               ...jobDetails['applications']

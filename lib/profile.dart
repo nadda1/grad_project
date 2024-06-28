@@ -1,13 +1,19 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:grad_project/utils.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'main.dart';
 import 'navigation_service.dart';
 import 'clientJobs.dart';
 import 'contracts_page.dart';
 import 'wallet.dart';
+import 'package:image_picker/image_picker.dart';
+import 'utils.dart';
 
 final NavigationService navigationService = NavigationService();
 
@@ -19,6 +25,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  Uint8List? _image;
   String _name = 'Loading...';
   String _email = 'Loading...';
   List<dynamic>? _educations;
@@ -982,6 +989,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> selectImage() async {
+    XFile? imgFile = await pickImage(ImageSource.gallery);
+    if (imgFile != null) {
+      Uint8List imgBytes = await imgFile.readAsBytes();
+      setState(() {
+        _image = imgBytes;
+      });
+      await uploadImage(imgFile.path); // Passing file path
+    }
+  }
+
+  Future<void> uploadImage(String filePath) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    String url =
+        'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-picture';
+
+    try {
+      var request = http.MultipartRequest('PUT', Uri.parse(url));
+      request.headers['Authorization'] = 'Bearer $token';
+
+      // Adding the file using file path with the correct field name 'picture'
+      request.files.add(await http.MultipartFile.fromPath('picture', filePath));
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        var jsonResponse = jsonDecode(response.body);
+        print('Image uploaded successfully');
+        print('Response Body: $jsonResponse');
+      } else {
+        print('Failed to upload image');
+        print('Status Code: ${response.statusCode}');
+        print('Response Body: ${response.body}');
+      }
+    } catch (e) {
+      print('Error during image upload: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -993,10 +1041,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              CircleAvatar(
-                backgroundImage: NetworkImage(
-                    'https://static.vecteezy.com/system/resources/previews/005/129/844/original/profile-user-icon-isolated-on-white-background-eps10-free-vector.jpg'),
-                radius: 50.0,
+              Stack(
+                children: [
+                  _image != null
+                      ? CircleAvatar(
+                          radius: 64,
+                          backgroundImage: MemoryImage(_image!),
+                        )
+                      : CircleAvatar(
+                          radius: 64,
+                          backgroundImage: NetworkImage(
+                              'https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png'),
+                        ),
+                  Positioned(
+                    child: IconButton(
+                      onPressed: selectImage,
+                      icon: Icon(
+                        Icons.add_a_photo,
+                      ),
+                    ),
+                    bottom: -10,
+                    left: 80,
+                  )
+                ],
               ),
               SizedBox(height: 20.0),
               Center(

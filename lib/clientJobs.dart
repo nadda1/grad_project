@@ -235,7 +235,7 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Contracts'),
-        backgroundColor: Colors.blueGrey,
+        backgroundColor: Color.fromARGB(255, 242, 242, 242),
       ),
       body: ListView.builder(
         itemCount: jobs.length,
@@ -287,14 +287,16 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
                       }).toList(),
                     ),
                     SizedBox(height: 10),
-                    Text('Attachments:'),
                     if (job['attachments'] != null &&
                         job['attachments'].isNotEmpty)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: job['attachments'].map<Widget>((attachment) {
-                          return Text(attachment);
-                        }).toList(),
+                        children: [
+                          Text('Attachments:'),
+                          ...job['attachments'].map<Widget>((attachment) {
+                            return Text(attachment);
+                          }).toList(),
+                        ],
                       ),
                     SizedBox(height: 10),
                     Text('Hired Applications:'),

@@ -6,7 +6,8 @@ class NavigationService {
 
   Future<void> navigateTo(String route) async {
     _pastRoutes.add(route);
-    _forwardRoutes.add(route); // Clear forward history when navigating to a new route.
+    _forwardRoutes
+        .add(route); // Clear forward history when navigating to a new route.
     await _updateLastRoute(route);
   }
 

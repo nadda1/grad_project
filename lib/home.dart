@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'DashBoard.dart';
 import 'messaging.dart';
 import 'Search.dart';
 import 'specificjob.dart';
@@ -25,7 +26,7 @@ Container Jobs(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Image.asset(
-                "images/" + imagePath,
+                "assets/images/" + imagePath,
                 fit: BoxFit.fill,
                 height: 50.0,
                 width: 40,
@@ -71,6 +72,41 @@ class _MyHomePageState extends State<MyHomePage> {
     _searchController.addListener(_filterJobs);
     _loadUserRole();
     fetchJobs();
+  }
+
+  Future<void> _logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    if (token == null) {
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse(
+            'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/logout'),
+        headers: <String, String>{
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await prefs.remove('token');
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Failed to log out."),
+        ));
+      }
+    } catch (e) {
+      print('Error logging out: $e');
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("An error occurred while logging out."),
+      ));
+    }
   }
 
   void refreshJobList() {
@@ -168,6 +204,18 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  String formatDate(String dateString) {
+    DateTime dateTime = DateTime.parse(dateString);
+    return '${dateTime.year}-${dateTime.month}-${dateTime.day}';
+  }
+
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userRole = prefs.getString('role');
+    });
+  }
+
   void _filterJobs() {
     String query = _searchController.text.toLowerCase();
     setState(() {
@@ -232,22 +280,20 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  String formatDate(String dateString) {
-    DateTime dateTime = DateTime.parse(dateString);
-    return '${dateTime.year}-${dateTime.month}-${dateTime.day}';
-  }
-
-  Future<void> _loadUserRole() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userRole = prefs.getString('role');
-    });
-  }
-
   void _showLocationPicker(BuildContext context) async {
     LatLng selectedLocation = LatLng(0, 0);
 
-    Position currentPosition = await Geolocator.getCurrentPosition(
+    LocationPermission permission;
+    Position currentPosition;
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.deniedForever) {
+        return Future.error('Location Not Available');
+      }
+    }
+
+    currentPosition = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
 
     showDialog(
@@ -319,45 +365,49 @@ class _MyHomePageState extends State<MyHomePage> {
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              //controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search',
-                prefixIcon: Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              onSubmitted: (String value) {
-                print("submit");
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SearchPage(searchQuery: value),
+            child: Container(
+              height: 50, // Adjust the height as needed
+              child: TextField(
+                //controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search',
+                  prefixIcon: Icon(Icons.search),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: BorderSide.none,
                   ),
-                );
-              },
-            ),
-          ),
-          SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: _locationController,
-              decoration: InputDecoration(
-                hintText: 'nearest jobs for you',
-                prefixIcon: Icon(Icons.place),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: BorderSide.none,
                 ),
+                onSubmitted: (String value) {
+                  print("submit");
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SearchPage(searchQuery: value),
+                    ),
+                  );
+                },
               ),
             ),
           ),
+
+          SizedBox(width: 10),
+          // Expanded(
+          //   child: TextField(
+          //     controller: _locationController,
+          //     decoration: InputDecoration(
+          //       hintText: 'Nearest jobs for you',
+          //       prefixIcon: Icon(Icons.place),
+          //       filled: true,
+          //       fillColor: Colors.white,
+          //       border: OutlineInputBorder(
+          //         borderRadius: BorderRadius.circular(10.0),
+          //         borderSide: BorderSide.none,
+          //       ),
+          //     ),
+          //   ),
+          // ),
           IconButton(
             icon: Icon(Icons.map),
             onPressed: () {
@@ -409,7 +459,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ],
           ),
-          SizedBox(height: 20.0),
+          // SizedBox(height: 10.0),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 17),
             child: Text(
@@ -510,7 +560,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: Container(
                           margin: EdgeInsets.symmetric(
                               vertical: 8.0, horizontal: 16.0),
-                          padding: EdgeInsets.all(12.0),
+                          padding: EdgeInsets.all(10.0),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10.0),
@@ -616,36 +666,92 @@ class _MyHomePageState extends State<MyHomePage> {
               decoration: BoxDecoration(
                 color: Color(0xFF5C8EF2),
               ),
-              child: Text('Settings'),
+              child: Text(
+                'App Navigation',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
+              ),
             ),
             ListTile(
+              leading: ShaderMask(
+                shaderCallback: (Rect bounds) {
+                  return LinearGradient(
+                    colors: [Colors.red, Colors.orange],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds);
+                },
+                child: Icon(Icons.favorite, color: Colors.white),
+              ),
               title: Text('Wishlist'),
               onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => WishlistPage()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => WishlistPage()),
+                );
               },
             ),
+            Divider(),
             ListTile(
-              title: Text('Log out'),
+              leading: ShaderMask(
+                shaderCallback: (Rect bounds) {
+                  return LinearGradient(
+                    colors: [Colors.blue, Colors.lightBlueAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds);
+                },
+                child: Icon(Icons.dashboard, color: Colors.white),
+              ),
+              title: Text('Dashboards'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PowerBIReportPage()),
+                );
               },
             ),
+            Divider(),
             ListTile(
-              title: Text('Change password'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
+              leading: ShaderMask(
+                shaderCallback: (Rect bounds) {
+                  return LinearGradient(
+                    colors: [Colors.green, Colors.lightGreenAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds);
+                },
+                child: Icon(Icons.recommend, color: Colors.white),
+              ),
               title: Text('Recommendation'),
               onTap: () {
                 Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => RecommendedJobsWidget()));
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => RecommendedJobsWidget()),
+                );
               },
             ),
+            Divider(),
+            ListTile(
+              leading: ShaderMask(
+                shaderCallback: (Rect bounds) {
+                  return LinearGradient(
+                    colors: [Colors.orange, Colors.deepOrange],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds);
+                },
+                child: Icon(Icons.logout, color: Colors.white),
+              ),
+              title: Text('Log out'),
+              onTap: () {
+                _logout();
+              },
+            ),
+            Divider(),
           ],
         ),
       ),

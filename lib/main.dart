@@ -32,6 +32,7 @@ class MyApp extends StatelessWidget {
 }
 
 Color buttonColor = Color(0xFF1B3D55);
+
 class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -62,22 +63,25 @@ class WelcomePage extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => LoginPage()),
                 );
               },
-
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>( Color(0xFF0064B1)),
+                backgroundColor:
+                    MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40.0), // Adjust radius as needed
+                    borderRadius:
+                        BorderRadius.circular(40.0), // Adjust radius as needed
                   ),
                 ),
                 minimumSize: MaterialStateProperty.all<Size>(
                   Size(200, 40), // Adjust width and height as needed
                 ),
               ),
-
-              child: Text('Login',style: TextStyle(
-                color: Colors.white,
-              ),),
+              child: Text(
+                'Login',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
             ),
             SizedBox(height: 10),
             ElevatedButton(
@@ -89,20 +93,23 @@ class WelcomePage extends StatelessWidget {
                 );
               },
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(
-                    0xFFFFFFFF)),
+                backgroundColor:
+                    MaterialStateProperty.all<Color>(Color(0xFFFFFFFF)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40.0), // Adjust radius as needed
+                    borderRadius:
+                        BorderRadius.circular(40.0), // Adjust radius as needed
                   ),
                 ),
                 minimumSize: MaterialStateProperty.all<Size>(
                   Size(200, 40), // Adjust width and height as needed
                 ),
               ),
-              child: Text('Sign Up',
+              child: Text(
+                'Sign Up',
                 style: TextStyle(
-                  color: Color(0xFF0064B1),),
+                  color: Color(0xFF0064B1),
+                ),
               ),
             ),
             // ElevatedButton(
@@ -162,9 +169,6 @@ class WelcomePage extends StatelessWidget {
     );
   }
 }
-
-
-
 
 class LoginPage extends StatelessWidget {
   @override

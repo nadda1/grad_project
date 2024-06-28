@@ -12,7 +12,6 @@ Future<void> persistRoute(String routeName) async {
   await prefs.setString('last_route', routeName);
 }
 
-
 class LoginForm extends StatefulWidget {
   @override
   _LoginFormState createState() => _LoginFormState();
@@ -23,7 +22,7 @@ class _LoginFormState extends State<LoginForm> {
 
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
-@override
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -66,7 +65,7 @@ class _LoginFormState extends State<LoginForm> {
               child: TextField(
                 controller: _emailController,
                 decoration: InputDecoration(
-                  labelText: 'email',
+                  labelText: 'Email',
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -78,124 +77,139 @@ class _LoginFormState extends State<LoginForm> {
             ),
             SizedBox(height: 15),
             SizedBox(
-  width: 300.0,
-  height: 50.0,
-  child: TextField(
-    controller: _passwordController,
-    obscureText: !_isPasswordVisible, // Updated based on state variable
-    decoration: InputDecoration(
-      labelText: 'Password',
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20.0),
-      ),
-      prefixIcon: Icon(Icons.lock),
-      suffixIcon: IconButton(
-        icon: Icon(
-          // Change the icon based on the state
-          _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-        ),
-        onPressed: () {
-          // Update the state to toggle password visibility
-          setState(() {
-            _isPasswordVisible = !_isPasswordVisible;
-          });
-        },
-      ),
-    ),
-  ),
-),
+              width: 300.0,
+              height: 50.0,
+              child: TextField(
+                controller: _passwordController,
+                obscureText:
+                    !_isPasswordVisible, // Updated based on state variable
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  prefixIcon: Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      // Change the icon based on the state
+                      _isPasswordVisible
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      // Update the state to toggle password visibility
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ),
             SizedBox(height: 20),
             ElevatedButton(
-  onPressed: () async {
-    String email = _emailController.text;
-    String password = _passwordController.text;
+              onPressed: () async {
+                String email = _emailController.text;
+                String password = _passwordController.text;
 
-    final String apiUrl = 'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/login';
+                final String apiUrl =
+                    'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/login';
 
-    final http.Response response = await http.post(
-      Uri.parse(apiUrl),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'email': email,
-        'password': password,
-      }),
-    );
+                final http.Response response = await http.post(
+                  Uri.parse(apiUrl),
+                  headers: <String, String>{
+                    'Content-Type': 'application/json; charset=UTF-8',
+                  },
+                  body: jsonEncode(<String, String>{
+                    'email': email,
+                    'password': password,
+                  }),
+                );
 
-if (response.statusCode == 200) {
-  final jsonData = json.decode(response.body);
-  
-List<String> skillNames = (jsonData['data']['user']['skills'] as List)
-    .map((skill) => skill['name'].toString())
-    .toList();
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  
-  await prefs.setStringList('user_skills', skillNames);
-  await prefs.setString('token', jsonData['data']['access_token']);
-  await prefs.setString('user', json.encode(jsonData['data']['user']));
-  await prefs.setString('role', jsonData['data']['user']['role']); 
- await prefs.setInt('user_id', jsonData['data']['user']['id']);  
- await prefs.setString('user_name', jsonData['data']['user']['name']);  
- List<String> storedSkills = prefs.getStringList('user_skills') ?? [];
-  print("Stored skills: $storedSkills");
+                if (response.statusCode == 200) {
+                  final jsonData = json.decode(response.body);
 
-  await persistRoute('/home');
-  navigationService.navigateTo('/home');
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(builder: (context) => MyHomePage(title: '')),
-    (Route<dynamic> route) => false, // Remove all routes below
-  );
-} else {
-      // Login failed, display an error message
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Login Failed'),
-            content: Text('An error occurred during login. Please try again.'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('OK'),
+                  List<String> skillNames =
+                      (jsonData['data']['user']['skills'] as List)
+                          .map((skill) => skill['name'].toString())
+                          .toList();
+                  SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
+
+                  await prefs.setStringList('user_skills', skillNames);
+                  await prefs.setString(
+                      'token', jsonData['data']['access_token']);
+                  await prefs.setString(
+                      'user', json.encode(jsonData['data']['user']));
+                  await prefs.setString(
+                      'role', jsonData['data']['user']['role']);
+                  await prefs.setInt('user_id', jsonData['data']['user']['id']);
+                  await prefs.setString(
+                      'user_name', jsonData['data']['user']['name']);
+                  List<String> storedSkills =
+                      prefs.getStringList('user_skills') ?? [];
+                  print("Stored skills: $storedSkills");
+
+                  await persistRoute('/home');
+                  navigationService.navigateTo('/home');
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => MyHomePage(title: '')),
+                    (Route<dynamic> route) => false, // Remove all routes below
+                  );
+                } else {
+                  // Login failed, display an error message
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Login Failed'),
+                        content: Text(
+                            'An error occurred during login. Please try again.'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('OK'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                }
+              },
+              style: ButtonStyle(
+                backgroundColor:
+                    MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(40.0),
+                  ),
+                ),
+                minimumSize: MaterialStateProperty.all<Size>(
+                  Size(150, 40),
+                ),
               ),
-            ],
-          );
-        },
-      );
-    }
-  },
-  style: ButtonStyle(
-    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
-    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-      RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(40.0),
-      ),
-    ),
-    minimumSize: MaterialStateProperty.all<Size>(
-      Size(150, 40),
-    ),
-  ),
- child: Text('Login',style: TextStyle(
-                color: Colors.white,
+              child: Text(
+                'Login',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
               ),
- ),
-  
-),
-       ],
+            ),
+          ],
         ),
       ),
     );
   }
-
-  
 }
+
 class SignUpForm extends StatefulWidget {
   @override
   _SignUpFormState createState() => _SignUpFormState();
@@ -206,14 +220,14 @@ class _SignUpFormState extends State<SignUpForm> {
   bool _isConfirmPasswordVisible = false;
   TextEditingController _usernameController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
-  TextEditingController _passwordConfirmationController = TextEditingController();
+  TextEditingController _passwordConfirmationController =
+      TextEditingController();
   TextEditingController _emailController = TextEditingController();
   TextEditingController _nameController = TextEditingController();
   TextEditingController _jobTitleController = TextEditingController();
   TextEditingController _dobController = TextEditingController();
   List<Map<String, dynamic>> _specializations = [];
   String? _selectedSpecializationId;
-
 
   String? _selectedRole;
   List<String> _roles = ['freelancer', 'client'];
@@ -234,36 +248,35 @@ class _SignUpFormState extends State<SignUpForm> {
     _dobController.dispose();
     super.dispose();
   }
+
   @override
-void initState() {
-  super.initState();
-  _loadSpecializations();
-}
-
-Future<List<Map<String, dynamic>>> _fetchSpecializations() async {
-  final apiUrl = 'https://snapwork-133ce78bbd88.herokuapp.com/api/specializations';
-  final response = await http.get(Uri.parse(apiUrl));
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    return List<Map<String, dynamic>>.from(data['data']);
-  } else {
-    throw Exception('Failed to load specializations');
+  void initState() {
+    super.initState();
+    _loadSpecializations();
   }
-}
 
-Future<void> _loadSpecializations() async {
-  try {
-    final specializations = await _fetchSpecializations();
-    setState(() {
-      _specializations = specializations;
-    });
-  } catch (e) {
-    print('Failed to load specializations: $e');
+  Future<List<Map<String, dynamic>>> _fetchSpecializations() async {
+    final apiUrl =
+        'https://snapwork-133ce78bbd88.herokuapp.com/api/specializations';
+    final response = await http.get(Uri.parse(apiUrl));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return List<Map<String, dynamic>>.from(data['data']);
+    } else {
+      throw Exception('Failed to load specializations');
+    }
   }
-}
 
-  
-
+  Future<void> _loadSpecializations() async {
+    try {
+      final specializations = await _fetchSpecializations();
+      setState(() {
+        _specializations = specializations;
+      });
+    } catch (e) {
+      print('Failed to load specializations: $e');
+    }
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -275,365 +288,384 @@ Future<void> _loadSpecializations() async {
     if (picked != null && picked != _selectedDate)
       setState(() {
         _selectedDate = picked;
-        _dobController.text = "${picked.toLocal()}".split(' ')[0];  // Format the date as YYYY-MM-DD
+        _dobController.text = "${picked.toLocal()}"
+            .split(' ')[0]; // Format the date as YYYY-MM-DD
       });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(child:SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
-            Image.asset(
-              'assets/images/logo.png',
-              width: 200,
-              height: 200,
-              fit: BoxFit.contain,
-            ),
-            Text(
-              'Welcome Back',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
+    return Center(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              Image.asset(
+                'assets/images/logo.png',
+                width: 200,
+                height: 200,
+                fit: BoxFit.contain,
               ),
-            ),
-            Text(
-              'Please sign up',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF343ABA),
-              ),
-            ),
-            SizedBox(height: 15),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Name',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  prefixIcon: Icon(Icons.person),
+              Text(
+                'Welcome Back',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-            SizedBox(height: 20),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Username',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  prefixIcon: Icon(Icons.person),
+              Text(
+                'Please sign up',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF343ABA),
                 ),
               ),
-            ),
-            SizedBox(height: 15),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  prefixIcon: Icon(Icons.email),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: DropdownButtonFormField(
-                value: _selectedRole,
-                decoration: InputDecoration(
-                  labelText: 'Role',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
-                items: _roles.map((String role) {
-                  return DropdownMenuItem(
-                    value: role,
-                    child: Text(role),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedRole = newValue!;
-                  });
-                },
-              ),
-            ),
-            SizedBox(height: 15),
+              SizedBox(height: 15),
               SizedBox(
-            width: 300.0,
-            height: 50.0,
-            child: DropdownButtonFormField<String>(
-              value: _selectedSpecializationId,
-              decoration: InputDecoration(
-                labelText: 'Specialization',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-              ),
-              items: _specializations.map((spec) {
-                return DropdownMenuItem(
-                  value: spec['id'].toString(),
-                  child: Text(spec['name']),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedSpecializationId = newValue!;
-                });
-              },
-            ),
-          ),
-            SizedBox(height: 20),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _jobTitleController,
-                decoration: InputDecoration(
-                  labelText: 'Job Title',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  prefixIcon: Icon(Icons.work),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: DropdownButtonFormField(
-                value: _selectedGender,
-                decoration: InputDecoration(
-                  labelText: 'Gender',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
-                items: _genders.map((String gender) {
-                  return DropdownMenuItem(
-                    value: gender,
-                    child: Text(gender),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedGender = newValue!;
-                  });
-                },
-              ),
-            ),
-            SizedBox(height: 20),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-            child: TextField(
-              readOnly: true,
-              onTap: () => _selectDate(context),
-              controller: TextEditingController(
-                text: _selectedDate == null
-                    ? 'Select your date of birth'
-                    : "${_selectedDate!.toLocal()}".split(' ')[0],
-              ),
-              decoration: InputDecoration(
-                contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-                labelText: 'Date of Birth',
-                filled: true,
-                fillColor: Colors.white,
-                prefixIcon: IconButton(
-                  icon: Icon(Icons.calendar_today),
-                  onPressed: () => _selectDate(context),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey, width: 1.0),
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey, width: 1.0),
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-              ),
-            ),),
-
-            SizedBox(height: 15),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _passwordController,
-                obscureText: !_isPasswordVisible, 
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  prefixIcon: Icon(Icons.lock),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      // Change the icon based on the state
-                      _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                width: 300.0,
+                height: 50.0,
+                child: TextField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Name',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20.0),
                     ),
-                    onPressed: () {
-                      // Update the state to toggle password visibility
-                      setState(() {
-                        _isPasswordVisible = !_isPasswordVisible;
-                      });
-                    },
+                    prefixIcon: Icon(Icons.person),
                   ),
                 ),
               ),
-            ),
-            SizedBox(height: 15),
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _passwordConfirmationController,
-                obscureText: !_isConfirmPasswordVisible, // Use the state variable here
-                decoration: InputDecoration(
-                  fillColor: Colors.white,
-                  filled: true,
-                  labelText: 'Password confirmation',
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isConfirmPasswordVisible ? Icons.visibility_off : Icons.visibility,
+              SizedBox(height: 20),
+              SizedBox(
+                width: 300.0,
+                height: 50.0,
+                child: TextField(
+                  controller: _usernameController,
+                  decoration: InputDecoration(
+                    labelText: 'Username',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20.0),
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                      });
-                    },
+                    prefixIcon: Icon(Icons.person),
                   ),
                 ),
               ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-             onPressed: () async {
-              Map<String, dynamic> userData = {
-                'name': _nameController.text,
-                'username': _usernameController.text,
-                'email': _emailController.text,
-                'password': _passwordController.text,
-                'password_confirmation': _passwordConfirmationController.text,
-                'specialization_id': _selectedSpecializationId, 
-                'role': _selectedRole ?? '',
-                'job_title': _jobTitleController.text,
-                'gender': _selectedGender ?? '',
-                'dob': _dobController.text,
-              };
-
-                String requestBody = json.encode(userData);
-
-                final response = await http.post(
-                  Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/register'),
-                  headers: <String, String>{
-                    'Content-Type': 'application/json; charset=UTF-8',
+              SizedBox(height: 15),
+              SizedBox(
+                width: 300.0,
+                height: 50.0,
+                child: TextField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    prefixIcon: Icon(Icons.email),
+                  ),
+                ),
+              ),
+              SizedBox(height: 20),
+              SizedBox(
+                width: 300.0,
+                height: 60.0,
+                child: DropdownButtonFormField(
+                  value: _selectedRole,
+                  decoration: InputDecoration(
+                    labelText: 'Role',
+                    labelStyle: TextStyle(fontSize: 12),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                  ),
+                  items: _roles.map((String role) {
+                    return DropdownMenuItem(
+                      value: role,
+                      child: Text(role, style: TextStyle(fontSize: 14)),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedRole = newValue!;
+                    });
                   },
-                  body: requestBody,
-                );
+                ),
+              ),
+              SizedBox(height: 15),
+              SizedBox(
+                width: 300.0,
+                height: 60.0,
+                child: DropdownButtonFormField<String>(
+                  value: _selectedSpecializationId,
+                  decoration: InputDecoration(
+                    labelText: 'Specialization',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                  ),
+                  items: _specializations.map((spec) {
+                    return DropdownMenuItem(
+                      value: spec['id'].toString(),
+                      child: Text(spec['name'], style: TextStyle(fontSize: 14)),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedSpecializationId = newValue!;
+                    });
+                  },
+                ),
+              ),
+              SizedBox(height: 20),
+              SizedBox(
+                width: 300.0,
+                height: 50.0,
+                child: TextField(
+                  controller: _jobTitleController,
+                  decoration: InputDecoration(
+                    labelText: 'Job Title',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    prefixIcon: Icon(Icons.work),
+                  ),
+                ),
+              ),
+              SizedBox(height: 20),
+              SizedBox(
+                width: 300.0,
+                height: 60.0,
+                child: DropdownButtonFormField(
+                  value: _selectedGender,
+                  decoration: InputDecoration(
+                    labelText: 'Gender',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                  ),
+                  items: _genders.map((String gender) {
+                    return DropdownMenuItem(
+                      value: gender,
+                      child: Text(gender, style: TextStyle(fontSize: 13)),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedGender = newValue!;
+                    });
+                  },
+                ),
+              ),
+              SizedBox(height: 20),
+              SizedBox(
+                width: 300.0,
+                height: 50.0,
+                child: TextField(
+                  readOnly: true,
+                  onTap: () => _selectDate(context),
+                  controller: TextEditingController(
+                    text: _selectedDate == null
+                        ? 'Select your date of birth'
+                        : "${_selectedDate!.toLocal()}".split(' ')[0],
+                  ),
+                  decoration: InputDecoration(
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
+                    labelText: 'Date of Birth',
+                    filled: true,
+                    fillColor: Colors.white,
+                    prefixIcon: IconButton(
+                      icon: Icon(Icons.calendar_today),
+                      onPressed: () => _selectDate(context),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 15),
+              SizedBox(
+                width: 300.0,
+                height: 50.0,
+                child: TextField(
+                  controller: _passwordController,
+                  obscureText: !_isPasswordVisible,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    prefixIcon: Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        // Change the icon based on the state
+                        _isPasswordVisible
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        // Update the state to toggle password visibility
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 15),
+              SizedBox(
+                width: 300.0,
+                height: 50.0,
+                child: TextField(
+                  controller: _passwordConfirmationController,
+                  obscureText:
+                      !_isConfirmPasswordVisible, // Use the state variable here
+                  decoration: InputDecoration(
+                    fillColor: Colors.white,
+                    filled: true,
+                    labelText: 'Password confirmation',
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isConfirmPasswordVisible
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isConfirmPasswordVisible =
+                              !_isConfirmPasswordVisible;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  Map<String, dynamic> userData = {
+                    'name': _nameController.text,
+                    'username': _usernameController.text,
+                    'email': _emailController.text,
+                    'password': _passwordController.text,
+                    'password_confirmation':
+                        _passwordConfirmationController.text,
+                    'specialization_id': _selectedSpecializationId,
+                    'role': _selectedRole ?? '',
+                    'job_title': _jobTitleController.text,
+                    'gender': _selectedGender ?? '',
+                    'dob': _dobController.text,
+                  };
 
-                if (response.statusCode == 201) {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('Registration success'),
-                        content: Text('Congratulations, you now have an account.'),
-                        actions: <Widget>[
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: Text('OK'),
-                          ),
-                        ],
-                      );
+                  String requestBody = json.encode(userData);
+
+                  final response = await http.post(
+                    Uri.parse(
+                        'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/register'),
+                    headers: <String, String>{
+                      'Content-Type': 'application/json; charset=UTF-8',
                     },
+                    body: requestBody,
                   );
-                } else {
-      var responseData = json.decode(response.body);
-      String errorMessage = responseData['message'] ?? 'Unknown error occurred';  // Adjust based on your API
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Registration Failed'),
-            content: Text(errorMessage),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
+
+                  if (response.statusCode == 201) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Registration success'),
+                          content:
+                              Text('Congratulations, you now have an account.'),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('OK'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  } else {
+                    var responseData = json.decode(response.body);
+                    String errorMessage = responseData['message'] ??
+                        'Unknown error occurred'; // Adjust based on your API
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Registration Failed'),
+                          content: Text(errorMessage),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('OK'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
                 },
-                child: Text('OK'),
+                style: ButtonStyle(
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40.0),
+                    ),
+                  ),
+                  minimumSize: MaterialStateProperty.all<Size>(
+                    Size(150, 40),
+                  ),
+                ),
+                child: Text(
+                  'sign up',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ],
-          );
-        },
-      );
-    }
-              },
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0064B1)),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40.0),
-                  ),
-                ),
-                minimumSize: MaterialStateProperty.all<Size>(
-                  Size(150, 40),
-                ),
-              ),
-             child: Text('sign up',style: TextStyle(
-                color: Colors.white,
-              ),
-             ),
-              
-            ),
-          ],
+          ),
         ),
-      ),),
+      ),
     );
   }
 }

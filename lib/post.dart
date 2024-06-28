@@ -8,6 +8,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 
+import 'home.dart';
+
 class Post extends StatefulWidget {
   final Function onJobPosted;
   Post({Key? key, required this.onJobPosted}) : super(key: key);
@@ -114,7 +116,17 @@ class _PostState extends State<Post> {
 
     if (response.statusCode == 200) {
       showSuccessDialog('Job posted successfully.');
-      widget.onJobPosted();
+
+      // Navigate to MyHomePage after posting job
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MyHomePage(title: 'Home'),
+        ),
+      );
+
+      widget
+          .onJobPosted(); // Optionally, trigger a callback to refresh the home screen
     } else {
       try {
         Map<String, dynamic> decodedResponseBody = jsonDecode(responseBody);
@@ -224,11 +236,13 @@ class _PostState extends State<Post> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Create Post'),
+        backgroundColor: Color.fromARGB(255, 242, 242, 242),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextField(
                 controller: _titleController,
@@ -347,10 +361,28 @@ class _PostState extends State<Post> {
                 decoration: InputDecoration(
                     labelText: 'Address', hintText: 'Enter address'),
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: pickFiles,
-                child: Text('Pick Files'),
+              SizedBox(height: 10),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Attachments',
+                        style: TextStyle(fontSize: 16.0),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.attach_file),
+                      onPressed: pickFiles,
+                      tooltip: 'Attach Files',
+                    ),
+                  ],
+                ),
               ),
               SizedBox(height: 20),
               ElevatedButton(
@@ -364,7 +396,7 @@ class _PostState extends State<Post> {
                     ),
                   ),
                 ),
-                child: Text('Post Job'),
+                child: Text('Post ', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
