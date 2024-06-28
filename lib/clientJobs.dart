@@ -18,50 +18,11 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
     fetchJobs();
   }
 
-  Future<bool> acceptRequest(BuildContext context, int requestId) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    var url =
-        'https://snapwork-133ce78bbd88.herokuapp.com/api/response-accept/$requestId';
-    var headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-
-    var response = await http.put(Uri.parse(url), headers: headers);
-
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      print('Error: ${response.body}');
-      return false;
-    }
-  }
-
-  Future<bool> declineRequest(BuildContext context, int requestId) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    var url =
-        'https://snapwork-133ce78bbd88.herokuapp.com/api/response-decline/$requestId';
-    var headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-
-    var response = await http.put(Uri.parse(url), headers: headers);
-
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      print('Error: ${response.body}');
-      return false;
-    }
-  }
 
   Future<void> fetchJobs() async {
     final prefs = await SharedPreferences.getInstance();
     String? token =
-        prefs.getString('token'); // نفترض أن الرمز المخزن بالمفتاح 'token'
+    prefs.getString('token'); // نفترض أن الرمز المخزن بالمفتاح 'token'
     var url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/jobs';
     var headers = {
       'Content-Type': 'application/json',
@@ -78,11 +39,11 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
     }
   }
 
-  Future<String> sendRating(
-      int jobId, List<Map<String, dynamic>> rates, String comment) async {
+  Future<String> sendRating(int jobId, List<Map<String, dynamic>> rates,
+      String comment) async {
     final prefs = await SharedPreferences.getInstance();
     String? token =
-        prefs.getString('token'); // نفترض أن الرمز المخزن بالمفتاح 'token'
+    prefs.getString('token'); // نفترض أن الرمز المخزن بالمفتاح 'token'
     var url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/rate';
     var headers = {
       'Content-Type': 'application/json',
@@ -97,7 +58,7 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
     });
 
     var response =
-        await http.post(Uri.parse(url), headers: headers, body: body);
+    await http.post(Uri.parse(url), headers: headers, body: body);
 
     if (response.statusCode == 200) {
       return 'Rating sent successfully';
@@ -187,48 +148,7 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
     );
   }
 
-  AlertDialog buildRequestDialog(BuildContext context, dynamic request) {
-    return AlertDialog(
-      title: Text('Request Details'),
-      content: SingleChildScrollView(
-        child: ListBody(
-          children: <Widget>[
-            Text('Type: ${request['type']}'),
-            Text('New Bid: \$${request['new_bid'] ?? 'No change'}'),
-            Text(
-                'New Duration: ${request['new_duration'] ?? 'No change'} days'),
-          ],
-        ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () async {
-            Navigator.of(context).pop(); // Close the dialog
-            bool success = await acceptRequest(context, request['id']);
-            String message = success
-                ? 'Request accepted successfully.'
-                : 'Failed to accept request.';
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(message)));
-          },
-          child: const Text('Accept'),
-          style: TextButton.styleFrom(backgroundColor: Colors.green),
-        ),
-        TextButton(
-          onPressed: () async {
-            Navigator.of(context).pop(); // Close the dialog
-            bool success = await declineRequest(context, request['id']);
-            String message =
-                success ? 'Request declined.' : 'Failed to decline request.';
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(message)));
-          },
-          child: const Text('Decline'),
-          style: TextButton.styleFrom(backgroundColor: Colors.red),
-        ),
-      ],
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -250,86 +170,278 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => SpecificJobPage(
-                    jobId: job['id'].toString(),
-                    specializationId: job['specialization']['id'].toString(),
-                  ),
+                  builder: (context) =>
+                      SpecificJobPage(
+                        jobId: job['id'].toString(),
+                        specializationId: job['specialization']['id']
+                            .toString(),
+                      ),
                 ),
               );
             },
             child: Card(
               elevation: 4,
               margin: EdgeInsets.all(10),
+              // color: Color.fromARGB(255, 224, 228, 234),
               child: Padding(
                 padding: EdgeInsets.all(8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Job Title: ${job['title']}',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(height: 10),
-                    Text('Client Name: ${job['client']['name']}'),
-                    Text('Specialization: ${job['specialization']['name']}'),
-                    Text('Description: ${job['description']}'),
-                    Text('Expected Budget: \$${job['expected_budget']}'),
-                    Text('Expected Duration: ${job['expected_duration']} days'),
-                    Text('Location: ${job['address']}'),
-                    SizedBox(height: 10),
-                    Text('Required Skills:'),
-                    Wrap(
-                      spacing: 8.0,
-                      runSpacing: 4.0,
-                      children: job['required_skills'].map<Widget>((skill) {
-                        return Chip(
-                          label: Text(skill),
-                          backgroundColor: Colors.blueGrey[100],
-                        );
-                      }).toList(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Text(
+                                'Job Title: ',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'SerifFont',
+                                  color: Colors
+                                      .blueGrey, // Changed to blue grey
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  job['title'],
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'SerifFont',
+                                    color: Colors.black, // Changed to black
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        IconButton(
+                          icon: Icon(Icons.notifications),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    NotificationPage(
+                                      requests: job['reqeusts'],
+                                    ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                     SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Text(
+                          'Client Name: ',
+                          style: TextStyle(
+                            fontFamily: 'SerifFont',
+                            color: Colors.blueGrey,
+                            fontWeight: FontWeight.bold,// Changed to blue grey
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            job['client']['name'],
+                            style: TextStyle(
+                              fontFamily: 'SerifFont',
+                              color: Colors.black, // Changed to black
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          'Specialization: ',
+                          style: TextStyle(
+                            fontFamily: 'SerifFont',
+                            color: Colors.blueGrey,
+                            fontWeight: FontWeight.bold,// Changed to blue grey
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            job['specialization']['name'],
+                            style: TextStyle(
+                              fontFamily: 'SerifFont',
+                              color: Colors.black, // Changed to black
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          'Description: ',
+                          style: TextStyle(
+                            fontFamily: 'SerifFont',
+                            color: Colors.blueGrey,
+                            fontWeight: FontWeight.bold,// Changed to blue grey
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            job['description'],
+                            style: TextStyle(
+                              fontFamily: 'SerifFont',
+                              color: Colors.black,
+
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          'Expected Budget: ',
+                          style: TextStyle(
+                            fontFamily: 'SerifFont',
+                            color: Colors.blueGrey,
+                            fontWeight: FontWeight.bold,// Changed to blue grey
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            '\$${job['expected_budget']}',
+                            style: TextStyle(
+                              fontFamily: 'SerifFont',
+                              color: Colors.green, // Changed to black
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          'Expected Duration: ',
+                          style: TextStyle(
+                            fontFamily: 'SerifFont',
+                            color: Colors.blueGrey,
+                            fontWeight: FontWeight.bold,// Changed to blue grey
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            '${job['expected_duration']} days',
+                            style: TextStyle(
+                              fontFamily: 'SerifFont',
+                              color: Colors.green, // Changed to black
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          'Location: ',
+                          style: TextStyle(
+                            fontFamily: 'SerifFont',
+                            color: Colors.blueGrey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            job['address'],
+                            style: TextStyle(
+                              fontFamily: 'SerifFont',
+                              color: Colors.black, // Changed to black
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    // Text(
+                    //   'Required Skills:',
+                    //   style: TextStyle(
+                    //     fontFamily: 'SerifFont',
+                    //     color: Colors.blueGrey, // Changed to blue grey
+                    //   ),
+                    // ),
+                    // Wrap(
+                    //   spacing: 8.0,
+                    //   runSpacing: 4.0,
+                    //   children: job['required_skills'].map<Widget>((skill) {
+                    //     return Chip(
+                    //       label: Text(
+                    //         skill,
+                    //         style: TextStyle(fontFamily: 'SerifFont'),
+                    //       ),
+                    //       backgroundColor: Colors.blueGrey[100],
+                    //     );
+                    //   }).toList(),
+                    // ),
+                    // SizedBox(height: 10),
                     if (job['attachments'] != null &&
                         job['attachments'].isNotEmpty)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Attachments:'),
+                          Text(
+                            'Attachments:',
+                            style: TextStyle(
+                              fontFamily: 'SerifFont',
+                              color: Colors.blueGrey,
+                                fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           ...job['attachments'].map<Widget>((attachment) {
-                            return Text(attachment);
+                            return Text(
+                              attachment,
+                              style: TextStyle(
+                                fontFamily: 'SerifFont',
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.bold// Changed to black
+                              ),
+                            );
                           }).toList(),
                         ],
                       ),
                     SizedBox(height: 10),
-                    Text('Hired Applications:'),
-                    Column(
-                      children: hiredApplications.map<Widget>((app) {
-                        return ListTile(
-                          title:
-                              Text('Freelancer: ${app['freelancer']['name']}'),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Bid: \$${app['bid']}'),
-                              Text('Duration: ${app['duration']} days'),
-                            ],
+                    if (hiredApplications != null &&
+                        hiredApplications.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Hired Applications:',style: TextStyle(
+                            fontFamily: 'SerifFont',
+                            color: Colors.blueGrey, // Changed to blue grey
+                          ),),
+                          Column(
+                            children: hiredApplications.map<Widget>((app) {
+                              return ListTile(
+                                title:
+                                Text('Freelancer: ${app['freelancer']['name']}'),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Bid: \$${app['bid']}'),
+                                    Text('Duration: ${app['duration']} days'),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
                           ),
-                        );
-                      }).toList(),
-                    ),
-                    ...job['reqeusts'].map<Widget>((request) {
-                      return GestureDetector(
-                        onTap: () => showDialog(
-                          context: context,
-                          builder: (context) =>
-                              buildRequestDialog(context, request),
-                        ),
-                        child: Text(
-                          'There is a request to ${request['type']}',
-                          style: TextStyle(
-                              color: Colors.blue,
-                              decoration: TextDecoration.underline),
-                        ),
-                      );
-                    }).toList(),
+                        ],
+                      ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -341,6 +453,9 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
                         ),
                       ],
                     ),
+
+
+
                   ],
                 ),
               ),
@@ -349,5 +464,157 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
         },
       ),
     );
+  }
+}
+
+
+
+class NotificationPage extends StatefulWidget {
+  final List requests;
+
+  NotificationPage({required this.requests});
+
+  @override
+  _NotificationPageState createState() => _NotificationPageState();
+}
+
+class _NotificationPageState extends State<NotificationPage> {
+  late List<bool> _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = List<bool>.filled(widget.requests.length, false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Notifications',
+
+        ),
+        backgroundColor: Color.fromARGB(255, 242, 242, 242),
+      ),
+      body: ListView.builder(
+        itemCount: widget.requests.length,
+        itemBuilder: (context, index) {
+          final request = widget.requests[index];
+          return Card(
+            margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: Column(
+              children: [
+                ListTile(
+                  title: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _expanded[index] = !_expanded[index];
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        'There is a request to ${request['type']}',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                if (_expanded[index])
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Type: ${request['type']}'),
+                        Text('New Bid: \$${request['new_bid'] ?? 'No change'}'),
+                        Text('New Duration: ${request['new_duration'] ?? 'No change'} days'),
+                        ButtonBar(
+                          children: [
+                            ElevatedButton(
+                              onPressed: () async {
+                                bool success = await acceptRequest(context, request['id']);
+                                String message = success
+                                    ? 'Request accepted successfully.'
+                                    : 'Failed to accept request.';
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(message)),
+                                );
+                              },
+                              child: Text('Accept',style: TextStyle(
+                                color: Colors.white,
+                              ),),
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                bool success = await declineRequest(context, request['id']);
+                                String message = success
+                                    ? 'Request declined.'
+                                    : 'Failed to decline request.';
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(message)),
+                                );
+                              },
+                              child: Text('Decline',style: TextStyle(
+                                color: Colors.white,
+                              ),),
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<bool> acceptRequest(BuildContext context, int requestId) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    var url =
+        'https://snapwork-133ce78bbd88.herokuapp.com/api/response-accept/$requestId';
+    var headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+
+    var response = await http.put(Uri.parse(url), headers: headers);
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      print('Error: ${response.body}');
+      return false;
+    }
+  }
+
+  Future<bool> declineRequest(BuildContext context, int requestId) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    var url =
+        'https://snapwork-133ce78bbd88.herokuapp.com/api/response-decline/$requestId';
+    var headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+
+    var response = await http.put(Uri.parse(url), headers: headers);
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      print('Error: ${response.body}');
+      return false;
+    }
   }
 }

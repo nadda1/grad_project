@@ -112,57 +112,7 @@ class WelcomePage extends StatelessWidget {
                 ),
               ),
             ),
-            // ElevatedButton(
-            //   onPressed: () {
-            //     // Navigate to sign up page
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(builder: (context) =>  MyHomePage(title: 'home',)),
-            //     );
-            //   },
-            //   style: ButtonStyle(
-            //     backgroundColor: MaterialStateProperty.all<Color>(Color(
-            //         0xFFFFFFFF)),
-            //     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-            //       RoundedRectangleBorder(
-            //         borderRadius: BorderRadius.circular(40.0), // Adjust radius as needed
-            //       ),
-            //     ),
-            //     minimumSize: MaterialStateProperty.all<Size>(
-            //       Size(200, 40), // Adjust width and height as needed
-            //     ),
-            //   ),
-            //   child: Text('home',
-            //     style: TextStyle(
-            //       color: Color(0xFF0064B1),),
-            //   ),
-            // ),
 
-            // ElevatedButton(
-            //   onPressed: () {
-            //     // Navigate to sign up page
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(builder: (context) =>  MyHomePage(title: 'home',)),
-            //     );
-            //   },
-            //   style: ButtonStyle(
-            //     backgroundColor: MaterialStateProperty.all<Color>(Color(
-            //         0xFFFFFFFF)),
-            //     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-            //       RoundedRectangleBorder(
-            //         borderRadius: BorderRadius.circular(40.0), // Adjust radius as needed
-            //       ),
-            //     ),
-            //     minimumSize: MaterialStateProperty.all<Size>(
-            //       Size(200, 40), // Adjust width and height as needed
-            //     ),
-            //   ),
-            //   child: Text('home',
-            //     style: TextStyle(
-            //       color: Color(0xFF0064B1),),
-            //   ),
-            // ),
           ],
         ),
       ),

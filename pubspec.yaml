@@ -73,6 +73,9 @@ flutter:
     - family: CustomFont
       fonts:
         - asset: assets/fonts/PlaywriteDEGrund-VariableFont_wght.ttf
+    - family: SerifFont
+      fonts:
+        - asset: assets/fonts/NotoSerif-VariableFont_wdth,wght.ttf
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
