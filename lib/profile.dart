@@ -26,6 +26,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   Uint8List? _image;
+   String imageUrl = '';
   String _name = 'Loading...';
   String _email = 'Loading...';
   List<dynamic>? _educations;
@@ -37,6 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<dynamic> _reviews = [];
   String? role = '';
   List<Map<String, dynamic>> _projects = [];
+  
 
   @override
   void initState() {
@@ -57,13 +59,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       Map<String, dynamic> userProfile = await _getUserProfile();
       setState(() {
+        //_image=userProfile['user']['picture'];
+        imageUrl= userProfile['user']['picture'];
         _name = userProfile['user']['name'];
         _email = userProfile['user']['email'];
+       // _image = userProfile['user']['picture'];
         _educations = userProfile['educations'];
         _certifications = userProfile['certifications'];
         _employments = userProfile['Employment'];
         _skills = userProfile['user']['skills'];
         _languages = userProfile['languages'];
+        
       });
     } catch (e) {
       print('Error loading user profile: $e');
@@ -212,6 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (response.statusCode == 200) {
       setState(() {
         _languages!.removeAt(index);
+        print('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/$imageUrl');
       });
     } else {
       // Handle error case
@@ -988,38 +995,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
+ 
+
+
 
   Future<void> selectImage() async {
-    XFile? imgFile = await pickImage(ImageSource.gallery);
-    if (imgFile != null) {
-      Uint8List imgBytes = await imgFile.readAsBytes();
+    Uint8List? imgBytes = await pickImage(ImageSource.gallery);
+    if (imgBytes != null) {
       setState(() {
         _image = imgBytes;
       });
-      await uploadImage(imgFile.path); // Passing file path
+      await uploadImage(imgBytes);
     }
   }
 
-  Future<void> uploadImage(String filePath) async {
+
+
+   Future<void> uploadImage(Uint8List imgBytes) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
-    String url =
-        'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-picture';
 
     try {
-      var request = http.MultipartRequest('PUT', Uri.parse(url));
+      var uri = Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-picture');
+      var request = http.MultipartRequest('POST', uri);
+
+      // Set the Authorization header
       request.headers['Authorization'] = 'Bearer $token';
 
-      // Adding the file using file path with the correct field name 'picture'
-      request.files.add(await http.MultipartFile.fromPath('picture', filePath));
+      // Add the image data to the request
+      request.files.add(http.MultipartFile.fromBytes(
+        'picture',  // This should be the name expected by your API
+        imgBytes,
+        filename: 'upload.jpg',
+        contentType: MediaType('image', 'jpeg'),  // Ensure correct MIME type
+      ));
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {
-        var jsonResponse = jsonDecode(response.body);
+        //var jsonResponse = jsonDecode(response.body);
+    
         print('Image uploaded successfully');
-        print('Response Body: $jsonResponse');
+        //print('Response Body: $jsonResponse');
       } else {
         print('Failed to upload image');
         print('Status Code: ${response.statusCode}');
@@ -1029,7 +1047,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('Error during image upload: $e');
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1044,6 +1061,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Stack(
                 children: [
                   _image != null
+                  
                       ? CircleAvatar(
                           radius: 64,
                           backgroundImage: MemoryImage(_image!),
@@ -1051,7 +1069,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       : CircleAvatar(
                           radius: 64,
                           backgroundImage: NetworkImage(
-                              'https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png'),
+           'https://snapwork-133ce78bbd88.herokuapp.com/uploads/freelancer/pictures/1803297153460132.jpg'),
                         ),
                   Positioned(
                     child: IconButton(
@@ -1597,8 +1615,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
+              
             ],
           ),
+          
         ),
       ),
     );

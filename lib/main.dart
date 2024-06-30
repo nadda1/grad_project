@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'Authentication.dart';
 import 'home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path/path.dart';
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Required for async main
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('token');
   final String initialRoute = token != null ? '/home' : '/';
-
+ 
   runApp(MyApp(initialRoute: initialRoute));
 }
 

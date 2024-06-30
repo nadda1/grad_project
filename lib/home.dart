@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+//import 'package:grad_project/WebView.dart';
 import 'package:grad_project/recommendtion.dart';
 import 'package:grad_project/wishlist.dart';
 import 'package:latlong2/latlong.dart';
@@ -150,6 +151,126 @@ class _MyHomePageState extends State<MyHomePage> {
         print('Failed to fetch jobs');
       }
     }
+  }
+
+  Future<void> fetchNotifications() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token == null) {
+      // Handle the case where the token is null
+      return;
+    }
+
+    final response = await http.get(
+      Uri.parse(
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/notifications'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final notifications = json.decode(response.body)['data'];
+      showNotificationsDialog(notifications);
+    } else {
+      // Handle error
+      print('Failed to fetch notifications');
+    }
+  }
+
+  void showNotificationsDialog(List<dynamic> notifications) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Notifications"),
+          content: Container(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: notifications.length,
+              itemBuilder: (BuildContext context, int index) {
+                final notification = notifications[index];
+                final isUnread = notification['read_at'] == null;
+                return Card(
+                  color: isUnread ? Colors.white : Colors.grey[200],
+                  margin: EdgeInsets.symmetric(vertical: 8.0),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.blueAccent,
+                      child: Icon(
+                        Icons.notifications,
+                        color: Colors.white,
+                      ),
+                    ),
+                    title: Text(
+                      notification['data']['title'],
+                      style: TextStyle(
+                        fontWeight:
+                            isUnread ? FontWeight.bold : FontWeight.normal,
+                        color: isUnread ? Colors.black : Colors.grey[600],
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          notification['data']['message'],
+                          style: TextStyle(
+                            color: Colors.black87,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          'Received at: ${notification['created_at']}',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward,
+                      color: Colors.blueAccent,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      String url = notification['data']['url'];
+                      Uri uri = Uri.parse(url);
+                      List<String> segments = uri.pathSegments;
+                      if (segments.length >= 2 &&
+                          segments[segments.length - 2] == 'jobs') {
+                        String jobId = segments.last;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SpecificJobPage(
+                              jobId: jobId,
+                              specializationId:
+                                  '', // يمكنك إضافة ID التخصص إذا كان متاحًا
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> fetchData(String specializationId, {int page = 1}) async {
@@ -424,6 +545,17 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
+      appBar: AppBar(
+        title: Text(widget.title),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.notifications),
+            onPressed: () {
+              fetchNotifications();
+            },
+          ),
+        ],
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
