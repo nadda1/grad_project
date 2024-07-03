@@ -14,6 +14,7 @@ import 'contracts_page.dart';
 import 'wallet.dart';
 import 'package:image_picker/image_picker.dart';
 import 'utils.dart';
+import 'package:intl/intl.dart';
 
 final NavigationService navigationService = NavigationService();
 
@@ -26,7 +27,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   Uint8List? _image;
-   String imageUrl = '';
+  String imageUrl = '';
   String _name = 'Loading...';
   String _email = 'Loading...';
   List<dynamic>? _educations;
@@ -38,7 +39,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<dynamic> _reviews = [];
   String? role = '';
   List<Map<String, dynamic>> _projects = [];
-  
+  List<dynamic> _specializations = [];
 
   @override
   void initState() {
@@ -46,6 +47,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserProfile();
     _loadUserRole();
     _loadUserRatings();
+    _fetchSpecializations();
+  }
+
+  Future<void> _fetchSpecializations() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'https://snapwork-133ce78bbd88.herokuapp.com/api/specializations'),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _specializations = json.decode(response.body)['data'];
+        });
+      } else {
+        throw Exception('Failed to load specializations');
+      }
+    } catch (e) {
+      print('Error fetching specializations: $e');
+    }
   }
 
   Future<void> _loadUserRole() async {
@@ -60,16 +81,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       Map<String, dynamic> userProfile = await _getUserProfile();
       setState(() {
         //_image=userProfile['user']['picture'];
-        imageUrl= userProfile['user']['picture'];
+        // imageUrl = userProfile['user']['picture'];
         _name = userProfile['user']['name'];
         _email = userProfile['user']['email'];
-       // _image = userProfile['user']['picture'];
+        // _image = userProfile['user']['picture'];
         _educations = userProfile['educations'];
         _certifications = userProfile['certifications'];
         _employments = userProfile['Employment'];
         _skills = userProfile['user']['skills'];
         _languages = userProfile['languages'];
-        
       });
     } catch (e) {
       print('Error loading user profile: $e');
@@ -81,6 +101,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       Map<String, dynamic> userRatings = await _getUserRatings();
       List<dynamic> ratingsData = userRatings['data'];
       double totalRating = 0.0;
+      print('user rating');
+      print(ratingsData);
 
       for (var rating in ratingsData) {
         totalRating += rating['value'];
@@ -114,6 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (response.statusCode == 200) {
+      print("the response is");
       return json.decode(response.body);
     } else {
       throw Exception('Failed to load user ratings');
@@ -894,47 +917,209 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Future<void> _showEditProfileDialog() async {
+  Future<void> _showChangePasswordDialog() async {
+    TextEditingController _oldPasswordController = TextEditingController();
+    TextEditingController _passwordController = TextEditingController();
+    TextEditingController _confirmPasswordController = TextEditingController();
+
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
-        String editedName = _name;
-        String editedEmail = _email;
-        String editedPassword = '';
-        String editedConfirmPassword = '';
+        return AlertDialog(
+          title: Text('Change Password'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                TextFormField(
+                  controller: _oldPasswordController,
+                  decoration: InputDecoration(labelText: 'Old Password'),
+                  obscureText: true,
+                ),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(labelText: 'New Password'),
+                  obscureText: true,
+                ),
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  decoration: InputDecoration(labelText: 'Confirm Password'),
+                  obscureText: true,
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Change'),
+              onPressed: () async {
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                String? token = prefs.getString('token');
+                if (token == null) {
+                  Navigator.of(context).pop(); // Close the dialog
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("You're not logged in."),
+                  ));
+                  return;
+                }
 
+                final response = await http.put(
+                  Uri.parse(
+                      'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/change-password'),
+                  headers: <String, String>{
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer $token',
+                  },
+                  body: jsonEncode({
+                    'old_password': _oldPasswordController.text,
+                    'password': _passwordController.text,
+                    'password_confirmation': _confirmPasswordController.text,
+                  }),
+                );
+
+                if (response.statusCode == 200) {
+                  Navigator.of(context).pop(); // Close the dialog
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("Password changed successfully."),
+                  ));
+                } else {
+                  Navigator.of(context).pop(); // Close the dialog
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(
+                        "Failed to change password. Error: ${response.body}"),
+                  ));
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showEditProfileDialog() async {
+    TextEditingController _nameController = TextEditingController(text: _name);
+    TextEditingController _emailController =
+        TextEditingController(text: _email);
+    TextEditingController _jobTitleController = TextEditingController();
+    TextEditingController _phoneController = TextEditingController();
+    TextEditingController _bioController = TextEditingController();
+    TextEditingController _countryController = TextEditingController();
+    TextEditingController _cityController = TextEditingController();
+    TextEditingController _addressController = TextEditingController();
+    TextEditingController _postalCodeController = TextEditingController();
+    TextEditingController _dobController = TextEditingController();
+    TextEditingController _passwordController = TextEditingController();
+    TextEditingController _confirmPasswordController = TextEditingController();
+
+    String selectedGender = 'male'; // القيم الافتراضية
+    DateTime? selectedDate;
+    int? selectedSpecializationId;
+
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Edit Profile'),
           content: SingleChildScrollView(
             child: Column(
               children: <Widget>[
                 TextFormField(
-                  initialValue: _name,
-                  onChanged: (value) {
-                    editedName = value;
-                  },
+                  controller: _nameController,
                   decoration: InputDecoration(labelText: 'Name'),
                 ),
                 TextFormField(
-                  initialValue: _email,
-                  onChanged: (value) {
-                    editedEmail = value;
-                  },
+                  controller: _emailController,
                   decoration: InputDecoration(labelText: 'Email'),
                 ),
                 TextFormField(
-                  onChanged: (value) {
-                    editedPassword = value;
+                  controller: _jobTitleController,
+                  decoration: InputDecoration(labelText: 'Job Title'),
+                ),
+                DropdownButtonFormField<String>(
+                  value: selectedGender,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      selectedGender = newValue!;
+                    });
                   },
-                  decoration: InputDecoration(labelText: 'Password'),
-                  obscureText: true,
+                  items: <String>['male', 'female']
+                      .map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  decoration: InputDecoration(labelText: 'Gender'),
                 ),
                 TextFormField(
-                  onChanged: (value) {
-                    editedConfirmPassword = value;
+                  controller: _phoneController,
+                  decoration: InputDecoration(labelText: 'Phone'),
+                ),
+                TextFormField(
+                  controller: _bioController,
+                  decoration: InputDecoration(labelText: 'Bio'),
+                ),
+                TextFormField(
+                  controller: _countryController,
+                  decoration: InputDecoration(labelText: 'Country'),
+                ),
+                TextFormField(
+                  controller: _cityController,
+                  decoration: InputDecoration(labelText: 'City'),
+                ),
+                TextFormField(
+                  controller: _addressController,
+                  decoration: InputDecoration(labelText: 'Address'),
+                ),
+                TextFormField(
+                  controller: _postalCodeController,
+                  decoration: InputDecoration(labelText: 'Postal Code'),
+                ),
+                TextFormField(
+                  controller: _dobController,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: 'Date of Birth',
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.calendar_today),
+                      onPressed: () async {
+                        selectedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(1900),
+                          lastDate: DateTime(2100),
+                        );
+                        if (selectedDate != null) {
+                          setState(() {
+                            _dobController.text =
+                                DateFormat('yyyy-MM-dd').format(selectedDate!);
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                DropdownButtonFormField<int>(
+                  value: selectedSpecializationId,
+                  onChanged: (int? newValue) {
+                    setState(() {
+                      selectedSpecializationId = newValue;
+                    });
                   },
-                  decoration: InputDecoration(labelText: 'Confirm Password'),
-                  obscureText: true,
+                  items: _specializations
+                      .map<DropdownMenuItem<int>>((dynamic specialization) {
+                    return DropdownMenuItem<int>(
+                      value: specialization['id'],
+                      child: Text(specialization['name']),
+                    );
+                  }).toList(),
+                  decoration: InputDecoration(labelText: 'Specialization'),
                 ),
               ],
             ),
@@ -967,11 +1152,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Authorization': 'Bearer $token',
                   },
                   body: jsonEncode({
-                    'name': editedName,
-                    'email': editedEmail,
-                    if (editedPassword.isNotEmpty) 'password': editedPassword,
-                    if (editedConfirmPassword.isNotEmpty)
-                      'password_confirmation': editedConfirmPassword,
+                    'name': _nameController.text,
+                    'email': _emailController.text,
+                    'job_title': _jobTitleController.text,
+                    'gender': selectedGender,
+                    'phone': _phoneController.text,
+                    'bio': _bioController.text,
+                    'country': _countryController.text,
+                    'city': _cityController.text,
+                    'address': _addressController.text,
+                    'postalcode': _postalCodeController.text,
+                    'dob': _dobController.text,
+                    'specialization_id': selectedSpecializationId,
                   }),
                 );
 
@@ -995,49 +1187,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
- 
-
-
 
   Future<void> selectImage() async {
-    Uint8List? imgBytes = await pickImage(ImageSource.gallery);
-    if (imgBytes != null) {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
       setState(() {
-        _image = imgBytes;
+        _image = File(image.path).readAsBytesSync();
       });
-      await uploadImage(imgBytes);
+      await uploadImage(image.path);
     }
   }
 
-
-
-   Future<void> uploadImage(Uint8List imgBytes) async {
+  Future<void> uploadImage(String filePath) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
 
     try {
-      var uri = Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-picture');
+      var uri = Uri.parse(
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/auth/update-picture');
       var request = http.MultipartRequest('POST', uri);
 
       // Set the Authorization header
       request.headers['Authorization'] = 'Bearer $token';
 
-      // Add the image data to the request
-      request.files.add(http.MultipartFile.fromBytes(
-        'picture',  // This should be the name expected by your API
-        imgBytes,
-        filename: 'upload.jpg',
-        contentType: MediaType('image', 'jpeg'),  // Ensure correct MIME type
+      // Add the image file to the request
+      request.files.add(await http.MultipartFile.fromPath(
+        'picture', // This should be the name expected by your API
+        filePath,
+        contentType: MediaType('image', 'jpeg'), // Ensure correct MIME type
       ));
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {
-        //var jsonResponse = jsonDecode(response.body);
-    
         print('Image uploaded successfully');
-        //print('Response Body: $jsonResponse');
       } else {
         print('Failed to upload image');
         print('Status Code: ${response.statusCode}');
@@ -1047,6 +1233,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('Error during image upload: $e');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1061,15 +1248,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Stack(
                 children: [
                   _image != null
-                  
                       ? CircleAvatar(
                           radius: 64,
                           backgroundImage: MemoryImage(_image!),
                         )
                       : CircleAvatar(
                           radius: 64,
-                          backgroundImage: NetworkImage(
-           'https://snapwork-133ce78bbd88.herokuapp.com/uploads/freelancer/pictures/1803297153460132.jpg'),
+                          backgroundImage: NetworkImage(imageUrl),
                         ),
                   Positioned(
                     child: IconButton(
@@ -1169,9 +1354,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ).createShader(bounds),
                     child: IconButton(
                       icon: Icon(Icons.lock, size: 30, color: Colors.white),
-                      onPressed: () {
-                        // Change password button action
-                      },
+                      onPressed: _showChangePasswordDialog,
                     ),
                   ),
                   if (role == "freelancer")
@@ -1615,10 +1798,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              
             ],
           ),
-          
         ),
       ),
     );
@@ -1640,6 +1821,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (response.statusCode == 200) {
+      print(json.decode(response.body));
       final jsonData = json.decode(response.body);
       return jsonData['data'];
     } else {

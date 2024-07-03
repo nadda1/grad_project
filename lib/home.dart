@@ -512,29 +512,26 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-
           SizedBox(width: 10),
-          // Expanded(
-          //   child: TextField(
-          //     controller: _locationController,
-          //     decoration: InputDecoration(
-          //       hintText: 'Nearest jobs for you',
-          //       prefixIcon: Icon(Icons.place),
-          //       filled: true,
-          //       fillColor: Colors.white,
-          //       border: OutlineInputBorder(
-          //         borderRadius: BorderRadius.circular(10.0),
-          //         borderSide: BorderSide.none,
-          //       ),
-          //     ),
-          //   ),
-          // ),
-          IconButton(
-            icon: Icon(Icons.map),
-            onPressed: () {
-              _showLocationPicker(context);
-            },
-            color: Colors.white,
+          Column(
+            children: [
+              IconButton(
+                icon: Icon(Icons.map, color: Colors.white),
+                onPressed: () {
+                  _showLocationPicker(context);
+                },
+                iconSize: 30.0,
+                splashColor: Colors.blueAccent,
+                highlightColor: Colors.blue.withOpacity(0.3),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text(
+                  'Get distances',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
           ),
         ],
       ),
