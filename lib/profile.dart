@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:grad_project/specificjob.dart';
 import 'package:grad_project/utils.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -27,7 +28,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   Uint8List? _image;
-  String imageUrl = '';
+  String imageUrl = 'https://th.bing.com/th/id/OIP.DQdhyRifE5tywz-uIlBKUAHaHa?rs=1&pid=ImgDetMain';
   String _name = 'Loading...';
   String _email = 'Loading...';
   List<dynamic>? _educations;
@@ -153,23 +154,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: _reviews.map((review) {
-                return Card(
-                  margin: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          review['comment'],
-                          style: TextStyle(fontSize: 16.0),
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SpecificJobPage(
+                          jobId: review['job']['id'].toString(),
+                          specializationId: review['job']['specialization']?['id']?.toString() ?? '1',
                         ),
-                        SizedBox(height: 5.0),
-                        Text(
-                          'Rating: ${review['value']}',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
+                      ),
+                    );
+                  },
+                  child: Card(
+                    margin: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.work, color: Colors.blueAccent),
+                              SizedBox(width: 8.0),
+                              Expanded(
+                                child: Text(
+                                  review['job']['title'] ?? 'No job title available',
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 5.0),
+                          Text(
+                            review['comment'] ?? 'No comment available',
+                            style: TextStyle(fontSize: 16.0),
+                          ),
+                          SizedBox(height: 5.0),
+                          Text(
+                            'Rating: ${review['value']}',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -188,6 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
+
 
   Future<void> _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -1398,8 +1430,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       tileMode: TileMode.mirror,
                     ).createShader(bounds),
                     child: IconButton(
-                      icon: Icon(Icons.logout, size: 30, color: Colors.white),
-                      onPressed: _logout,
+                      icon: Icon(Icons.reviews, size: 30, color: Colors.white),
+                      onPressed: () => _showReviewsDialog(context),
                     ),
                   ),
                   ShaderMask(

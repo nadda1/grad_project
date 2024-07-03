@@ -59,6 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late TextEditingController _searchController;
   late TextEditingController _locationController;
   String? userRole;
+  bool _isLoading = false;
   List<dynamic> jobList = [];
   List<dynamic> filteredJobs = [];
   int currentPage = 1;
@@ -274,6 +275,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> fetchData(String specializationId, {int page = 1}) async {
+    setState(() {
+      _isLoading = true; // Show loader
+    });
+
     final prefs = await SharedPreferences.getInstance();
     List<String> skills = prefs.getStringList('user_skills') ??
         ["html", "css", "js"]; // Provide a default skill if none found
@@ -286,14 +291,13 @@ class _MyHomePageState extends State<MyHomePage> {
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
-        body:
-            jsonEncode({'skills': skills, 'page': page}), // Use dynamic skills
+        body: jsonEncode({'skills': skills, 'page': page}), // Use dynamic skills
       );
 
       if (response.statusCode == 200) {
         String responseBody = response.body;
         List<dynamic> recommendedJobs =
-            jsonDecode(responseBody)["recommended_jobs"];
+        jsonDecode(responseBody)["recommended_jobs"];
         print(skills);
 
         setState(() {
@@ -303,14 +307,22 @@ class _MyHomePageState extends State<MyHomePage> {
               List.from(jobList); // Filtered jobs are now the same as job list
           buildJobCardsFromRecommendedJobs(
               recommendedJobs); // Optionally build job cards
+          _isLoading = false; // Hide loader
         });
       } else {
         print('Request failed with status: ${response.statusCode}');
+        setState(() {
+          _isLoading = false; // Hide loader
+        });
       }
     } catch (error) {
       print('Error: $error');
+      setState(() {
+        _isLoading = false; // Hide loader
+      });
     }
   }
+
 
   void buildJobCardsFromRecommendedJobs(List<dynamic> recommendedJobs) {
     setState(() {
@@ -520,14 +532,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: () {
                   _showLocationPicker(context);
                 },
-                iconSize: 30.0,
+                iconSize: 26.0,
                 splashColor: Colors.blueAccent,
                 highlightColor: Colors.blue.withOpacity(0.3),
               ),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Text(
-                  'Get distances',
+                  'Distances',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -542,17 +554,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        title: Text(widget.title),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.notifications),
-            onPressed: () {
-              fetchNotifications();
-            },
-          ),
-        ],
-      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -569,7 +570,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               Spacer(),
               IconButton(
-                icon: Icon(Icons.message, color: Color(0xFF343ABA), size: 26.0),
+                icon: Icon(Icons.message, color: Color(0xFF343ABA), size: 24.0),
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -580,15 +581,19 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               ),
               IconButton(
-                icon: Icon(Icons.more_horiz,
-                    color: Color(0xFF343ABA), size: 36.0),
+                icon: Icon(Icons.notifications, color: Color(0xFF343ABA), size: 25.0),
+                onPressed: () {
+                  fetchNotifications();
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.more_horiz, color: Color(0xFF343ABA), size: 36.0),
                 onPressed: () {
                   _scaffoldKey.currentState!.openDrawer();
                 },
               ),
             ],
           ),
-          // SizedBox(height: 10.0),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 17),
             child: Text(
@@ -608,23 +613,20 @@ class _MyHomePageState extends State<MyHomePage> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  Jobs("all-inclusive.png", "all jobs", "",
-                      (id) => fetchJobs(specializationId: id)),
-                  Jobs("social-media.png", "Recommended", "",
-                      (id) => fetchData(id)),
-                  Jobs("coding.png", "web", "1",
-                      (id) => fetchJobs(specializationId: id)),
-                  Jobs("mobile-development.png", "mobile", "2",
-                      (id) => fetchJobs(specializationId: id)),
-                  Jobs("graphic-designer.png", "graphic", "3",
-                      (id) => fetchJobs(specializationId: id)),
+                  Jobs("all-inclusive.png", "all jobs", "", (id) => fetchJobs(specializationId: id)),
+                  Jobs("social-media.png", "Recommended", "", (id) => fetchData(id)),
+                  Jobs("coding.png", "web", "1", (id) => fetchJobs(specializationId: id)),
+                  Jobs("mobile-development.png", "mobile", "2", (id) => fetchJobs(specializationId: id)),
+                  Jobs("graphic-designer.png", "graphic", "3", (id) => fetchJobs(specializationId: id)),
                 ],
               ),
             ),
           ),
           SizedBox(height: 20.0),
           Expanded(
-            child: Column(
+            child: _isLoading
+                ? Center(child: CircularProgressIndicator()) // Show loader while fetching data
+                : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
@@ -650,10 +652,10 @@ class _MyHomePageState extends State<MyHomePage> {
                           ? formatDate(job['created_at'])
                           : 'Not available';
                       List<String> userCoords =
-                          _locationController.text.split(',');
+                      _locationController.text.split(',');
                       String distance = 'Location not set';
                       String message =
-                          job['status'] == "hired" ? 'this job is expired' : '';
+                      job['status'] == "hired" ? 'this job is expired' : '';
 
                       if (userCoords.length > 1 &&
                           userCoords[0].trim().isNotEmpty &&
@@ -663,7 +665,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             userCoords[1].trim(), // User longitude
                             job['latitude'] as String?, // Job latitude
                             job['longitude'] as String? // Job longitude
-                            );
+                        );
                         double distanceNumeric =
                             double.tryParse(distance.split(' ')[0]) ??
                                 double.infinity;
@@ -680,8 +682,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               builder: (context) => SpecificJobPage(
                                 jobId: job['id'].toString(),
                                 specializationId:
-                                    job['specialization']?['id']?.toString() ??
-                                        '1',
+                                job['specialization']?['id']?.toString() ?? '1',
                               ),
                             ),
                           );
@@ -704,7 +705,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           child: ListTile(
                             title: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
                               children: [
                                 Flexible(
                                   child: Text(
@@ -720,17 +722,19 @@ class _MyHomePageState extends State<MyHomePage> {
                                 FavIconButton(
                                   job: job,
                                   isBookmarked:
-                                      true, // Assume this state is dynamic and can change
+                                  true, // Assume this state is dynamic and can change
                                   updateUI: () => setState(() {}),
                                 ),
                               ],
                             ),
                             subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   job['description'],
-                                  style: TextStyle(color: Colors.black87),
+                                  style:
+                                  TextStyle(color: Colors.black87),
                                 ),
                                 Text(
                                   'Created at: $formattedDate',
@@ -768,16 +772,14 @@ class _MyHomePageState extends State<MyHomePage> {
                       if (lastAction == 'all') {
                         fetchJobs(page: currentPage + 1);
                       } else if (lastAction == 'recommended') {
-                        fetchData('',
-                            page:
-                                currentPage); // Assume fetchData can handle empty ID and page
+                        fetchData('', page: currentPage); // Assume fetchData can handle empty ID and page
                       }
                     },
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.black,
                       backgroundColor: Colors.white,
-                      padding:
-                          EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                      padding: EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 20),
                     ),
                     child: Text('Load More', style: TextStyle(fontSize: 18)),
                   ),
@@ -858,8 +860,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => RecommendedJobsWidget()),
+                  MaterialPageRoute(builder: (context) => RecommendedJobsWidget()),
                 );
               },
             ),
@@ -880,7 +881,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 _logout();
               },
             ),
-            Divider(),
+
           ],
         ),
       ),
@@ -908,20 +909,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               ),
             IconButton(
-              icon:
-                  Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
+              icon: Icon(Icons.account_circle_outlined, color: Color(0xFF343ABA)),
               onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => ProfileScreen()));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
               },
             ),
           ],
         ),
       ),
     );
-  }
-
-  @override
+  } @override
   void dispose() {
     _searchController.dispose();
     _locationController.dispose();

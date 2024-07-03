@@ -126,7 +126,7 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
                                         ),
                                       ),
                                       IconButton(
-                                        icon: Icon(Icons.notifications),
+                                        icon: Icon(Icons.request_page,color: Color(0xFF343ABA)),
                                         onPressed: () {
                                           Navigator.push(
                                             context,
@@ -493,7 +493,7 @@ class _NotificationPageState extends State<NotificationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Notifications'),
+        title: Text('Requests'),
         backgroundColor: Color.fromARGB(255, 242, 242, 242),
       ),
       body: widget.requests.isEmpty

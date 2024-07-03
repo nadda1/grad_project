@@ -33,7 +33,7 @@ class _RecommendedJobsWidgetState extends State<RecommendedJobsWidget> {
         String responseBody = response.body.replaceAll('"NaN"', 'null');
 
         List<dynamic> jobData = jsonDecode(responseBody)["recommended_jobs"];
-
+        print(jobData);
         setState(() {
           jobCards = jobData.map<Widget>((job) {
             return Card(
@@ -59,9 +59,23 @@ class _RecommendedJobsWidgetState extends State<RecommendedJobsWidget> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: jobCards,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Job Recommendations'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context); // Navigate back when the back button is pressed
+          },
+        ),
+      ),
+      body: ListView(
+        children: jobCards,
+      ),
+
     );
   }
+
 }
