@@ -71,6 +71,9 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
                         List hiredApplications = job['applications']
                             .where((app) => app['status'] == 'hired')
                             .toList();
+                        int freelancerId = hiredApplications.isNotEmpty
+                            ? hiredApplications.first['freelancer']['id']
+                            : 0;
 
                         return InkWell(
                           onTap: () {
@@ -123,7 +126,7 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
                                         ),
                                       ),
                                       IconButton(
-                                        icon: Icon(Icons.notifications),
+                                        icon: Icon(Icons.request_page,color: Color(0xFF343ABA)),
                                         onPressed: () {
                                           Navigator.push(
                                             context,
@@ -342,7 +345,8 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
                                       IconButton(
                                         icon: Icon(Icons.rate_review),
                                         onPressed: () {
-                                          showRatingDialog(context, job['id']);
+                                          showRatingDialog(
+                                              context, job['id'], freelancerId);
                                         },
                                       ),
                                     ],
@@ -357,10 +361,9 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
     );
   }
 
-  Future<String> sendRating(
-      int jobId, List<Map<String, dynamic>> rates, String comment) async {
+  Future<String> sendRating(int jobId, int freelancerId,
+      List<Map<String, dynamic>> rates, String comment) async {
     final prefs = await SharedPreferences.getInstance();
-    int? userId = prefs.getInt('user_id');
     String? token = prefs.getString('token');
     var url = 'https://snapwork-133ce78bbd88.herokuapp.com/api/rate';
     var headers = {
@@ -370,7 +373,7 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
 
     var body = json.encode({
       'job_id': jobId,
-      'rated_by': userId,
+      'rated_by': freelancerId,
       'rates': rates,
       'comment': comment,
     });
@@ -385,7 +388,7 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
     }
   }
 
-  void showRatingDialog(BuildContext context, int jobId) {
+  void showRatingDialog(BuildContext context, int jobId, int freelancerId) {
     final _formKey = GlobalKey<FormState>();
     List<Map<String, dynamic>> rates = [
       {'name': 'Skills', 'value': 0},
@@ -443,7 +446,8 @@ class _ClientJobsPageState extends State<ClientJobsPage> {
                 TextButton(
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      String message = await sendRating(jobId, rates, comment);
+                      String message =
+                          await sendRating(jobId, freelancerId, rates, comment);
                       Navigator.of(context).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(message)),
@@ -489,7 +493,7 @@ class _NotificationPageState extends State<NotificationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Notifications'),
+        title: Text('Requests'),
         backgroundColor: Color.fromARGB(255, 242, 242, 242),
       ),
       body: widget.requests.isEmpty
