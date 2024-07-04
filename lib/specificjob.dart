@@ -3,7 +3,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 import 'messaging.dart';
 
 class SpecificJobPage extends StatefulWidget {
@@ -86,7 +86,7 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     }
   }
 
-  Future<void> hireFreelancer(String jobSlug, String applicationSlug) async {
+  Future<void> hireFreelancer(Map<String, dynamic> jobDetails, String applicationSlug) async {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
     if (token == null) {
@@ -97,14 +97,31 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
 
     final response = await http.put(
       Uri.parse(
-          'https://snapwork-133ce78bbd88.herokuapp.com/api/hire/$jobSlug/$applicationSlug'),
+          'https://snapwork-133ce78bbd88.herokuapp.com/api/hire/${jobDetails['slug']}/$applicationSlug'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
       fetchJobDetails();
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Freelancer hired successfully!")));
+      final response = await http.post(
+        Uri.parse(
+            'https://snapwork-133ce78bbd88.herokuapp.com/api/payment/initiate'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'job_id': jobDetails['id'],
+        })
+      );
+
+      var responseBody = json.decode(response.body);
+      String payment_url = responseBody['payment_url'];
+      if (await canLaunchUrl(Uri.parse(payment_url))) {
+        await launchUrl(Uri.parse(payment_url));
+      } else {
+        throw 'Could not launch $payment_url';
+      }
     } else {
       var responseBody = json.decode(response.body);
       var error = responseBody['message'];
@@ -553,7 +570,7 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
                 children: [
                   ElevatedButton(
                     onPressed: () =>
-                        hireFreelancer(jobDetails['slug'], applicationSlug),
+                        hireFreelancer(jobDetails, applicationSlug),
                     child:
                         Text(' Hire ', style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
