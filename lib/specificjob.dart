@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:grad_project/payment_page.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'messaging.dart';
 
 class SpecificJobPage extends StatefulWidget {
@@ -126,24 +126,25 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
     if (response.statusCode == 200) {
       fetchJobDetails();
       final response = await http.post(
-        Uri.parse(
-            'https://snapwork-133ce78bbd88.herokuapp.com/api/payment/initiate'),
+        Uri.parse('https://snapwork-133ce78bbd88.herokuapp.com/api/payment/initiate'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
         body: json.encode({
           'job_id': jobDetails['id'],
-        })
+        }),
       );
 
       var responseBody = json.decode(response.body);
-      String payment_url = responseBody['payment_url'];
-      if (await canLaunchUrl(Uri.parse(payment_url))) {
-        await launchUrl(Uri.parse(payment_url));
-      } else {
-        throw 'Could not launch $payment_url';
-      }
+      String paymentUrl = responseBody['payment_url'];
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentPage(paymentUrl: paymentUrl),
+        ),
+      );
     } else {
       var responseBody = json.decode(response.body);
       var error = responseBody['message'];
@@ -151,6 +152,8 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
           .showSnackBar(SnackBar(content: Text(error)));
     }
   }
+
+
 
   void showFreelancersPopup(BuildContext context) async {
     List<dynamic> freelancers = await fetchFreelancers();
