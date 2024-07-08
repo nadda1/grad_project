@@ -37,6 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<dynamic>? _skills;
   List<dynamic>? _languages;
   double _averageRating = 0.0;
+  double _balance = 0.0;
   List<dynamic> _reviews = [];
   String? role = '';
   List<Map<String, dynamic>> _projects = [];
@@ -91,6 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _employments = userProfile['Employment'];
         _skills = userProfile['user']['skills'];
         _languages = userProfile['languages'];
+        _balance = userProfile['user']['balance'].toDouble();
       });
     } catch (e) {
       print('Error loading user profile: $e');
@@ -1445,7 +1447,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => WalletPage()),
+                          MaterialPageRoute(builder: (context) => WalletPage(balance: _balance)),
                         );
                       },
                     ),

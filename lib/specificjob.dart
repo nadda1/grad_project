@@ -138,11 +138,13 @@ class _SpecificJobPageState extends State<SpecificJobPage> {
 
       var responseBody = json.decode(response.body);
       String paymentUrl = responseBody['payment_url'];
+      String jobSlug = jobDetails['slug'];
 
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => PaymentPage(paymentUrl: paymentUrl),
+          builder: (context) => PaymentPage(paymentUrl: paymentUrl, jobSlug: jobSlug,
+          applicationSlug: applicationSlug),
         ),
       );
     } else {

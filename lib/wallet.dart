@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 class WalletPage extends StatelessWidget {
+  final double balance;
+
+  WalletPage({required this.balance});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,22 +26,8 @@ class WalletPage extends StatelessWidget {
               child: ListTile(
                 leading: Icon(Icons.account_balance_wallet, size: 40),
                 title: Text('Balance'),
-                subtitle: Text('\$1000.00'), // Example balance
+                subtitle: Text('\$${balance.toStringAsFixed(2)}'), // Display the balance
               ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // Implement your add money function here
-              },
-              child: const Text('Add Money'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // Implement your transaction history function here
-              },
-              child: const Text('Transaction History'),
             ),
           ],
         ),
